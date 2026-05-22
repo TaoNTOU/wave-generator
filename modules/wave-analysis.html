@@ -639,6 +639,45 @@
         grid-template-columns: 1fr;
       }
     }
+  
+    /* =====================================================
+       Analysis-only layout cleanup
+       保留原始 JS 所需 DOM，但視覺上隱藏參考波浪條件。
+       ===================================================== */
+    #regularTab,
+    #irregularTab,
+    #regularPanel,
+    #irregularPanel,
+    .results,
+    .canvas-wrap,
+    .status-row,
+    #lowerTitle,
+    #theoryWrap,
+    #spectrumInfo {
+      display: none !important;
+    }
+
+    #analysisTab {
+      display: block !important;
+      width: 100%;
+    }
+
+    .tabs {
+      grid-template-columns: 1fr !important;
+    }
+
+    #analysisPanel {
+      display: grid !important;
+    }
+
+    .layout {
+      grid-template-columns: minmax(300px, 380px) 1fr;
+    }
+
+    .stage {
+      align-content: start;
+    }
+
   </style>
 
   <style id="module-split-style">
@@ -670,9 +709,9 @@
       <aside class="panel">
         <div class="controls">
           <div class="tabs">
-            <button class="tab-button active" id="regularTab" type="button">規則波</button>
+            <button class="tab-button" id="regularTab" type="button">規則波</button>
             <button class="tab-button" id="irregularTab" type="button">不規則波</button>
-            <button class="tab-button" id="analysisTab" type="button">波浪分析<br><span lang="en">Analysis</span></button>
+            <button class="tab-button active" id="analysisTab" type="button">波浪分析<br><span lang="en">Analysis</span></button>
           </div>
 
           <div class="control">
@@ -702,7 +741,7 @@
             <input id="depthNumber" type="number" min="0.1" step="0.1" value="15">
           </div>
 
-          <div class="tab-panel active" id="regularPanel">
+          <div class="tab-panel" id="regularPanel">
             <p class="hint">規則波以 H 與 T 表示單一波高與週期；不規則波與頻譜比對則以 Hs 與 Tp 表示頻譜尺度。</p>
           </div>
 
@@ -736,8 +775,32 @@
 
 
 
-          <div class="tab-panel" id="analysisPanel">
+          <div class="tab-panel active" id="analysisPanel">
             <p class="hint">貼上兩欄資料：時間 t(s) 與水位 η(m)，可用逗號、Tab 或空白分隔。分析結果會同時提供時域零切統計與頻域頻譜統計。</p>
+            <div class="control">
+              <label for="fileInput">讀取資料檔 File import</label>
+              <input id="fileInput" type="file" accept=".txt,.csv,.dat,.tsv,text/plain,text/csv">
+              <p class="hint" id="fileStatus">支援 TXT / CSV / DAT / TSV。資料格式為兩欄：時間 t(s)、水位 η(m)，可用逗號、Tab 或空白分隔。</p>
+            </div>
+
+            <div class="split">
+              <div class="control">
+                <label for="skipHeader">標題列 Header</label>
+                <select id="skipHeader">
+                  <option value="auto">自動判斷 auto</option>
+                  <option value="yes">略過第一列</option>
+                  <option value="no">不略過</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="columnMode">欄位 Columns</label>
+                <select id="columnMode">
+                  <option value="first2">前兩欄 t, η</option>
+                  <option value="last2">最後兩欄 t, η</option>
+                </select>
+              </div>
+            </div>
+
             <div class="control">
               <label for="analysisInput">時間序列資料 Time series</label>
               <textarea id="analysisInput" placeholder="0,0.00&#10;0.05,0.03&#10;0.10,0.07"></textarea>
@@ -867,7 +930,7 @@
             <h3>名詞定義與比對原則 Terminology</h3>
             <ul>
               <li><strong>H1/3</strong>：零切法取得所有個別波高後，取最高三分之一波高之平均；常作為時域 significant wave height。</li>
-              <li><strong>Hm0 = 4√m0</strong>：由頻譜零階矩 m0 計算之示性波高；理論上常與 Hs、H1/3 接近。</li>
+              <li><strong>Hm0 = 4√m0</strong>：由頻譜零階矩 m0 計算之顯著波高；理論上常與 Hs、H1/3 接近。</li>
               <li><strong>Tz</strong>：零上切或零下切平均週期，為時域平均週期。</li>
               <li><strong>Tp</strong>：頻譜尖峰週期，Tp = 1 / fp；不規則波中通常不可直接拿 Tz 與 Tp 比。</li>
               <li><strong>Tm01、Tm02</strong>：由頻譜矩計算的平均週期；Tz 通常較適合與 Tm02 對照。</li>
@@ -906,7 +969,7 @@
               <div class="fit-hint">NRMSE 越小表示擬合越好；綠色星號 ★ 為最佳擬合結果。判讀時請注意：Hs/Hm0/H1/3 是波高對照組，Tp 與 Tz 則不是同一種週期。</div>
             </div>
           </div>
-          <p class="hint" id="analysisNote">零切分析依零上切或零下切分割個別波，波高取每段 max(η)-min(η)。時域 H1/3 可與頻域 Hm0 對照；Tz 是零切平均週期，通常不等於頻譜尖峰週期 Tp。</p>
+          <p class="hint" id="analysisNote">零切分析依零上切或零下切分割個別波；零切點以線性內插定位，波峰與波谷以鄰近三點拋物線微調。時域 H1/3 可與頻域 Hm0 對照；Tz 是零切平均週期，通常不等於頻譜尖峰週期 Tp。</p>
         </div>
       </section>
     </section>
@@ -932,6 +995,10 @@
       spectrumInfo: document.getElementById("spectrumInfo"),
       analysisInfo: document.getElementById("analysisInfo"),
       analysisInput: document.getElementById("analysisInput"),
+      fileInput: document.getElementById("fileInput"),
+      fileStatus: document.getElementById("fileStatus"),
+      skipHeader: document.getElementById("skipHeader"),
+      columnMode: document.getElementById("columnMode"),
       crossingMode: document.getElementById("crossingMode"),
       demeanMode: document.getElementById("demeanMode"),
       analysisSpectrumMethod: document.getElementById("analysisSpectrumMethod"),
@@ -990,7 +1057,7 @@
     let startTime = performance.now();
     let current = null;
     let irregularPreviewCache = null;
-    let activeWaveMode = "regular";
+    let activeWaveMode = "analysis";
 
     function clamp(value, min, max) {
       return Math.min(max, Math.max(min, value));
@@ -2130,6 +2197,80 @@
     }
 
 
+
+    function normalizeImportedText(text, options = {}) {
+      const skipHeader = options.skipHeader || "auto";
+      const columnMode = options.columnMode || "first2";
+
+      const lines = String(text || "")
+        .replace(/^\uFEFF/, "")
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("#"));
+
+      const parsed = [];
+
+      lines.forEach((line, lineIndex) => {
+        const parts = line
+          .split(/[\s,\t;]+/)
+          .map((value) => value.trim())
+          .filter(Boolean);
+
+        if (parts.length < 2) return;
+
+        const pair = columnMode === "last2" ? parts.slice(-2) : parts.slice(0, 2);
+        const t = Number(pair[0]);
+        const eta = Number(pair[1]);
+
+        if (!Number.isFinite(t) || !Number.isFinite(eta)) {
+          if (lineIndex === 0 && (skipHeader === "auto" || skipHeader === "yes")) return;
+          return;
+        }
+
+        if (lineIndex === 0 && skipHeader === "yes") return;
+
+        parsed.push([t, eta]);
+      });
+
+      parsed.sort((a, b) => a[0] - b[0]);
+
+      return parsed.map(([t, eta]) => `${t}\t${eta}`).join("\n");
+    }
+
+    function handleFileImport(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const normalized = normalizeImportedText(reader.result || "", {
+          skipHeader: controls.skipHeader?.value || "auto",
+          columnMode: controls.columnMode?.value || "first2"
+        });
+
+        const count = normalized ? normalized.split(/\r?\n/).filter(Boolean).length : 0;
+
+        controls.analysisInput.value = normalized;
+
+        if (controls.fileStatus) {
+          controls.fileStatus.textContent = `已讀取 ${file.name}，有效資料 ${count} 筆。`;
+        }
+
+        // 直接接入原本後續計算
+        if (count >= 2) {
+          runWaveAnalysis();
+        }
+      };
+
+      reader.onerror = () => {
+        if (controls.fileStatus) controls.fileStatus.textContent = `讀取檔案失敗：${file.name}`;
+      };
+
+      reader.readAsText(file);
+    }
+
+
     function parseAnalysisInput() {
       const lines = controls.analysisInput.value.split(/\r?\n/);
       const rows = [];
@@ -2149,55 +2290,156 @@
 
     function findCrossings(rows, mode) {
       const crossings = [];
-      for (let i = 1; i < rows.length; i += 1) {
-        const a = rows[i - 1];
-        const b = rows[i];
-        const up = a.eta_m <= 0 && b.eta_m > 0;
-        const down = a.eta_m >= 0 && b.eta_m < 0;
+      if (!Array.isArray(rows) || rows.length < 2) return crossings;
+
+      const sorted = rows.slice().sort((a, b) => a.time_s - b.time_s);
+      const eps = 1e-10;
+
+      const dts = [];
+      for (let i = 1; i < sorted.length; i += 1) {
+        const dt = sorted[i].time_s - sorted[i - 1].time_s;
+        if (Number.isFinite(dt) && dt > 0) dts.push(dt);
+      }
+      dts.sort((a, b) => a - b);
+      const medianDt = dts.length ? dts[Math.floor(dts.length / 2)] : 0;
+      const minCrossingGap = Math.max(medianDt * 0.25, 1e-9);
+
+      for (let i = 1; i < sorted.length; i += 1) {
+        const a = sorted[i - 1];
+        const b = sorted[i];
+        const y0 = Math.abs(a.eta_m) < eps ? 0 : a.eta_m;
+        const y1 = Math.abs(b.eta_m) < eps ? 0 : b.eta_m;
+
+        // Up-crossing: η changes from negative side to positive side.
+        // Down-crossing: η changes from positive side to negative side.
+        // Use strict sign change plus one-sided zero handling to avoid double-counting points that are exactly zero.
+        const up = (y0 < 0 && y1 >= 0) || (y0 === 0 && y1 > 0 && i >= 2 && sorted[i - 2].eta_m < -eps);
+        const down = (y0 > 0 && y1 <= 0) || (y0 === 0 && y1 < 0 && i >= 2 && sorted[i - 2].eta_m > eps);
+
         if ((mode === "up" && up) || (mode === "down" && down)) {
-          const r = Math.abs(b.eta_m - a.eta_m) > 1e-12 ? -a.eta_m / (b.eta_m - a.eta_m) : 0;
-          crossings.push({ time_s: a.time_s + r * (b.time_s - a.time_s), index: i });
+          const denom = b.eta_m - a.eta_m;
+          const r = Math.abs(denom) > eps ? clamp(-a.eta_m / denom, 0, 1) : 0;
+          const time = a.time_s + r * (b.time_s - a.time_s);
+
+          const last = crossings[crossings.length - 1];
+          if (!last || Math.abs(time - last.time_s) > minCrossingGap) {
+            crossings.push({
+              time_s: time,
+              leftIndex: i - 1,
+              rightIndex: i,
+              index: i
+            });
+          }
         }
       }
+
       return crossings;
     }
 
+    function refineExtremumByParabola(rows, centerIndex, kind) {
+      const center = rows[centerIndex];
+      if (!center || centerIndex <= 0 || centerIndex >= rows.length - 1) return center?.eta_m ?? NaN;
+
+      const p0 = rows[centerIndex - 1];
+      const p1 = rows[centerIndex];
+      const p2 = rows[centerIndex + 1];
+
+      const x0 = p0.time_s;
+      const x1 = p1.time_s;
+      const x2 = p2.time_s;
+      const y0 = p0.eta_m;
+      const y1 = p1.eta_m;
+      const y2 = p2.eta_m;
+
+      const denom = (x0 - x1) * (x0 - x2) * (x1 - x2);
+      if (Math.abs(denom) < 1e-14) return y1;
+
+      const a =
+        (x2 * (y1 - y0) +
+          x1 * (y0 - y2) +
+          x0 * (y2 - y1)) / denom;
+      const b =
+        (x2 * x2 * (y0 - y1) +
+          x1 * x1 * (y2 - y0) +
+          x0 * x0 * (y1 - y2)) / denom;
+
+      if (Math.abs(a) < 1e-14) return y1;
+
+      const xv = -b / (2 * a);
+      const lo = Math.min(x0, x2);
+      const hi = Math.max(x0, x2);
+
+      if (xv < lo || xv > hi) return y1;
+
+      const c = y0 - a * x0 * x0 - b * x0;
+      const yv = a * xv * xv + b * xv + c;
+
+      if (kind === "max" && yv >= y1) return yv;
+      if (kind === "min" && yv <= y1) return yv;
+
+      return y1;
+    }
+
     function zeroCrossingStats(rows, mode) {
-      const crossings = findCrossings(rows, mode);
+      const sorted = rows.slice().sort((a, b) => a.time_s - b.time_s);
+      const crossings = findCrossings(sorted, mode);
       const waves = [];
+
       for (let i = 1; i < crossings.length; i += 1) {
         const start = crossings[i - 1];
         const end = crossings[i];
-        const segment = rows.filter((row) => row.time_s >= start.time_s && row.time_s <= end.time_s);
+        const period = end.time_s - start.time_s;
+        if (!Number.isFinite(period) || period <= 0) continue;
+
+        const segment = sorted
+          .map((row, index) => ({ ...row, originalIndex: index }))
+          .filter((row) => row.time_s >= start.time_s && row.time_s <= end.time_s);
+
         if (segment.length < 2) continue;
-        const maxEta = Math.max(...segment.map((row) => row.eta_m));
-        const minEta = Math.min(...segment.map((row) => row.eta_m));
+
+        let maxRow = segment[0];
+        let minRow = segment[0];
+
+        segment.forEach((row) => {
+          if (row.eta_m > maxRow.eta_m) maxRow = row;
+          if (row.eta_m < minRow.eta_m) minRow = row;
+        });
+
+        const maxEta = refineExtremumByParabola(sorted, maxRow.originalIndex, "max");
+        const minEta = refineExtremumByParabola(sorted, minRow.originalIndex, "min");
+
         waves.push({
           no: waves.length + 1,
           start_s: start.time_s,
           end_s: end.time_s,
-          T_s: end.time_s - start.time_s,
+          T_s: period,
           H_m: maxEta - minEta,
           crest_m: maxEta,
           trough_m: minEta
         });
       }
-      const heights = waves.map((w) => w.H_m).filter(Number.isFinite).sort((a, b) => b - a);
-      const periods = waves.map((w) => w.T_s).filter(Number.isFinite);
+
+      const validWaves = waves.filter((w) => Number.isFinite(w.H_m) && Number.isFinite(w.T_s));
+      const sortedByHeight = validWaves.slice().sort((a, b) => b.H_m - a.H_m);
+      const heights = sortedByHeight.map((w) => w.H_m);
+      const periods = validWaves.map((w) => w.T_s);
       const mean = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : NaN;
-      const topMean = (fraction) => {
-        if (!heights.length) return NaN;
-        const count = Math.max(1, Math.ceil(heights.length * fraction));
-        return mean(heights.slice(0, count));
+      const topMean = (fraction, key) => {
+        if (!sortedByHeight.length) return NaN;
+        const count = Math.max(1, Math.ceil(sortedByHeight.length * fraction));
+        return mean(sortedByHeight.slice(0, count).map((wave) => wave[key]));
       };
+
       return {
         crossings,
-        waves,
-        samples: rows.length,
+        waves: validWaves,
+        samples: sorted.length,
         Hmax: heights[0] ?? NaN,
         Hmean: mean(heights),
-        H13: topMean(1 / 3),
-        H10: topMean(1 / 10),
+        H13: topMean(1 / 3, "H_m"),
+        H10: topMean(1 / 10, "H_m"),
+        T13: topMean(1 / 3, "T_s"),
+        T10: topMean(1 / 10, "T_s"),
         Tmean: mean(periods),
         Tz: mean(periods)
       };
@@ -3205,6 +3447,17 @@
     update();
     cancelAnimationFrame(animationId);
     animationId = requestAnimationFrame(animate);
+  
+    if (controls.fileInput) {
+      controls.fileInput.addEventListener("change", handleFileImport);
+    }
+
+    // 分析頁預設顯示
+    activeWaveMode = "analysis";
+    if (controls.analysisPanel) controls.analysisPanel.classList.add("active");
+    if (controls.regularPanel) controls.regularPanel.classList.remove("active");
+    if (controls.irregularPanel) controls.irregularPanel.classList.remove("active");
+
   </script>
 
   <script id="module-split-init">
