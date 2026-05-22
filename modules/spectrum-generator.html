@@ -263,23 +263,76 @@
     }
 
     .spectrum-item {
+      display: none;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .spectrum-item.active {
       display: grid;
-      gap: 3px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--line);
     }
 
     .spectrum-item:last-child {
-      border-bottom: 0;
+      border-bottom: 1px solid var(--line);
     }
 
-    .spectrum-item strong {
-      font-size: 1rem;
+    .spectrum-heading {
+      display: grid;
+      gap: 4px;
     }
 
-    .spectrum-item span {
+    .spectrum-heading strong {
+      font-size: 1.08rem;
+    }
+
+    .spectrum-heading span,
+    .method-section p {
       color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .method-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .method-section h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--accent-dark);
+    }
+
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .param-table th,
+    .param-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
       line-height: 1.45;
+    }
+
+    .param-table th {
+      background: #f3f7fa;
+      color: var(--ink);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .param-table tr:last-child td {
+      border-bottom: 0;
     }
 
 
@@ -723,47 +776,130 @@
               <canvas id="spectrumNonDimCanvas" width="600" height="320" aria-label="無因次波譜圖" role="img"></canvas>
             </div>
           </div>
-          <div class="spectrum-item">
-            <strong>Pierson-Moskowitz (PM)</strong>
-            <div class="formula-box">
-              \[
-              S(f)=A f^{-5}\exp\left[-\beta\left(\frac{f_p}{f}\right)^4\right]
-              \]
+          <div class="spectrum-item" data-spectrum-type="pm">
+            <div class="spectrum-heading">
+              <strong>Pierson-Moskowitz (PM)</strong>
+              <span>完全發展風浪頻譜，適合風場作用時間與吹程足夠時使用。</span>
             </div>
-            <span>Fully developed sea spectrum, often used when wind has blown long enough over sufficient fetch.</span>
-            <div class="param-note">參數：β 控制低頻側衰減；f<sub>p</sub>=1/T<sub>p</sub>；A 由目標 m<sub>0</sub>=H<sub>s</sub><sup>2</sup>/16 正規化取得。</div>
-          </div>
-          <div class="spectrum-item">
-            <strong>JONSWAP</strong>
-            <div class="formula-box">
-              \[
-              S(f)=A f^{-5}\exp\left[-\beta\left(\frac{f_p}{f}\right)^4\right]\gamma^{\exp\left[-\frac{(f/f_p-1)^2}{2\sigma^2}\right]}
-              \]
+            <div class="method-section">
+              <h3>公式</h3>
+              <div class="formula-box">
+                \[
+                S(f)=A f^{-5}\exp\left[-\beta\left(\frac{f_p}{f}\right)^4\right]
+                \]
+              </div>
             </div>
-            <span>Fetch-limited sea spectrum with a sharper peak controlled by gamma; common for growing wind seas.</span>
-            <div class="param-note">參數：γ 控制尖峰增強；σ=σ<sub>a</sub> when f≤f<sub>p</sub>，σ=σ<sub>b</sub> when f&gt;f<sub>p</sub>；β 控制低頻側衰減。</div>
-          </div>
-          <div class="spectrum-item">
-            <strong>Bretschneider / ISSC</strong>
-            <div class="formula-box">
-              \[
-              S(f)=\frac{5}{16}H_s^2 f_p^4 f^{-5}\exp\left[-\frac{5}{4}\left(\frac{f_p}{f}\right)^4\right]
-              \]
+            <div class="method-section">
+              <h3>公式代號</h3>
+              <table class="param-table">
+                <tr><th>代號</th><th>意義</th></tr>
+                <tr><td>\(S(f)\)</td><td>頻率頻譜密度，單位通常為 m²/Hz。</td></tr>
+                <tr><td>\(f\)</td><td>頻率，單位 Hz。</td></tr>
+                <tr><td>\(f_p\)</td><td>尖峰頻率，\(f_p=1/T_p\)。</td></tr>
+                <tr><td>\(T_p\)</td><td>尖峰週期，本工具由輸入週期代表。</td></tr>
+                <tr><td>\(A\)</td><td>尺度係數，由目標 \(m_0=H_s^2/16\) 正規化取得。</td></tr>
+                <tr><td>\(\beta\)</td><td>低頻側衰減控制參數。</td></tr>
+              </table>
             </div>
-            <span>Two-parameter spectrum commonly described by Hs and Tp; useful for general engineering sea states.</span>
-            <div class="param-note">參數：H<sub>s</sub> 代表顯著波高；T<sub>p</sub> 為尖峰週期；f<sub>p</sub>=1/T<sub>p</sub>；本程式另提供 β 與 fmax/fp 供輸出範圍調整。</div>
-          </div>
-          <div class="spectrum-item">
-            <strong>TMA</strong>
-            <div class="formula-box">
-              \[
-              S_{TMA}(f)=S_{JONSWAP}(f)\,\Phi(\omega,h)
-              \]
+            <div class="method-section">
+              <h3>工程意義</h3>
+              <p>PM 頻譜假設海況已充分發展，形狀較固定；適合用來產生一般風浪背景，但不特別強調尖峰增強。</p>
             </div>
-            <span>Finite-depth spectrum based on JONSWAP with shallow-water transformation, used for coastal water depths.</span>
-            <div class="param-note">參數：γ、σ<sub>a</sub>、σ<sub>b</sub> 延續 JONSWAP；h 為水深；shallow power 控制有限水深修正強度。</div>
           </div>
-        </div>
+          <div class="spectrum-item" data-spectrum-type="jonswap">
+            <div class="spectrum-heading">
+              <strong>JONSWAP</strong>
+              <span>吹程受限或成長中風浪頻譜，特色是尖峰比 PM 更明顯。</span>
+            </div>
+            <div class="method-section">
+              <h3>公式</h3>
+              <div class="formula-box">
+                \[
+                S(f)=A f^{-5}\exp\left[-\beta\left(\frac{f_p}{f}\right)^4\right]
+                \gamma^{\exp\left[-\frac{(f/f_p-1)^2}{2\sigma^2}\right]}
+                \]
+              </div>
+            </div>
+            <div class="method-section">
+              <h3>公式代號</h3>
+              <table class="param-table">
+                <tr><th>代號</th><th>意義</th></tr>
+                <tr><td>\(S(f)\)</td><td>頻率頻譜密度。</td></tr>
+                <tr><td>\(f\)</td><td>頻率。</td></tr>
+                <tr><td>\(f_p\)</td><td>尖峰頻率。</td></tr>
+                <tr><td>\(A\)</td><td>正規化尺度係數，使總能量符合 \(m_0=H_s^2/16\)。</td></tr>
+                <tr><td>\(\beta\)</td><td>低頻側衰減控制參數。</td></tr>
+                <tr><td>\(\gamma\)</td><td>尖峰增強因子；數值越大，尖峰越高、越窄。</td></tr>
+                <tr><td>\(\sigma\)</td><td>尖峰寬度參數；\(f\le f_p\) 使用 \(\sigma_a\)，\(f&gt;f_p\) 使用 \(\sigma_b\)。</td></tr>
+              </table>
+            </div>
+            <div class="method-section">
+              <h3>工程意義</h3>
+              <p>JONSWAP 可描述能量集中於尖峰頻率附近的海況，適合成長中風浪或吹程尚未充分發展的條件。</p>
+            </div>
+          </div>
+          <div class="spectrum-item" data-spectrum-type="bretschneider">
+            <div class="spectrum-heading">
+              <strong>Bretschneider / ISSC</strong>
+              <span>常用於工程海象描述的雙參數頻譜，主要由 \(H_s\) 與 \(T_p\) 決定。</span>
+            </div>
+            <div class="method-section">
+              <h3>公式</h3>
+              <div class="formula-box">
+                \[
+                S(f)=\frac{5}{16}H_s^2 f_p^4 f^{-5}
+                \exp\left[-\frac{5}{4}\left(\frac{f_p}{f}\right)^4\right]
+                \]
+              </div>
+            </div>
+            <div class="method-section">
+              <h3>公式代號</h3>
+              <table class="param-table">
+                <tr><th>代號</th><th>意義</th></tr>
+                <tr><td>\(S(f)\)</td><td>頻率頻譜密度。</td></tr>
+                <tr><td>\(H_s\)</td><td>顯著波高，控制頻譜總能量。</td></tr>
+                <tr><td>\(f_p\)</td><td>尖峰頻率，\(f_p=1/T_p\)。</td></tr>
+                <tr><td>\(T_p\)</td><td>尖峰週期。</td></tr>
+                <tr><td>\(f^{-5}\)</td><td>高頻尾端衰減型態。</td></tr>
+                <tr><td>指數項</td><td>控制低頻側能量衰減。</td></tr>
+              </table>
+            </div>
+            <div class="method-section">
+              <h3>工程意義</h3>
+              <p>Bretschneider / ISSC 形式簡潔，常用於以 \(H_s\) 與 \(T_p\) 給定設計海況時的工程頻譜。</p>
+            </div>
+          </div>
+          <div class="spectrum-item" data-spectrum-type="tma">
+            <div class="spectrum-heading">
+              <strong>TMA</strong>
+              <span>有限水深頻譜，可視為 JONSWAP 加上淺水修正，較適合近岸水深。</span>
+            </div>
+            <div class="method-section">
+              <h3>公式</h3>
+              <div class="formula-box">
+                \[
+                S_{TMA}(f)=S_{JONSWAP}(f)\,\Phi(\omega,h)
+                \]
+              </div>
+            </div>
+            <div class="method-section">
+              <h3>公式代號</h3>
+              <table class="param-table">
+                <tr><th>代號</th><th>意義</th></tr>
+                <tr><td>\(S_{TMA}(f)\)</td><td>有限水深修正後的頻譜。</td></tr>
+                <tr><td>\(S_{JONSWAP}(f)\)</td><td>原始 JONSWAP 頻譜。</td></tr>
+                <tr><td>\(\Phi(\omega,h)\)</td><td>有限水深修正函數。</td></tr>
+                <tr><td>\(\omega\)</td><td>角頻率，\(\omega=2\pi f\)。</td></tr>
+                <tr><td>\(h\)</td><td>水深。</td></tr>
+                <tr><td>\(\gamma,\sigma_a,\sigma_b\)</td><td>延續 JONSWAP 的尖峰高度與尖峰寬度控制。</td></tr>
+                <tr><td>shallow power</td><td>本工具提供的有限水深修正強度調整參數。</td></tr>
+              </table>
+            </div>
+            <div class="method-section">
+              <h3>工程意義</h3>
+              <p>TMA 會考慮有限水深對高頻與低頻能量分布的影響，較適合近岸、淺化區或水深效應明顯的波浪條件。</p>
+            </div>
+          </div>        </div>
         <div class="analysis-info" id="analysisInfo">
           <div class="analysis-summary" id="analysisSummary">
             <div class="metric"><span>資料筆數 Samples</span><strong>-</strong></div>
@@ -1087,6 +1223,13 @@
       controls.tmaParams.classList.toggle("active", type === "tma");
     }
 
+    function updateSpectrumExplanation() {
+      const type = controls.spectrumType.value;
+      document.querySelectorAll(".spectrum-item[data-spectrum-type]").forEach((item) => {
+        item.classList.toggle("active", item.dataset.spectrumType === type);
+      });
+    }
+
     function spectrumFrequencyRatios(type = controls.spectrumType.value) {
       const params = getSpectrumParams(type);
       const fMinRatio = type === "pm" ? params.pmFminRatio : 0.2;
@@ -1133,6 +1276,17 @@
       return shape;
     }
 
+    function componentWaveProperties(f, depth) {
+      const omega = 2 * Math.PI * f;
+      const k = solveWaveNumber(1 / f, depth);
+      const L = 2 * Math.PI / k;
+      const c = omega / k;
+      const kh = k * depth;
+      const n = 0.5 * (1 + (2 * kh) / Math.sinh(2 * kh));
+      const Cg = n * c;
+      return { omega, k, L, c, Cg };
+    }
+
     function buildSpectrumComponents(model, totalTime) {
       const Hs = model.H;
       const Tp = model.T;
@@ -1159,13 +1313,19 @@
       const scale = m0Raw > 0 ? targetM0 / m0Raw : 0;
       const random = seededRandom(seed);
 
-      return raw.map(({ f, value }) => ({
-        f,
-        omega: 2 * Math.PI * f,
-        k: solveWaveNumber(1 / f, model.h),
-        amp: Math.sqrt(2 * value * scale * df),
-        phase: 2 * Math.PI * random()
-      }));
+      return raw.map(({ f, value }) => {
+        const props = componentWaveProperties(f, model.h);
+        return {
+          f,
+          omega: props.omega,
+          k: props.k,
+          L: props.L,
+          c: props.c,
+          Cg: props.Cg,
+          amp: Math.sqrt(2 * value * scale * df),
+          phase: 2 * Math.PI * random()
+        };
+      });
     }
 
     function generateIrregularTimeSeries(model, dt, totalTime) {
@@ -1180,7 +1340,8 @@
         const time = Math.min(i * safeDt, duration);
         let eta = 0;
         components.forEach((component) => {
-          eta += component.amp * Math.cos(2 * Math.PI * component.f * time + component.phase);
+          // x = 0 的水位時序列，與動畫使用同一個行進波相位慣例：cos(kx - omega t + phase)
+          eta += component.amp * Math.cos(-component.omega * time + component.phase);
         });
         rows.push({ time_s: time, eta_m: eta });
       }
@@ -1381,8 +1542,9 @@
       const bottomPad = Math.max(46, height * 0.11);
       const duration = clamp(Number(controls.totalTime.value) || model.T * 20, 0.001, 100000000);
       const key = [
-        model.H, model.T, model.h, controls.spectrumType.value, controls.gamma.value,
-        controls.components.value, controls.seed.value, duration
+        model.H, model.T, model.h, controls.spectrumType.value,
+        JSON.stringify(getSpectrumParams()),
+        controls.components.value, controls.seed.value, controls.dt.value, duration
       ].join("|");
 
       if (!irregularPreviewCache || irregularPreviewCache.key !== key) {
@@ -1393,8 +1555,11 @@
 
       const rows = irregularPreviewCache.rows;
       const components = irregularPreviewCache.components;
-      const visibleLength = Math.max(160, model.L * 2);
-      const maxAbs = Math.max(...rows.map((row) => Math.abs(row.eta_m)), 0.001);
+      // 不規則波沒有單一波長；動畫視窗以尖峰週期 Tp 對應的代表波長 Lp 為尺度。
+      const peakK = solveWaveNumber(model.T, model.h);
+      const peakL = 2 * Math.PI / peakK;
+      const visibleLength = Math.max(200, peakL * 4);
+      const maxAbs = Math.max(...rows.map((row) => Math.abs(row.eta_m)), model.H / 2, 0.001);
       const verticalExtent = Math.max(model.h + 2 * maxAbs, 4);
       const pxPerM = (height - topPad - bottomPad) / verticalExtent;
       const stillY = topPad + maxAbs * pxPerM;
@@ -1403,6 +1568,8 @@
       const etaAt = (x, time) => {
         let eta = 0;
         components.forEach((component) => {
+          // 不規則波傳遞：每一個頻率成分都使用自己的 k_i、omega_i 與 phase_i。
+          // eta(x,t) = sum a_i cos(k_i x - omega_i t + phi_i)
           eta += component.amp * Math.cos(component.k * x - component.omega * time + component.phase);
         });
         return eta;
@@ -1419,14 +1586,14 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
 
-      const xStep = 20;
-      for (let xTick = 0; xTick <= visibleLength; xTick += xStep) {
+      const xStep = niceStep(visibleLength, 7);
+      for (let xTick = 0; xTick <= visibleLength + 1e-9; xTick += xStep) {
         const x = xToPx(xTick);
         ctx.beginPath();
         ctx.moveTo(x, topPad);
         ctx.lineTo(x, bedY);
         ctx.stroke();
-        ctx.fillText(`${xTick}`, x, bedY + 9);
+        ctx.fillText(`${Number(xTick).toFixed(xStep < 1 ? 1 : 0)}`, x, bedY + 9);
       }
 
       ctx.textAlign = "right";
@@ -1493,7 +1660,7 @@
       ctx.font = "700 16px Segoe UI, sans-serif";
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      ctx.fillText(`irregular spectrum: ${controls.spectrumType.value}`, pad, topPad - 8);
+      ctx.fillText(`irregular spectrum: ${controls.spectrumType.value} | linear component propagation`, pad, topPad - 8);
       ctx.fillText("seabed", pad + 6, bedY - 10);
       ctx.textAlign = "right";
       ctx.fillText("still water level", width - pad - 8, stillY - 8);
@@ -1504,7 +1671,7 @@
       ctx.rotate(-Math.PI / 2);
       ctx.fillText("elevation z (m)", 0, 0);
       ctx.restore();
-      labels.time.textContent = `t = ${time.toFixed(2)} s`;
+      labels.time.textContent = `t = ${time.toFixed(2)} s | eta=sum aᵢcos(kᵢx−ωᵢt+φᵢ)`;
     }
 
     function draw(model, elapsedSeconds) {
@@ -2717,6 +2884,7 @@
     function update() {
       current = calculate();
       updateSpectrumParamPanels();
+      updateSpectrumExplanation();
       irregularPreviewCache = null;
       syncPair(controls.height, controls.heightNumber, current.H);
       syncPair(controls.period, controls.periodNumber, current.T);
