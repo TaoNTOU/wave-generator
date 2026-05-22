@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>線性波浪產生器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212b;
+      --muted: #637083;
+      --line: #d8e0ea;
+      --panel: #ffffff;
+      --bg: #f5f7fa;
+      --accent: #0e7a8a;
+      --accent-dark: #095c68;
+      --water: #4db2c7;
+      --sand: #d7a85f;
+      --warn: #9b4a1f;
+      font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(28, 41, 56, 0.08);
+    }
+
+    .controls {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .control {
+      display: grid;
+      gap: 8px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      font-weight: 700;
+    }
+
+    .value {
+      color: var(--accent-dark);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #e7edf3;
+      color: var(--ink);
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    .results {
+      padding: 16px 18px 18px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .metric strong {
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .stage {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .canvas-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(#f8fbfd 0 48%, #dff5f9 48% 100%);
+    }
+
+    .theory-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1.05;
+      min-height: 430px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fbfcfd;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .warning {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    .chart-title {
+      margin: 2px 0 -4px;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    @media (max-width: 860px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas-wrap {
+        min-height: 240px;
+      }
+
+      .theory-wrap {
+        min-height: 360px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100% - 20px, 1180px);
+        padding-top: 18px;
+      }
+
+      .split,
+      .button-row,
+      .results {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>線性波浪產生器</h1>
+        <p class="subtitle">調整波高 H、週期 T、水深 h，產生 Airy 線性波並輸出資料。</p>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="controls">
+          <div class="control">
+            <div class="label-row">
+              <label for="height">波高 H</label>
+              <span class="value" id="heightValue">2.00 m</span>
+            </div>
+            <input id="height" type="range" min="0.1" max="12" step="0.1" value="2">
+            <input id="heightNumber" type="number" min="0.1" step="0.1" value="2">
+          </div>
+
+          <div class="control">
+            <div class="label-row">
+              <label for="period">週期 T</label>
+              <span class="value" id="periodValue">8.00 s</span>
+            </div>
+            <input id="period" type="range" min="1" max="25" step="0.1" value="8">
+            <input id="periodNumber" type="number" min="0.5" step="0.1" value="8">
+          </div>
+
+          <div class="control">
+            <div class="label-row">
+              <label for="depth">水深 h</label>
+              <span class="value" id="depthValue">15.00 m</span>
+            </div>
+            <input id="depth" type="range" min="0.5" max="80" step="0.5" value="15">
+            <input id="depthNumber" type="number" min="0.1" step="0.1" value="15">
+          </div>
+
+          <div class="split">
+            <div class="control">
+              <label for="dt">dt (s)</label>
+              <input id="dt" type="number" min="0.001" step="0.001" value="0.05">
+            </div>
+            <div class="control">
+              <label for="totalTime">total time (s)</label>
+              <input id="totalTime" type="number" min="0.001" step="0.1" value="8">
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="control">
+              <label for="fileType">檔案類型</label>
+              <select id="fileType">
+                <option value="csv">CSV</option>
+                <option value="json">JSON</option>
+                <option value="txt">TXT</option>
+                <option value="svg">SVG</option>
+              </select>
+            </div>
+            <div class="control">
+              <label>輸出方式</label>
+              <input type="text" value="eta(t), theory-shaped" readonly>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="download">下載輸出</button>
+            <button class="secondary" id="reset">重設</button>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="metric"><span>波長 L</span><strong id="wavelength">-</strong></div>
+          <div class="metric"><span>波數 k</span><strong id="wavenumber">-</strong></div>
+          <div class="metric"><span>角頻率 ω</span><strong id="omega">-</strong></div>
+          <div class="metric"><span>相速 c</span><strong id="celerity">-</strong></div>
+          <div class="metric"><span>群速 Cg</span><strong id="group">-</strong></div>
+          <div class="metric"><span>建議理論</span><strong id="validity">-</strong></div>
+          <div class="metric"><span>波陡 H/L</span><strong id="steepnessMetric">-</strong></div>
+          <div class="metric"><span>相對水深 h/L</span><strong id="relativeDepthMetric">-</strong></div>
+          <div class="metric"><span>Ursell number</span><strong id="ursellMetric">-</strong></div>
+        </div>
+      </aside>
+
+      <section class="panel stage">
+        <div class="canvas-wrap">
+          <canvas id="waveCanvas" width="1200" height="675"></canvas>
+        </div>
+        <div class="status-row">
+          <span id="equation">η generated by selected wave-theory shape</span>
+          <span id="time">t = 0.00 s</span>
+        </div>
+        <div class="chart-title">波浪理論分類圖</div>
+        <div class="theory-wrap">
+          <canvas id="theoryCanvas" width="1200" height="525"></canvas>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const g = 9.81;
+    const controls = {
+      height: document.getElementById("height"),
+      heightNumber: document.getElementById("heightNumber"),
+      period: document.getElementById("period"),
+      periodNumber: document.getElementById("periodNumber"),
+      depth: document.getElementById("depth"),
+      depthNumber: document.getElementById("depthNumber"),
+      dt: document.getElementById("dt"),
+      totalTime: document.getElementById("totalTime"),
+      fileType: document.getElementById("fileType")
+    };
+
+    const labels = {
+      heightValue: document.getElementById("heightValue"),
+      periodValue: document.getElementById("periodValue"),
+      depthValue: document.getElementById("depthValue"),
+      wavelength: document.getElementById("wavelength"),
+      wavenumber: document.getElementById("wavenumber"),
+      omega: document.getElementById("omega"),
+      celerity: document.getElementById("celerity"),
+      group: document.getElementById("group"),
+      validity: document.getElementById("validity"),
+      steepnessMetric: document.getElementById("steepnessMetric"),
+      relativeDepthMetric: document.getElementById("relativeDepthMetric"),
+      ursellMetric: document.getElementById("ursellMetric"),
+      time: document.getElementById("time")
+    };
+
+    const canvas = document.getElementById("waveCanvas");
+    const ctx = canvas.getContext("2d");
+    const theoryCanvas = document.getElementById("theoryCanvas");
+    const theoryCtx = theoryCanvas.getContext("2d");
+    let animationId = 0;
+    let startTime = performance.now();
+    let current = null;
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function solveWaveNumber(period, depth) {
+      const omega = 2 * Math.PI / period;
+      let k = Math.max((omega * omega) / g, omega / Math.sqrt(g * depth));
+
+      for (let i = 0; i < 40; i += 1) {
+        const kh = k * depth;
+        const tanhKh = Math.tanh(kh);
+        const f = g * k * tanhKh - omega * omega;
+        const df = g * (tanhKh + kh * (1 - tanhKh * tanhKh));
+        const next = k - f / df;
+        if (!Number.isFinite(next) || next <= 0) break;
+        if (Math.abs(next - k) < 1e-12) {
+          k = next;
+          break;
+        }
+        k = next;
+      }
+
+      return k;
+    }
+
+    function calculate() {
+      const H = clamp(Number(controls.heightNumber.value) || 2, 0.01, 10000);
+      const T = clamp(Number(controls.periodNumber.value) || 8, 0.1, 10000);
+      const h = clamp(Number(controls.depthNumber.value) || 15, 0.01, 100000);
+      const omega = 2 * Math.PI / T;
+      const k = solveWaveNumber(T, h);
+      const L = 2 * Math.PI / k;
+      const c = L / T;
+      const n = 0.5 * (1 + (2 * k * h) / Math.sinh(2 * k * h));
+      const Cg = n * c;
+      const steepness = H / L;
+      const shallowRatio = h / L;
+      const model = { H, T, h, omega, k, L, c, Cg, steepness, shallowRatio };
+      model.classification = classifyWave(model);
+      return model;
+    }
+
+    function syncPair(range, number, value) {
+      number.value = value.toFixed(2).replace(/\.00$/, "");
+      range.value = clamp(value, Number(range.min), Number(range.max));
+    }
+
+    function format(value, unit, digits = 3) {
+      return `${value.toFixed(digits)} ${unit}`;
+    }
+
+    function niceStep(span, targetTicks) {
+      const raw = span / Math.max(targetTicks, 1);
+      const power = Math.pow(10, Math.floor(Math.log10(raw)));
+      const scaled = raw / power;
+      if (scaled <= 1) return power;
+      if (scaled <= 2) return 2 * power;
+      if (scaled <= 5) return 5 * power;
+      return 10 * power;
+    }
+
+    function classifyWave(model) {
+      const relativeDepth = model.h / model.L;
+      const steepness = model.H / model.L;
+      const ursell = (model.H * model.L * model.L) / Math.pow(model.h, 3);
+      const periodDepth = model.h / (g * model.T * model.T);
+      const periodHeight = model.H / (g * model.T * model.T);
+      let type = "Linear / Airy";
+      let note = "small-amplitude";
+      let severity = "ok";
+
+      if (model.H / model.h > 0.78) {
+        type = "Breaking limit";
+        note = "H/h is high";
+        severity = "warn";
+      } else if (periodDepth < 0.003 && periodHeight > 0.01) {
+        type = "Solitary";
+        note = "Le Mehaute shallow high-wave range";
+        severity = "warn";
+      } else if (periodDepth < 0.006 || ursell > 26) {
+        type = "Cnoidal";
+        note = "Le Mehaute shallow nonlinear range";
+        severity = "warn";
+      } else if (periodHeight < 0.0012) {
+        type = "Airy";
+        note = "small-amplitude range";
+      } else if (periodHeight < 0.003) {
+        type = "Stokes 2nd";
+        note = "finite-amplitude range";
+        severity = "warn";
+      } else if (periodHeight < 0.008) {
+        type = "Stokes 3rd";
+        note = "finite-amplitude range";
+        severity = "warn";
+      } else {
+        type = "Stokes 5th";
+        note = "higher-order Stokes range";
+        severity = "warn";
+      }
+
+      return { type, note, severity, relativeDepth, steepness, ursell, periodDepth, periodHeight };
+    }
+
+    function waveRaw(model, phase) {
+      const type = model.classification?.type || "Airy";
+      if (type.includes("Cnoidal") || type.includes("Solitary")) {
+        const sharpness = type.includes("Solitary") ? 10 : 6;
+        return 1 / Math.pow(1 + sharpness * (1 - Math.cos(phase)), 1.15);
+      }
+
+      if (type.includes("Stokes")) {
+        let q = 0.18;
+        if (type.includes("3rd")) q = 0.26;
+        if (type.includes("4th")) q = 0.32;
+        if (type.includes("5th")) q = 0.40;
+        return Math.cos(phase) + q * Math.cos(2 * phase) + 0.35 * q * Math.cos(3 * phase);
+      }
+
+      return Math.cos(phase);
+    }
+
+    function waveEta(model, phase) {
+      if (!model.waveShape) {
+        let min = Infinity;
+        let max = -Infinity;
+        for (let i = 0; i < 720; i += 1) {
+          const value = waveRaw(model, (2 * Math.PI * i) / 720);
+          min = Math.min(min, value);
+          max = Math.max(max, value);
+        }
+        model.waveShape = { min, max };
+      }
+
+      const { min, max } = model.waveShape;
+      const normalized = ((waveRaw(model, phase) - min) / (max - min || 1)) * 2 - 1;
+      return (model.H / 2) * normalized;
+    }
+
+    function timeStartPhase(model) {
+      if (model.timeStartPhase !== undefined) return model.timeStartPhase;
+      let previousPhase = -Math.PI;
+      let previousEta = waveEta(model, previousPhase);
+      for (let i = 1; i <= 720; i += 1) {
+        const phase = -Math.PI + (2 * Math.PI * i) / 720;
+        const eta = waveEta(model, phase);
+        if (previousEta <= 0 && eta >= 0) {
+          let lo = previousPhase;
+          let hi = phase;
+          for (let j = 0; j < 24; j += 1) {
+            const mid = (lo + hi) / 2;
+            if (waveEta(model, mid) >= 0) hi = mid;
+            else lo = mid;
+          }
+          model.timeStartPhase = (lo + hi) / 2;
+          return model.timeStartPhase;
+        }
+        previousPhase = phase;
+        previousEta = eta;
+      }
+      model.timeStartPhase = -Math.PI / 2;
+      return model.timeStartPhase;
+    }
+
+    function updateLabels(model) {
+      labels.heightValue.textContent = format(model.H, "m", 2);
+      labels.periodValue.textContent = format(model.T, "s", 2);
+      labels.depthValue.textContent = format(model.h, "m", 2);
+      labels.wavelength.textContent = format(model.L, "m", 3);
+      labels.wavenumber.textContent = format(model.k, "1/m", 5);
+      labels.omega.textContent = format(model.omega, "rad/s", 4);
+      labels.celerity.textContent = format(model.c, "m/s", 3);
+      labels.group.textContent = format(model.Cg, "m/s", 3);
+
+      labels.validity.textContent = `${model.classification.type} (${model.classification.note})`;
+      labels.validity.className = model.classification.severity === "ok" ? "" : "warning";
+      labels.steepnessMetric.textContent = model.classification.steepness.toFixed(4);
+      labels.relativeDepthMetric.textContent = model.classification.relativeDepth.toFixed(4);
+      labels.ursellMetric.textContent = model.classification.ursell.toFixed(2);
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      const theoryRect = theoryCanvas.getBoundingClientRect();
+      theoryCanvas.width = Math.round(theoryRect.width * ratio);
+      theoryCanvas.height = Math.round(theoryRect.height * ratio);
+      theoryCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function draw(model, elapsedSeconds) {
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const pad = Math.max(54, width * 0.055);
+      const topPad = Math.max(24, height * 0.07);
+      const bottomPad = Math.max(46, height * 0.11);
+      const visibleLength = 160;
+      const verticalExtent = Math.max(model.h + model.H, 4);
+      const pxPerM = (height - topPad - bottomPad) / verticalExtent;
+      const stillY = topPad + (model.H / 2) * pxPerM;
+      const bedY = stillY + model.h * pxPerM;
+      const ampPx = (model.H / 2) * pxPerM;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = "#f8fbfd";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = "rgba(99, 112, 131, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#637083";
+      ctx.font = "12px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      const xStep = 20;
+      for (let xTick = 0; xTick <= visibleLength; xTick += xStep) {
+        const px = pad + (xTick / visibleLength) * (width - 2 * pad);
+        ctx.beginPath();
+        ctx.moveTo(px, topPad);
+        ctx.lineTo(px, bedY);
+        ctx.stroke();
+      }
+
+      const yMin = -model.h;
+      const yMax = model.H / 2;
+      const yStep = niceStep(yMax - yMin, 6);
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      const firstYTick = Math.ceil(yMin / yStep) * yStep;
+      for (let yTick = firstYTick; yTick <= yMax + 1e-9; yTick += yStep) {
+        const py = stillY - yTick * pxPerM;
+        ctx.beginPath();
+        ctx.moveTo(pad, py);
+        ctx.lineTo(width - pad, py);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "#bdc9d5";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(pad, stillY);
+      ctx.lineTo(width - pad, stillY);
+      ctx.stroke();
+
+      const surface = [];
+      const phaseT = model.omega * elapsedSeconds;
+      for (let px = pad; px <= width - pad; px += 3) {
+        const x = ((px - pad) / (width - 2 * pad)) * visibleLength;
+        const eta = waveEta(model, model.k * x - phaseT);
+        const y = stillY - eta * pxPerM;
+        surface.push([px, y]);
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(pad, bedY);
+      surface.forEach(([x, y], index) => {
+        if (index === 0) ctx.lineTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(width - pad, bedY);
+      ctx.closePath();
+      const waterGradient = ctx.createLinearGradient(0, stillY - ampPx, 0, bedY);
+      waterGradient.addColorStop(0, "rgba(77, 178, 199, 0.78)");
+      waterGradient.addColorStop(1, "rgba(25, 116, 142, 0.86)");
+      ctx.fillStyle = waterGradient;
+      ctx.fill();
+
+      ctx.strokeStyle = "#087388";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      surface.forEach(([x, y], index) => {
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = "#d7a85f";
+      ctx.fillRect(pad, bedY, width - 2 * pad, Math.max(12, height - bedY));
+      ctx.strokeStyle = "#9d7433";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad, bedY);
+      ctx.lineTo(width - pad, bedY);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(23, 33, 43, 0.34)";
+      ctx.fillStyle = "#17212b";
+      ctx.lineWidth = 1;
+      ctx.font = "12px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      for (let xTick = 0; xTick <= visibleLength; xTick += xStep) {
+        const px = pad + (xTick / visibleLength) * (width - 2 * pad);
+        ctx.beginPath();
+        ctx.moveTo(px, bedY);
+        ctx.lineTo(px, bedY + 6);
+        ctx.stroke();
+        ctx.fillText(`${xTick}`, px, bedY + 9);
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let yTick = firstYTick; yTick <= yMax + 1e-9; yTick += yStep) {
+        const py = stillY - yTick * pxPerM;
+        const label = Number(Math.abs(yTick) < 1e-9 ? 0 : yTick).toFixed(yStep < 1 ? 1 : 0);
+        ctx.beginPath();
+        ctx.moveTo(pad - 6, py);
+        ctx.lineTo(pad, py);
+        ctx.stroke();
+        ctx.fillText(label, pad - 10, py);
+      }
+
+      ctx.fillStyle = "#17212b";
+      ctx.font = "600 13px Segoe UI, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText("still water level", width - pad - 8, stillY - 8);
+      ctx.textAlign = "left";
+      ctx.fillText("seabed", pad + 6, bedY - 10);
+      ctx.textAlign = "center";
+      ctx.fillText("x (m)", width / 2, height - 10);
+      ctx.save();
+      ctx.translate(15, (topPad + bedY) / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("elevation z (m)", 0, 0);
+      ctx.restore();
+      ctx.textAlign = "left";
+      ctx.fillText(`view width ${visibleLength} m`, width - pad - 120, height - 20);
+      ctx.fillText(`shape: ${model.classification.type}`, pad, height - 20);
+
+      labels.time.textContent = `t = ${(elapsedSeconds % model.T).toFixed(2)} s`;
+    }
+
+    function drawTheoryChart(model) {
+      const rect = theoryCanvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const left = 76;
+      const right = 28;
+      const top = 26;
+      const bottom = 72;
+      const plotW = width - left - right;
+      const plotH = height - top - bottom;
+      const xMin = 0.0005;
+      const xMax = 0.2;
+      const yMin = 0.00005;
+      const yMax = 0.05;
+      const log10 = (value) => Math.log10(value);
+      const xToPx = (value) => {
+        const safe = clamp(value, xMin, xMax);
+        return left + ((log10(safe) - log10(xMin)) / (log10(xMax) - log10(xMin))) * plotW;
+      };
+      const yToPx = (value) => {
+        const safe = clamp(value, yMin, yMax);
+        return top + (1 - (log10(safe) - log10(yMin)) / (log10(yMax) - log10(yMin))) * plotH;
+      };
+
+      theoryCtx.clearRect(0, 0, width, height);
+      theoryCtx.fillStyle = "#fbfcfd";
+      theoryCtx.fillRect(0, 0, width, height);
+
+      const drawPolygon = (points, fill, stroke = null, widthPx = 1, dash = []) => {
+        theoryCtx.beginPath();
+        points.forEach(([x, y], index) => {
+          const px = xToPx(x);
+          const py = yToPx(y);
+          if (index === 0) theoryCtx.moveTo(px, py);
+          else theoryCtx.lineTo(px, py);
+        });
+        theoryCtx.closePath();
+        theoryCtx.fillStyle = fill;
+        theoryCtx.fill();
+        if (stroke) {
+          theoryCtx.save();
+          theoryCtx.setLineDash(dash);
+          theoryCtx.strokeStyle = stroke;
+          theoryCtx.lineWidth = widthPx;
+          theoryCtx.stroke();
+          theoryCtx.restore();
+        }
+      };
+
+      const drawCurve = (points, stroke, widthPx = 2, dash = []) => {
+        theoryCtx.save();
+        theoryCtx.setLineDash(dash);
+        theoryCtx.strokeStyle = stroke;
+        theoryCtx.lineWidth = widthPx;
+        theoryCtx.beginPath();
+        points.forEach(([x, y], index) => {
+          const px = xToPx(x);
+          const py = yToPx(y);
+          if (index === 0) theoryCtx.moveTo(px, py);
+          else theoryCtx.lineTo(px, py);
+        });
+        theoryCtx.stroke();
+        theoryCtx.restore();
+      };
+
+      const breaking = [
+        [0.0005, 0.00035], [0.0008, 0.00055], [0.0012, 0.0009],
+        [0.002, 0.0017], [0.004, 0.0035], [0.008, 0.0065],
+        [0.015, 0.011], [0.03, 0.020], [0.06, 0.026], [0.10, 0.028], [0.20, 0.028]
+      ];
+      const streamLow = [
+        [0.0014, 0.00005], [0.002, 0.00012], [0.003, 0.00028],
+        [0.005, 0.00075], [0.008, 0.0015], [0.012, 0.0028],
+        [0.02, 0.006], [0.035, 0.012], [0.06, 0.018], [0.10, 0.020], [0.20, 0.020]
+      ];
+      const streamHigh = [
+        [0.0008, 0.00005], [0.001, 0.00012], [0.0015, 0.00026],
+        [0.0025, 0.00055], [0.004, 0.0011], [0.007, 0.0024],
+        [0.012, 0.005], [0.02, 0.010], [0.035, 0.017], [0.06, 0.022], [0.10, 0.025]
+      ];
+      const airyBoundary = [
+        [0.0015, 0.00005], [0.002, 0.00008], [0.003, 0.00013],
+        [0.005, 0.00023], [0.008, 0.00036], [0.012, 0.00052],
+        [0.02, 0.00075], [0.035, 0.00095], [0.06, 0.00105], [0.10, 0.00108], [0.20, 0.00108]
+      ];
+      const hbQuarter = [
+        [0.006, 0.0015], [0.009, 0.0021], [0.015, 0.0034],
+        [0.025, 0.0055], [0.04, 0.0075], [0.07, 0.0085], [0.20, 0.0085]
+      ];
+
+      drawPolygon([[0.0005, yMin], [0.20, yMin], [0.20, yMax], ...breaking.slice().reverse()], "rgba(232,232,232,0.72)");
+      drawPolygon([[0.0005, yMin], [0.20, yMin], [0.20, 0.00108], ...airyBoundary.slice().reverse()], "rgba(255,248,124,0.72)");
+      drawPolygon([[0.0005, yMin], [0.0015, yMin], ...streamLow, ...breaking.slice().reverse(), [0.0005, breaking[0][1]]], "rgba(122,238,245,0.70)");
+      drawPolygon([...streamLow, ...streamHigh.slice().reverse()], "rgba(106,220,236,0.80)");
+
+      theoryCtx.strokeStyle = "#d8e0ea";
+      theoryCtx.lineWidth = 1;
+      theoryCtx.fillStyle = "#637083";
+      theoryCtx.font = "12px Segoe UI, sans-serif";
+      theoryCtx.textAlign = "center";
+      theoryCtx.textBaseline = "top";
+      const xTicks = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2];
+      const yTicks = [0.00005, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05];
+      const tickLabel = (value) => {
+        if (value === 0.00005) return "0.00005";
+        if (value < 0.001) return value.toFixed(4);
+        if (value < 0.01) return value.toFixed(3);
+        return value.toFixed(value < 0.1 ? 2 : 1);
+      };
+      xTicks.forEach((x) => {
+        const px = xToPx(x);
+        theoryCtx.beginPath();
+        theoryCtx.moveTo(px, top);
+        theoryCtx.lineTo(px, top + plotH);
+        theoryCtx.stroke();
+        theoryCtx.fillText(tickLabel(x), px, top + plotH + 8);
+      });
+
+      theoryCtx.textAlign = "right";
+      theoryCtx.textBaseline = "middle";
+      yTicks.forEach((y) => {
+        const py = yToPx(y);
+        theoryCtx.beginPath();
+        theoryCtx.moveTo(left, py);
+        theoryCtx.lineTo(left + plotW, py);
+        theoryCtx.stroke();
+        theoryCtx.fillText(tickLabel(y), left - 8, py);
+      });
+
+      theoryCtx.strokeStyle = "#17212b";
+      theoryCtx.lineWidth = 1.5;
+      theoryCtx.strokeRect(left, top, plotW, plotH);
+
+      drawCurve(breaking, "#0a35ff", 2.5);
+      drawCurve(streamLow, "#0a35ff", 2);
+      drawCurve(streamHigh, "#0a35ff", 2);
+      drawCurve(airyBoundary, "#0a35ff", 2, [8, 4]);
+      drawCurve(hbQuarter, "#0a35ff", 2, [8, 4]);
+      drawCurve([[0.0015, yMin], [0.0015, yMax]], "#6f6f6f", 1.3, [12, 8]);
+      drawCurve([[0.08, yMin], [0.08, 0.02]], "#6f6f6f", 1.3, [12, 8]);
+
+      const orderCurves = [
+        { label: "Stokes 2nd order", points: [[0.014, 0.0022], [0.025, 0.0037], [0.05, 0.0060], [0.10, 0.0068], [0.20, 0.0068]] },
+        { label: "Stokes 3rd order", points: [[0.018, 0.0052], [0.035, 0.0090], [0.06, 0.012], [0.10, 0.014], [0.20, 0.014]] },
+        { label: "Stokes 4th order", points: [[0.026, 0.010], [0.045, 0.016], [0.075, 0.020], [0.12, 0.022], [0.20, 0.022]] }
+      ];
+      orderCurves.forEach((curve) => drawCurve(curve.points, "#0a35ff", 1.8, [8, 4]));
+
+      theoryCtx.fillStyle = "#17212b";
+      theoryCtx.font = "18px Georgia, serif";
+      theoryCtx.textAlign = "center";
+      theoryCtx.textBaseline = "middle";
+      theoryCtx.fillText("linear theory", xToPx(0.045), yToPx(0.00028));
+      theoryCtx.fillText("cnoidal", xToPx(0.0014), yToPx(0.00022));
+      theoryCtx.fillText("theory", xToPx(0.0014), yToPx(0.00015));
+      theoryCtx.fillText("shallow", xToPx(0.00085), yToPx(0.00009));
+      theoryCtx.fillText("water", xToPx(0.00085), yToPx(0.000065));
+      theoryCtx.fillText("waves", xToPx(0.00085), yToPx(0.000052));
+      theoryCtx.fillText("intermediate depth", xToPx(0.018), yToPx(0.00009));
+      theoryCtx.fillText("waves", xToPx(0.018), yToPx(0.000063));
+      theoryCtx.fillText("deep", xToPx(0.13), yToPx(0.00009));
+      theoryCtx.fillText("water", xToPx(0.13), yToPx(0.000063));
+      theoryCtx.fillText("waves", xToPx(0.13), yToPx(0.0000505));
+
+      theoryCtx.font = "18px Georgia, serif";
+      theoryCtx.fillText("Stokes 2nd order", xToPx(0.055), yToPx(0.0028));
+      theoryCtx.fillText("Stokes 3rd order", xToPx(0.06), yToPx(0.010));
+      theoryCtx.font = "11px Georgia, serif";
+      theoryCtx.fillText("Stokes 4th order", xToPx(0.09), yToPx(0.023));
+
+      theoryCtx.save();
+      theoryCtx.translate(xToPx(0.003), yToPx(0.004));
+      theoryCtx.rotate(-0.82);
+      theoryCtx.font = "14px Georgia, serif";
+      theoryCtx.textAlign = "center";
+      theoryCtx.fillText("breaking limit (H / h ≈ 0.8)", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.save();
+      theoryCtx.translate(xToPx(0.012), yToPx(0.007));
+      theoryCtx.rotate(-0.86);
+      theoryCtx.font = "16px Georgia, serif";
+      theoryCtx.fillText("stream function theory", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.save();
+      theoryCtx.translate(xToPx(0.004), yToPx(0.0012));
+      theoryCtx.rotate(-0.88);
+      theoryCtx.font = "15px Georgia, serif";
+      theoryCtx.fillText("5th order", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.font = "16px Georgia, serif";
+      theoryCtx.fillText("H = HB / 4", xToPx(0.026), yToPx(0.00155));
+      theoryCtx.fillText("Hλ² / h³ = 26", xToPx(0.026), yToPx(0.00078));
+      theoryCtx.fillText("H₀ / λ₀ ≈ 0.14", xToPx(0.012), yToPx(0.020));
+
+      const pointX = xToPx(model.classification.periodDepth);
+      const pointY = yToPx(model.classification.periodHeight);
+      theoryCtx.fillStyle = "#d9272e";
+      theoryCtx.strokeStyle = "#ffffff";
+      theoryCtx.lineWidth = 3;
+      theoryCtx.beginPath();
+      theoryCtx.arc(pointX, pointY, 7, 0, Math.PI * 2);
+      theoryCtx.fill();
+      theoryCtx.stroke();
+
+      theoryCtx.fillStyle = "#17212b";
+      theoryCtx.font = "700 13px Segoe UI, sans-serif";
+      theoryCtx.textAlign = pointX > width * 0.72 ? "right" : "left";
+      theoryCtx.textBaseline = pointY < top + 34 ? "top" : "bottom";
+      const labelX = pointX > width * 0.72 ? pointX - 12 : pointX + 12;
+      const labelY = pointY < top + 34 ? pointY + 14 : pointY - 10;
+      theoryCtx.fillText("current input", labelX, labelY);
+
+      theoryCtx.textAlign = "center";
+      theoryCtx.textBaseline = "alphabetic";
+      theoryCtx.font = "18px Georgia, serif";
+      theoryCtx.fillText("h / gT²", left + plotW / 2, height - 14);
+      theoryCtx.save();
+      theoryCtx.translate(20, top + plotH / 2);
+      theoryCtx.rotate(-Math.PI / 2);
+      theoryCtx.fillText("H / gT²", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.textAlign = "left";
+      theoryCtx.font = "12px Segoe UI, sans-serif";
+      theoryCtx.fillStyle = "#637083";
+      theoryCtx.fillText(`x=${model.classification.periodDepth.toPrecision(3)}, y=${model.classification.periodHeight.toPrecision(3)}, Ur=${model.classification.ursell.toFixed(2)}`, left + 6, top + 15);
+    }
+
+    function generateTimeSeries(model, dt, totalTime) {
+      const rows = [];
+      const safeDt = clamp(Number(dt) || 0.05, 0.000001, 100000);
+      const duration = clamp(Number(totalTime) || model.T, safeDt, 100000000);
+      const samples = clamp(Math.floor(duration / safeDt) + 1, 2, 1000000);
+      const phase0 = timeStartPhase(model);
+      for (let i = 0; i < samples; i += 1) {
+        const time = Math.min(i * safeDt, duration);
+        const eta = waveEta(model, phase0 + model.omega * time);
+        rows.push({ time_s: time, eta_m: eta });
+      }
+      return rows;
+    }
+
+    function exportText(model, rows, type) {
+      if (type === "json") {
+        return {
+          text: JSON.stringify(rows.map((row) => [Number(row.time_s.toFixed(6)), Number(row.eta_m.toFixed(6))]), null, 2),
+          mime: "application/json",
+          ext: "json"
+        };
+      }
+
+      if (type === "txt") {
+        const body = rows.map((row) => `${row.time_s.toFixed(6)}\t${row.eta_m.toFixed(6)}`).join("\n");
+        return {
+          text: `${body}\n`,
+          mime: "text/plain",
+          ext: "txt"
+        };
+      }
+
+      const lines = rows.map((row) => `${row.time_s.toFixed(6)},${row.eta_m.toFixed(6)}`);
+      return { text: `${lines.join("\n")}\n`, mime: "text/csv", ext: "csv" };
+    }
+
+    function buildSvg(model, rows) {
+      const width = 1200;
+      const height = 600;
+      const pad = 70;
+      const topPad = 85;
+      const bottomPad = 80;
+      const plotW = width - 2 * pad;
+      const plotH = height - topPad - bottomPad;
+      const yMax = model.H / 2;
+      const yMin = -model.H / 2;
+      const yToPx = (value) => topPad + (1 - (value - yMin) / (yMax - yMin || 1)) * plotH;
+      const duration = rows.length ? rows[rows.length - 1].time_s : model.T;
+      const dt = rows.length > 1 ? rows[1].time_s - rows[0].time_s : 0;
+      const xToPx = (time) => pad + (time / duration) * plotW;
+      const points = rows.map((row) => {
+        const x = xToPx(row.time_s);
+        const y = yToPx(row.eta_m);
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      }).join(" ");
+      const zeroY = yToPx(0);
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="100%" height="100%" fill="#f8fbfd"/>
+  ${Array.from({ length: 6 }, (_, index) => {
+    const time = (duration * index) / 5;
+    const x = xToPx(time);
+    return `<line x1="${x.toFixed(2)}" y1="${topPad}" x2="${x.toFixed(2)}" y2="${topPad + plotH}" stroke="#d8e0ea"/>
+  <text x="${x.toFixed(2)}" y="${topPad + plotH + 24}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" fill="#17212b">${time.toFixed(2)}</text>`;
+  }).join("\n  ")}
+  ${(() => {
+    const yStep = niceStep(yMax - yMin, 6);
+    const ticks = [];
+    for (let yTick = Math.ceil(yMin / yStep) * yStep; yTick <= yMax + 1e-9; yTick += yStep) {
+      const y = yToPx(yTick);
+      const label = Number(Math.abs(yTick) < 1e-9 ? 0 : yTick).toFixed(yStep < 1 ? 1 : 0);
+      ticks.push(`<line x1="${pad}" y1="${y.toFixed(2)}" x2="${width - pad}" y2="${y.toFixed(2)}" stroke="#d8e0ea"/>
+  <text x="${pad - 12}" y="${(y + 5).toFixed(2)}" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="14" fill="#17212b">${label}</text>`);
+    }
+    return ticks.join("\n  ");
+  })()}
+  <line x1="${pad}" y1="${zeroY.toFixed(2)}" x2="${width - pad}" y2="${zeroY.toFixed(2)}" stroke="#637083"/>
+  <polyline points="${points}" fill="none" stroke="#087388" stroke-width="5"/>
+  <rect x="${pad}" y="${topPad}" width="${plotW}" height="${plotH}" fill="none" stroke="#17212b" stroke-width="2"/>
+  <text x="${pad}" y="42" font-family="Segoe UI, sans-serif" font-size="24" font-weight="700" fill="#17212b">Eta time series: H=${model.H.toFixed(2)} m, T=${model.T.toFixed(2)} s, h=${model.h.toFixed(2)} m</text>
+  <text x="${pad}" y="70" font-family="Segoe UI, sans-serif" font-size="18" fill="#637083">η(t), shape=${model.classification.type}, dt=${dt.toFixed(6)} s, total time=${duration.toFixed(3)} s, samples=${rows.length}</text>
+  <text x="${width / 2}" y="${height - 20}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#17212b">time (s)</text>
+  <text x="24" y="${(topPad + plotH / 2).toFixed(2)}" text-anchor="middle" transform="rotate(-90 24 ${(topPad + plotH / 2).toFixed(2)})" font-family="Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#17212b">eta (m)</text>
+</svg>`;
+    }
+
+    function downloadOutput() {
+      const model = current || calculate();
+      const rows = generateTimeSeries(model, Number(controls.dt.value), Number(controls.totalTime.value));
+      const type = controls.fileType.value;
+      const exported = type === "svg"
+        ? { text: buildSvg(model, rows), mime: "image/svg+xml", ext: "svg" }
+        : exportText(model, rows, type);
+      const blob = new Blob([exported.text], { type: `${exported.mime};charset=utf-8` });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `linear-wave-eta-time-H${model.H.toFixed(2)}-T${model.T.toFixed(2)}-h${model.h.toFixed(2)}.${exported.ext}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function update() {
+      current = calculate();
+      syncPair(controls.height, controls.heightNumber, current.H);
+      syncPair(controls.period, controls.periodNumber, current.T);
+      syncPair(controls.depth, controls.depthNumber, current.h);
+      updateLabels(current);
+      drawTheoryChart(current);
+    }
+
+    function animate(now) {
+      if (!current) update();
+      draw(current, (now - startTime) / 1000);
+      drawTheoryChart(current);
+      animationId = requestAnimationFrame(animate);
+    }
+
+    [
+      ["height", "heightNumber"],
+      ["period", "periodNumber"],
+      ["depth", "depthNumber"]
+    ].forEach(([rangeKey, numberKey]) => {
+      controls[rangeKey].addEventListener("input", () => {
+        controls[numberKey].value = controls[rangeKey].value;
+        update();
+      });
+      controls[numberKey].addEventListener("input", update);
+    });
+
+    document.getElementById("download").addEventListener("click", downloadOutput);
+    document.getElementById("reset").addEventListener("click", () => {
+      controls.heightNumber.value = 2;
+      controls.periodNumber.value = 8;
+      controls.depthNumber.value = 15;
+      controls.dt.value = 0.05;
+      controls.totalTime.value = 8;
+      controls.fileType.value = "csv";
+      startTime = performance.now();
+      update();
+    });
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      if (current) {
+        draw(current, 0);
+        drawTheoryChart(current);
+      }
+    });
+
+    resizeCanvas();
+    update();
+    cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
