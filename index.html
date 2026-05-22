@@ -989,7 +989,16 @@
       const plotW = width - left - right;
       const plotH = height - top - bottom;
       const xMin = Math.min(...points.map((p) => p[xKey]));
-      const xMax = Math.max(...points.map((p) => p[xKey]));
+      // =====================================================
+      // 無因次頻譜 X 軸限制
+      // 若 xKey 為 nondimF，代表 X 軸是 f/fp。
+      // 工程頻譜分析中，f/fp > 4.5 後多半屬於高頻尾端、
+      // FFT leakage、aliasing 或短時序造成的雜訊，因此固定顯示到 4.5。
+      // =====================================================
+      const xMax =
+        xKey === "nondimF"
+          ? 4.5
+          : Math.max(...points.map((p) => p[xKey]));
       const yMax = Math.max(...points.map((p) => p[yKey]), 1e-9);
       const xToPx = (value) => left + ((value - xMin) / (xMax - xMin || 1)) * plotW;
       const yToPx = (value) => top + (1 - value / yMax) * plotH;
@@ -1058,7 +1067,14 @@
       if (activeWaveMode !== "irregular") return;
       const { curve } = buildSpectrumCurve(model);
       drawLineChart(spectrumDimCanvas, spectrumDimCtx, curve, "f", "S", "Dimensional spectrum", "f (Hz)", "S(f) (m²/Hz)");
-      drawLineChart(spectrumNonDimCanvas, spectrumNonDimCtx, curve, "nondimF", "nondimS", "Non-dimensional spectrum", "f / fp", "S(f) fp / m0");
+
+      // =====================================================
+      // 不規則波產生器：無因次頻譜裁切
+      // X 軸為 f/fp，僅保留 f/fp <= 4.5。
+      // 目的：避免高頻尾端雜訊讓圖形比例失真。
+      // =====================================================
+      const filteredNonDimCurve = curve.filter((point) => point.nondimF <= 4.5);
+      drawLineChart(spectrumNonDimCanvas, spectrumNonDimCtx, filteredNonDimCurve, "nondimF", "nondimS", "Non-dimensional spectrum", "f / fp", "S(f) fp / m0");
     }
 
     function updateLabels(model) {
@@ -2040,7 +2056,13 @@
           nondimF: point.f / fp,
           nondimS: (point.S * fp) / m0
         }))
-        .filter((point) => Number.isFinite(point.nondimF) && Number.isFinite(point.nondimS));
+        // =====================================================
+        // 分析模組：無因次頻譜裁切
+        // 僅保留 f/fp <= 4.5。
+        // 高於此範圍的頻率通常為高頻尾端，
+        // 容易受到 FFT leakage、aliasing、取樣間距與資料長度影響。
+        // =====================================================
+        .filter((point) => Number.isFinite(point.nondimF) && Number.isFinite(point.nondimS) && point.nondimF <= 4.5);
     }
 
     function theoreticalSpectrumCurve(type, Hs, Tp, depth, gamma, fMin, fMax, count = 220) {
@@ -2159,7 +2181,11 @@
         analysisNonDimSpectrumCtx.clearRect(0, 0, analysisNonDimSpectrumCanvas.getBoundingClientRect().width, analysisNonDimSpectrumCanvas.getBoundingClientRect().height);
         return;
       }
-      drawAutoLineChart(analysisNonDimSpectrumCanvas, analysisNonDimSpectrumCtx, points, "x", "y", "Non-dimensional spectrum", "f / fp", "S(f) fp / m0", { xMin: 0, yMin: 0 });
+      // =====================================================
+      // 無因次頻譜圖
+      // X 軸固定為 0 ~ 4.5，避免高頻尾端壓縮主要波峰區。
+      // =====================================================
+      drawAutoLineChart(analysisNonDimSpectrumCanvas, analysisNonDimSpectrumCtx, points, "x", "y", "Non-dimensional spectrum", "f / fp", "S(f) fp / m0", { xMin: 0, xMax: 4.5, yMin: 0 });
     }
 
     function drawAnalysisSpectrumComparison(spectrum, specStats) {
@@ -2167,8 +2193,19 @@
         analysisCompareSpectrumCtx.clearRect(0, 0, analysisCompareSpectrumCanvas.getBoundingClientRect().width, analysisCompareSpectrumCanvas.getBoundingClientRect().height);
         return;
       }
-      const measured = spectrum.map((point) => ({ x: point.f, y: point.S }));
-      const fValues = spectrum.map((point) => point.f).filter((f) => f > 0);
+      // =====================================================
+      // 頻譜比對圖裁切
+      // 以實測尖峰週期 Tp 換算 fp = 1/Tp，
+      // 比對圖只顯示到 f/fp <= 4.5，也就是 f <= 4.5fp。
+      // 這樣 PM / JONSWAP / Bretschneider / TMA 與實測頻譜
+      // 會集中在主要能量範圍，避免高頻尾端雜訊影響判讀。
+      // =====================================================
+      const fp = 1 / specStats.Tp;
+      const maxCompareFrequency = 4.5 * fp;
+      const measured = spectrum
+        .filter((point) => point.f <= maxCompareFrequency)
+        .map((point) => ({ x: point.f, y: point.S }));
+      const fValues = spectrum.map((point) => point.f).filter((f) => f > 0 && f <= maxCompareFrequency);
       const fMin = Math.min(...fValues);
       const fMax = Math.max(...fValues);
       const depth = Number(controls.depthNumber.value) || 15;
@@ -2181,7 +2218,7 @@
         { label: "Bretschneider", color: "#6f42c1", dash: [10, 4], points: toPoints(theoreticalSpectrumCurve("bretschneider", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) },
         { label: "TMA", color: "#d63b3b", dash: [3, 4], points: toPoints(theoreticalSpectrumCurve("tma", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) }
       ];
-      drawMultiLineChart(analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx, series, "Spectrum comparison", "f (Hz)", "S(f) (m²/Hz)", { xMin: 0, yMin: 0 });
+      drawMultiLineChart(analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx, series, "Spectrum comparison", "f (Hz)", "S(f) (m²/Hz)", { xMin: 0, xMax: fMax, yMin: 0 });
     }
 
     function runWaveAnalysis() {
