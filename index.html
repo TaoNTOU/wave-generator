@@ -434,8 +434,11 @@
               </select>
             </div>
             <div class="control">
-              <label>輸出方式</label>
-              <input type="text" value="eta(t), theory-shaped" readonly>
+              <label for="outputKind">輸出方式</label>
+              <select id="outputKind">
+                <option value="eta">eta(t)</option>
+                <option value="spectrum">spectrum S(f)</option>
+              </select>
             </div>
           </div>
 
@@ -523,7 +526,8 @@
       seed: document.getElementById("seed"),
       dt: document.getElementById("dt"),
       totalTime: document.getElementById("totalTime"),
-      fileType: document.getElementById("fileType")
+      fileType: document.getElementById("fileType"),
+      outputKind: document.getElementById("outputKind")
     };
 
     const labels = {
@@ -1524,6 +1528,66 @@
       return { text: `${lines.join("\n")}\n`, mime: "text/csv", ext: "csv" };
     }
 
+    function exportSpectrum(model, type) {
+      const rows = buildSpectrumCurve(model).curve;
+
+      if (type === "json") {
+        return {
+          text: JSON.stringify(rows.map((row) => [Number(row.f.toFixed(8)), Number(row.S.toPrecision(8))]), null, 2),
+          mime: "application/json",
+          ext: "json"
+        };
+      }
+
+      if (type === "txt") {
+        const body = rows.map((row) => `${row.f.toFixed(8)}\t${row.S.toPrecision(8)}`).join("\n");
+        return { text: `${body}\n`, mime: "text/plain", ext: "txt" };
+      }
+
+      const lines = rows.map((row) => `${row.f.toFixed(8)},${row.S.toPrecision(8)}`);
+      return { text: `${lines.join("\n")}\n`, mime: "text/csv", ext: "csv" };
+    }
+
+    function buildSpectrumSvg(model) {
+      const { curve } = buildSpectrumCurve(model);
+      const width = 1200;
+      const height = 650;
+      const left = 90;
+      const right = 50;
+      const top = 70;
+      const bottom = 80;
+      const plotW = width - left - right;
+      const plotH = height - top - bottom;
+      const xMin = Math.min(...curve.map((row) => row.f));
+      const xMax = Math.max(...curve.map((row) => row.f));
+      const yMax = Math.max(...curve.map((row) => row.S), 1e-9);
+      const xToPx = (value) => left + ((value - xMin) / (xMax - xMin || 1)) * plotW;
+      const yToPx = (value) => top + (1 - value / yMax) * plotH;
+      const points = curve.map((row) => `${xToPx(row.f).toFixed(2)},${yToPx(row.S).toFixed(2)}`).join(" ");
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="100%" height="100%" fill="#f8fbfd"/>
+  ${Array.from({ length: 6 }, (_, index) => {
+    const f = xMin + ((xMax - xMin) * index) / 5;
+    const x = xToPx(f);
+    return `<line x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${top + plotH}" stroke="#d8e0ea"/>
+  <text x="${x.toFixed(2)}" y="${top + plotH + 24}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#17212b">${f.toFixed(3)}</text>`;
+  }).join("\n  ")}
+  ${Array.from({ length: 6 }, (_, index) => {
+    const s = (yMax * index) / 5;
+    const y = yToPx(s);
+    return `<line x1="${left}" y1="${y.toFixed(2)}" x2="${left + plotW}" y2="${y.toFixed(2)}" stroke="#d8e0ea"/>
+  <text x="${left - 12}" y="${(y + 5).toFixed(2)}" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="15" fill="#17212b">${s.toPrecision(3)}</text>`;
+  }).join("\n  ")}
+  <polyline points="${points}" fill="none" stroke="#087388" stroke-width="5"/>
+  <rect x="${left}" y="${top}" width="${plotW}" height="${plotH}" fill="none" stroke="#17212b" stroke-width="2"/>
+  <text x="${left}" y="42" font-family="Segoe UI, sans-serif" font-size="25" font-weight="700" fill="#17212b">${controls.spectrumType.value.toUpperCase()} spectrum</text>
+  <text x="${width / 2}" y="${height - 22}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#17212b">f (Hz)</text>
+  <text x="28" y="${(top + plotH / 2).toFixed(2)}" text-anchor="middle" transform="rotate(-90 28 ${(top + plotH / 2).toFixed(2)})" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#17212b">S(f) (m^2/Hz)</text>
+</svg>`;
+    }
+
     function buildSvg(model, rows) {
       const width = 1200;
       const height = 600;
@@ -1579,15 +1643,21 @@
       const model = current || calculate();
       const rows = generateTimeSeries(model, Number(controls.dt.value), Number(controls.totalTime.value));
       const type = controls.fileType.value;
-      const exported = type === "svg"
-        ? { text: buildSvg(model, rows), mime: "image/svg+xml", ext: "svg" }
-        : exportText(model, rows, type);
+      const exportingSpectrum = activeWaveMode === "irregular" && controls.outputKind.value === "spectrum";
+      const exported = exportingSpectrum
+        ? type === "svg"
+          ? { text: buildSpectrumSvg(model), mime: "image/svg+xml", ext: "svg" }
+          : exportSpectrum(model, type)
+        : type === "svg"
+          ? { text: buildSvg(model, rows), mime: "image/svg+xml", ext: "svg" }
+          : exportText(model, rows, type);
       const blob = new Blob([exported.text], { type: `${exported.mime};charset=utf-8` });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
       const modeName = activeWaveMode === "irregular" ? `irregular-${controls.spectrumType.value}` : "regular";
-      anchor.download = `${modeName}-eta-time-H${model.H.toFixed(2)}-T${model.T.toFixed(2)}-h${model.h.toFixed(2)}.${exported.ext}`;
+      const outputName = exportingSpectrum ? "spectrum" : "eta-time";
+      anchor.download = `${modeName}-${outputName}-H${model.H.toFixed(2)}-T${model.T.toFixed(2)}-h${model.h.toFixed(2)}.${exported.ext}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -1633,6 +1703,8 @@
       controls.theoryWrap.style.display = mode === "regular" ? "" : "none";
       controls.spectrumInfo.classList.toggle("active", mode === "irregular");
       controls.lowerTitle.textContent = mode === "regular" ? "波浪理論分類圖" : "波譜名詞說明";
+      controls.outputKind.disabled = mode === "regular";
+      if (mode === "regular") controls.outputKind.value = "eta";
       resizeCanvas();
       update();
     }
@@ -1657,6 +1729,7 @@
       controls.dt.value = 0.05;
       controls.totalTime.value = 8;
       controls.fileType.value = "csv";
+      controls.outputKind.value = "eta";
       startTime = performance.now();
       setWaveMode("regular");
     });
