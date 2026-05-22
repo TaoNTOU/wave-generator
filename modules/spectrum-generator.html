@@ -1,0 +1,2603 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="波浪產生器 Wave Generator，可計算規則波與不規則波的波長、波數、相速、群速、波陡、波譜，並可進行零上切／零下切波浪統計分析，並輸出 CSV、JSON、TXT 或 SVG 資料。">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="波浪產生器｜Wave Generator">
+  <meta property="og:description" content="調整波高、週期與水深，快速產生波浪資料與波譜圖。">
+  <meta property="og:type" content="website">
+  <title>不規則波與波譜產生 | Irregular Wave & Spectrum Generator</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212b;
+      --muted: #637083;
+      --line: #d8e0ea;
+      --panel: #ffffff;
+      --bg: #f5f7fa;
+      --accent: #0e7a8a;
+      --accent-dark: #095c68;
+      --water: #4db2c7;
+      --sand: #d7a85f;
+      --warn: #9b4a1f;
+      font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(28, 41, 56, 0.08);
+    }
+
+    .controls {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .control {
+      display: grid;
+      gap: 8px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      font-weight: 700;
+    }
+
+    .value {
+      color: var(--accent-dark);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .tab-button {
+      background: #e7edf3;
+      color: var(--ink);
+    }
+
+    .tab-button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .tab-panel {
+      display: none;
+      gap: 18px;
+    }
+
+    .tab-panel.active {
+      display: grid;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #e7edf3;
+      color: var(--ink);
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    .results {
+      padding: 16px 18px 18px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .metric strong {
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .stage {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .canvas-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(#f8fbfd 0 48%, #dff5f9 48% 100%);
+    }
+
+    .theory-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1.05;
+      min-height: 430px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fbfcfd;
+    }
+
+    .spectrum-info {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 14px;
+    }
+
+    .spectrum-info.active {
+      display: grid;
+      gap: 10px;
+    }
+
+    .spectrum-charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .spectrum-chart {
+      height: 230px;
+      min-height: 230px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .spectrum-item {
+      display: grid;
+      gap: 3px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .spectrum-item:last-child {
+      border-bottom: 0;
+    }
+
+    .spectrum-item strong {
+      font-size: 1rem;
+    }
+
+    .spectrum-item span {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .warning {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    .chart-title {
+      margin: 2px 0 -4px;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .hint {
+      margin: -8px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      font: 0.9rem Consolas, "Courier New", monospace;
+      color: var(--ink);
+      background: #fff;
+      resize: vertical;
+    }
+
+    .analysis-info {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 14px;
+      gap: 12px;
+    }
+
+    .analysis-info.active {
+      display: grid;
+    }
+
+    .analysis-chart {
+      height: 300px;
+      min-height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .analysis-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .analysis-summary .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    @media (max-width: 860px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas-wrap {
+        min-height: 240px;
+      }
+
+      .theory-wrap {
+        min-height: 360px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100% - 20px, 1180px);
+        padding-top: 18px;
+      }
+
+      .split,
+      .tabs,
+      .spectrum-charts,
+      .button-row,
+      .results,
+      .analysis-summary {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <style id="module-split-style">
+    /* =====================================================
+       模組拆分用樣式
+       目的：每一個 module HTML 仍保留原始計算核心，
+       但隱藏跨模組切換按鈕，讓主控 index.html 負責調用。
+       ===================================================== */
+    .tabs { display: none !important; }
+    header { margin-bottom: 14px; }
+    body.module-regular #irregularPanel,
+    body.module-regular #analysisPanel { display: none !important; }
+    body.module-irregular #regularPanel,
+    body.module-irregular #analysisPanel { display: none !important; }
+    body.module-analysis #regularPanel,
+    body.module-analysis #irregularPanel { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>不規則波與波譜產生<br><span lang="en">Irregular Wave & Spectrum Generator</span></h1>
+        <p class="subtitle">使用 PM、JONSWAP、Bretschneider、TMA 產生不規則波與波譜資料。</p>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="controls">
+          <div class="tabs">
+            <button class="tab-button active" id="regularTab" type="button">規則波</button>
+            <button class="tab-button" id="irregularTab" type="button">不規則波</button>
+            <button class="tab-button" id="analysisTab" type="button">波浪分析<br><span lang="en">Analysis</span></button>
+          </div>
+
+          <div class="control">
+            <div class="label-row">
+              <label for="height">波高 H</label>
+              <span class="value" id="heightValue">2.00 m</span>
+            </div>
+            <input id="height" type="range" min="0.1" max="12" step="0.1" value="2">
+            <input id="heightNumber" type="number" min="0.1" step="0.1" value="2">
+          </div>
+
+          <div class="control">
+            <div class="label-row">
+              <label for="period">週期 T</label>
+              <span class="value" id="periodValue">8.00 s</span>
+            </div>
+            <input id="period" type="range" min="1" max="25" step="0.1" value="8">
+            <input id="periodNumber" type="number" min="0.5" step="0.1" value="8">
+          </div>
+
+          <div class="control">
+            <div class="label-row">
+              <label for="depth">水深 h</label>
+              <span class="value" id="depthValue">15.00 m</span>
+            </div>
+            <input id="depth" type="range" min="0.5" max="80" step="0.5" value="15">
+            <input id="depthNumber" type="number" min="0.1" step="0.1" value="15">
+          </div>
+
+          <div class="tab-panel active" id="regularPanel">
+            <p class="hint">規則波一律使用完整線性色散關係計算，水深分類顯示在結果區。</p>
+          </div>
+
+          <div class="tab-panel" id="irregularPanel">
+            <div class="control">
+              <label for="spectrumType">波譜方法</label>
+              <select id="spectrumType">
+                <option value="pm">Pierson-Moskowitz</option>
+                <option value="jonswap">JONSWAP</option>
+                <option value="bretschneider">Bretschneider / ISSC</option>
+                <option value="tma">TMA</option>
+              </select>
+            </div>
+
+            <div class="split">
+              <div class="control">
+                <label for="gamma">JONSWAP gamma</label>
+                <input id="gamma" type="number" min="1" step="0.1" value="3.3">
+              </div>
+              <div class="control">
+                <label for="components">components</label>
+                <input id="components" type="number" min="16" max="2048" step="1" value="128">
+              </div>
+            </div>
+
+            <div class="control">
+              <label for="seed">random seed</label>
+              <input id="seed" type="number" step="1" value="12345">
+            </div>
+          </div>
+
+
+
+          <div class="tab-panel" id="analysisPanel">
+            <p class="hint">貼上兩欄資料：時間 t(s) 與水位 η(m)，可用逗號、Tab 或空白分隔。Paste two columns: time and surface elevation.</p>
+            <div class="control">
+              <label for="analysisInput">時間序列資料 Time series</label>
+              <textarea id="analysisInput" placeholder="0,0.00&#10;0.05,0.03&#10;0.10,0.07"></textarea>
+            </div>
+            <div class="split">
+              <div class="control">
+                <label for="crossingMode">切割方法 Crossing method</label>
+                <select id="crossingMode">
+                  <option value="up">零上切 Zero-upcrossing</option>
+                  <option value="down">零下切 Zero-downcrossing</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="demeanMode">平均水位 Mean removal</label>
+                <select id="demeanMode">
+                  <option value="yes">扣除平均值 remove mean</option>
+                  <option value="no">不扣除 keep raw</option>
+                </select>
+              </div>
+            </div>
+            <div class="control">
+              <label for="analysisSpectrumMethod">頻譜方法 Spectrum method</label>
+              <select id="analysisSpectrumMethod">
+                <option value="raw">Raw periodogram 原始週期圖</option>
+                <option value="hann">Hann periodogram Hann 窗週期圖</option>
+                <option value="welch">Welch spectrum Welch 平均頻譜</option>
+                <option value="smooth">Smoothed Welch 平滑 Welch 頻譜</option>
+              </select>
+            </div>
+            <div class="button-row">
+              <button id="runAnalysis" type="button">執行分析 Analyze</button>
+              <button class="secondary" id="loadSample" type="button">載入範例 Sample</button>
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="control">
+              <label for="dt">dt (s)</label>
+              <input id="dt" type="number" min="0.001" step="0.001" value="0.05">
+            </div>
+            <div class="control">
+              <label for="totalTime">total time (s)</label>
+              <input id="totalTime" type="number" min="0.001" step="0.1" value="8">
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="control">
+              <label for="fileType">檔案類型</label>
+              <select id="fileType">
+                <option value="csv">CSV</option>
+                <option value="json">JSON</option>
+                <option value="txt">TXT</option>
+                <option value="svg">SVG</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="outputKind">輸出方式</label>
+              <select id="outputKind">
+                <option value="eta">eta(t)</option>
+                <option value="spectrum">spectrum S(f)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="download">下載輸出</button>
+            <button class="secondary" id="reset">重設</button>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="metric"><span>波長 L</span><strong id="wavelength">-</strong></div>
+          <div class="metric"><span>波數 k</span><strong id="wavenumber">-</strong></div>
+          <div class="metric"><span>角頻率 ω</span><strong id="omega">-</strong></div>
+          <div class="metric"><span>相速 c</span><strong id="celerity">-</strong></div>
+          <div class="metric"><span>群速 Cg</span><strong id="group">-</strong></div>
+          <div class="metric"><span>建議理論</span><strong id="validity">-</strong></div>
+          <div class="metric"><span>水深分類</span><strong id="depthRegime">-</strong></div>
+          <div class="metric"><span>波陡 H/L</span><strong id="steepnessMetric">-</strong></div>
+          <div class="metric"><span>相對水深 h/L</span><strong id="relativeDepthMetric">-</strong></div>
+          <div class="metric"><span>Ursell number</span><strong id="ursellMetric">-</strong></div>
+        </div>
+      </aside>
+
+      <section class="panel stage">
+        <div class="canvas-wrap">
+          <canvas id="waveCanvas" width="1200" height="675" aria-label="波浪動畫圖" role="img"></canvas>
+        </div>
+        <div class="status-row">
+          <span id="equation">η generated by selected wave-theory shape</span>
+          <span id="time">t = 0.00 s</span>
+        </div>
+        <div class="chart-title" id="lowerTitle">波浪理論分類圖</div>
+        <div class="theory-wrap" id="theoryWrap">
+          <canvas id="theoryCanvas" width="1200" height="525" aria-label="波浪理論分類圖" role="img"></canvas>
+        </div>
+        <div class="spectrum-info" id="spectrumInfo">
+          <div class="spectrum-charts">
+            <div class="spectrum-chart">
+              <canvas id="spectrumDimCanvas" width="600" height="320" aria-label="有因次波譜圖" role="img"></canvas>
+            </div>
+            <div class="spectrum-chart">
+              <canvas id="spectrumNonDimCanvas" width="600" height="320" aria-label="無因次波譜圖" role="img"></canvas>
+            </div>
+          </div>
+          <div class="spectrum-item">
+            <strong>Pierson-Moskowitz (PM)</strong>
+            <span>Fully developed sea spectrum, often used when wind has blown long enough over sufficient fetch.</span>
+          </div>
+          <div class="spectrum-item">
+            <strong>JONSWAP</strong>
+            <span>Fetch-limited sea spectrum with a sharper peak controlled by gamma; common for growing wind seas.</span>
+          </div>
+          <div class="spectrum-item">
+            <strong>Bretschneider / ISSC</strong>
+            <span>Two-parameter spectrum commonly described by Hs and Tp; useful for general engineering sea states.</span>
+          </div>
+          <div class="spectrum-item">
+            <strong>TMA</strong>
+            <span>Finite-depth spectrum based on JONSWAP with shallow-water transformation, used for coastal water depths.</span>
+          </div>
+        </div>
+        <div class="analysis-info" id="analysisInfo">
+          <div class="analysis-summary" id="analysisSummary">
+            <div class="metric"><span>資料筆數 Samples</span><strong>-</strong></div>
+            <div class="metric"><span>波數 Waves</span><strong>-</strong></div>
+            <div class="metric"><span>H1/3 / Hs</span><strong>-</strong></div>
+            <div class="metric"><span>Tz</span><strong>-</strong></div>
+          </div>
+          <div class="spectrum-charts">
+            <div class="analysis-chart"><canvas id="analysisWaveCanvas" width="600" height="360" aria-label="波浪時間序列與零切點" role="img"></canvas></div>
+            <div class="analysis-chart"><canvas id="analysisSpectrumCanvas" width="600" height="360" aria-label="波譜分析圖" role="img"></canvas></div>
+          </div>
+          <div class="spectrum-charts">
+            <div class="analysis-chart"><canvas id="analysisNonDimSpectrumCanvas" width="600" height="360" aria-label="無因次頻譜圖" role="img"></canvas></div>
+            <div class="analysis-chart"><canvas id="analysisCompareSpectrumCanvas" width="600" height="360" aria-label="實測頻譜與理論頻譜比對圖" role="img"></canvas></div>
+          </div>
+          <p class="hint" id="analysisNote">零切分析會依所選零上切或零下切分割個別波，波高取每段內 max(η)-min(η)。頻譜可選 Raw、Hann、Welch、Smoothed Welch 四種方法。</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const g = 9.81;
+    const controls = {
+      height: document.getElementById("height"),
+      heightNumber: document.getElementById("heightNumber"),
+      period: document.getElementById("period"),
+      periodNumber: document.getElementById("periodNumber"),
+      depth: document.getElementById("depth"),
+      depthNumber: document.getElementById("depthNumber"),
+      regularTab: document.getElementById("regularTab"),
+      irregularTab: document.getElementById("irregularTab"),
+      analysisTab: document.getElementById("analysisTab"),
+      regularPanel: document.getElementById("regularPanel"),
+      irregularPanel: document.getElementById("irregularPanel"),
+      analysisPanel: document.getElementById("analysisPanel"),
+      lowerTitle: document.getElementById("lowerTitle"),
+      theoryWrap: document.getElementById("theoryWrap"),
+      spectrumInfo: document.getElementById("spectrumInfo"),
+      analysisInfo: document.getElementById("analysisInfo"),
+      analysisInput: document.getElementById("analysisInput"),
+      crossingMode: document.getElementById("crossingMode"),
+      demeanMode: document.getElementById("demeanMode"),
+      analysisSpectrumMethod: document.getElementById("analysisSpectrumMethod"),
+      analysisSummary: document.getElementById("analysisSummary"),
+      analysisNote: document.getElementById("analysisNote"),
+      spectrumType: document.getElementById("spectrumType"),
+      gamma: document.getElementById("gamma"),
+      components: document.getElementById("components"),
+      seed: document.getElementById("seed"),
+      dt: document.getElementById("dt"),
+      totalTime: document.getElementById("totalTime"),
+      fileType: document.getElementById("fileType"),
+      outputKind: document.getElementById("outputKind")
+    };
+
+    const labels = {
+      heightValue: document.getElementById("heightValue"),
+      periodValue: document.getElementById("periodValue"),
+      depthValue: document.getElementById("depthValue"),
+      wavelength: document.getElementById("wavelength"),
+      wavenumber: document.getElementById("wavenumber"),
+      omega: document.getElementById("omega"),
+      celerity: document.getElementById("celerity"),
+      group: document.getElementById("group"),
+      validity: document.getElementById("validity"),
+      depthRegime: document.getElementById("depthRegime"),
+      steepnessMetric: document.getElementById("steepnessMetric"),
+      relativeDepthMetric: document.getElementById("relativeDepthMetric"),
+      ursellMetric: document.getElementById("ursellMetric"),
+      time: document.getElementById("time")
+    };
+
+    const canvas = document.getElementById("waveCanvas");
+    const ctx = canvas.getContext("2d");
+    const theoryCanvas = document.getElementById("theoryCanvas");
+    const theoryCtx = theoryCanvas.getContext("2d");
+    const spectrumDimCanvas = document.getElementById("spectrumDimCanvas");
+    const spectrumDimCtx = spectrumDimCanvas.getContext("2d");
+    const spectrumNonDimCanvas = document.getElementById("spectrumNonDimCanvas");
+    const spectrumNonDimCtx = spectrumNonDimCanvas.getContext("2d");
+    const analysisWaveCanvas = document.getElementById("analysisWaveCanvas");
+    const analysisWaveCtx = analysisWaveCanvas.getContext("2d");
+    const analysisSpectrumCanvas = document.getElementById("analysisSpectrumCanvas");
+    const analysisSpectrumCtx = analysisSpectrumCanvas.getContext("2d");
+    const analysisNonDimSpectrumCanvas = document.getElementById("analysisNonDimSpectrumCanvas");
+    const analysisNonDimSpectrumCtx = analysisNonDimSpectrumCanvas.getContext("2d");
+    const analysisCompareSpectrumCanvas = document.getElementById("analysisCompareSpectrumCanvas");
+    const analysisCompareSpectrumCtx = analysisCompareSpectrumCanvas.getContext("2d");
+    let animationId = 0;
+    let startTime = performance.now();
+    let current = null;
+    let irregularPreviewCache = null;
+    let activeWaveMode = "regular";
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function solveWaveNumber(period, depth) {
+      const omega = 2 * Math.PI / period;
+      let k = Math.max((omega * omega) / g, omega / Math.sqrt(g * depth));
+
+      for (let i = 0; i < 40; i += 1) {
+        const kh = k * depth;
+        const tanhKh = Math.tanh(kh);
+        const f = g * k * tanhKh - omega * omega;
+        const df = g * (tanhKh + kh * (1 - tanhKh * tanhKh));
+        const next = k - f / df;
+        if (!Number.isFinite(next) || next <= 0) break;
+        if (Math.abs(next - k) < 1e-12) {
+          k = next;
+          break;
+        }
+        k = next;
+      }
+
+      return k;
+    }
+
+    function calculate() {
+      const H = clamp(Number(controls.heightNumber.value) || 2, 0.01, 10000);
+      const T = clamp(Number(controls.periodNumber.value) || 8, 0.1, 10000);
+      const h = clamp(Number(controls.depthNumber.value) || 15, 0.01, 100000);
+      const omega = 2 * Math.PI / T;
+      const k = solveWaveNumber(T, h);
+      const L = 2 * Math.PI / k;
+      const c = L / T;
+      const n = 0.5 * (1 + (2 * k * h) / Math.sinh(2 * k * h));
+      const Cg = n * c;
+      const steepness = H / L;
+      const shallowRatio = h / L;
+      const model = { H, T, h, omega, k, L, c, Cg, steepness, shallowRatio };
+      model.classification = classifyWave(model);
+      return model;
+    }
+
+    function syncPair(range, number, value) {
+      number.value = value.toFixed(2).replace(/\.00$/, "");
+      range.value = clamp(value, Number(range.min), Number(range.max));
+    }
+
+    function format(value, unit, digits = 3) {
+      return `${value.toFixed(digits)} ${unit}`;
+    }
+
+    function niceStep(span, targetTicks) {
+      const raw = span / Math.max(targetTicks, 1);
+      const power = Math.pow(10, Math.floor(Math.log10(raw)));
+      const scaled = raw / power;
+      if (scaled <= 1) return power;
+      if (scaled <= 2) return 2 * power;
+      if (scaled <= 5) return 5 * power;
+      return 10 * power;
+    }
+
+    function classifyWave(model) {
+      const relativeDepth = model.h / model.L;
+      const steepness = model.H / model.L;
+      const ursell = (model.H * model.L * model.L) / Math.pow(model.h, 3);
+      const periodDepth = model.h / (g * model.T * model.T);
+      const periodHeight = model.H / (g * model.T * model.T);
+      let type = "Linear / Airy";
+      let note = "small-amplitude";
+      let severity = "ok";
+
+      if (model.H / model.h > 0.78) {
+        type = "Breaking limit";
+        note = "H/h is high";
+        severity = "warn";
+      } else if (periodDepth < 0.003 && periodHeight > 0.01) {
+        type = "Solitary";
+        note = "Le Mehaute shallow high-wave range";
+        severity = "warn";
+      } else if (periodDepth < 0.006 || ursell > 26) {
+        type = "Cnoidal";
+        note = "Le Mehaute shallow nonlinear range";
+        severity = "warn";
+      } else if (periodHeight < 0.0012) {
+        type = "Airy";
+        note = "small-amplitude range";
+      } else if (periodHeight < 0.003) {
+        type = "Stokes 2nd";
+        note = "finite-amplitude range";
+        severity = "warn";
+      } else if (periodHeight < 0.008) {
+        type = "Stokes 3rd";
+        note = "finite-amplitude range";
+        severity = "warn";
+      } else {
+        type = "Stokes 5th";
+        note = "higher-order Stokes range";
+        severity = "warn";
+      }
+
+      return { type, note, severity, relativeDepth, steepness, ursell, periodDepth, periodHeight };
+    }
+
+    function depthRegime(model) {
+      const ratio = model.h / model.L;
+      if (ratio > 0.5) return "深水波";
+      if (ratio < 0.05) return "淺水波";
+      return "中間水深波";
+    }
+
+    function waveRaw(model, phase) {
+      const type = model.classification?.type || "Airy";
+      if (type.includes("Cnoidal") || type.includes("Solitary")) {
+        const sharpness = type.includes("Solitary") ? 10 : 6;
+        return 1 / Math.pow(1 + sharpness * (1 - Math.cos(phase)), 1.15);
+      }
+
+      if (type.includes("Stokes")) {
+        let q = 0.18;
+        if (type.includes("3rd")) q = 0.26;
+        if (type.includes("4th")) q = 0.32;
+        if (type.includes("5th")) q = 0.40;
+        return Math.cos(phase) + q * Math.cos(2 * phase) + 0.35 * q * Math.cos(3 * phase);
+      }
+
+      return Math.cos(phase);
+    }
+
+    function waveEta(model, phase) {
+      if (!model.waveShape) {
+        let min = Infinity;
+        let max = -Infinity;
+        for (let i = 0; i < 720; i += 1) {
+          const value = waveRaw(model, (2 * Math.PI * i) / 720);
+          min = Math.min(min, value);
+          max = Math.max(max, value);
+        }
+        model.waveShape = { min, max };
+      }
+
+      const { min, max } = model.waveShape;
+      const normalized = ((waveRaw(model, phase) - min) / (max - min || 1)) * 2 - 1;
+      return (model.H / 2) * normalized;
+    }
+
+    function timeStartPhase(model) {
+      if (model.timeStartPhase !== undefined) return model.timeStartPhase;
+      let previousPhase = -Math.PI;
+      let previousEta = waveEta(model, previousPhase);
+      for (let i = 1; i <= 720; i += 1) {
+        const phase = -Math.PI + (2 * Math.PI * i) / 720;
+        const eta = waveEta(model, phase);
+        if (previousEta <= 0 && eta >= 0) {
+          let lo = previousPhase;
+          let hi = phase;
+          for (let j = 0; j < 24; j += 1) {
+            const mid = (lo + hi) / 2;
+            if (waveEta(model, mid) >= 0) hi = mid;
+            else lo = mid;
+          }
+          model.timeStartPhase = (lo + hi) / 2;
+          return model.timeStartPhase;
+        }
+        previousPhase = phase;
+        previousEta = eta;
+      }
+      model.timeStartPhase = -Math.PI / 2;
+      return model.timeStartPhase;
+    }
+
+    function seededRandom(seed) {
+      let state = (Math.floor(seed) || 1) >>> 0;
+      return () => {
+        state = (1664525 * state + 1013904223) >>> 0;
+        return state / 4294967296;
+      };
+    }
+
+    function spectrumShape(type, f, fp, depth, gamma) {
+      if (f <= 0) return 0;
+      const base = Math.pow(f, -5) * Math.exp(-1.25 * Math.pow(fp / f, 4));
+      let shape = base;
+
+      if (type === "jonswap" || type === "tma") {
+        const sigma = f <= fp ? 0.07 : 0.09;
+        const peak = Math.exp(-Math.pow(f / fp - 1, 2) / (2 * sigma * sigma));
+        shape *= Math.pow(Math.max(gamma, 1), peak);
+      }
+
+      if (type === "tma") {
+        const omega = 2 * Math.PI * f;
+        const k = solveWaveNumber(1 / f, depth);
+        const kh = k * depth;
+        const shallowFactor = Math.pow(Math.tanh(kh), 2) / Math.max(1e-6, 1 + (2 * kh) / Math.sinh(2 * kh));
+        shape *= clamp(shallowFactor, 0, 1);
+      }
+
+      return shape;
+    }
+
+    function buildSpectrumComponents(model, totalTime) {
+      const Hs = model.H;
+      const Tp = model.T;
+      const fp = 1 / Tp;
+      const type = controls.spectrumType.value;
+      const gamma = Number(controls.gamma.value) || 3.3;
+      const componentCount = clamp(Math.round(Number(controls.components.value) || 128), 16, 2048);
+      const seed = Number(controls.seed.value) || 1;
+      const fMin = Math.max(1 / Math.max(totalTime, Tp * 8), fp * 0.2);
+      const fMax = Math.max(fMin * 1.1, fp * 5);
+      const df = (fMax - fMin) / componentCount;
+      const raw = [];
+      let m0Raw = 0;
+
+      for (let i = 0; i < componentCount; i += 1) {
+        const f = fMin + (i + 0.5) * df;
+        const value = spectrumShape(type, f, fp, model.h, gamma);
+        raw.push({ f, value });
+        m0Raw += value * df;
+      }
+
+      const targetM0 = (Hs * Hs) / 16;
+      const scale = m0Raw > 0 ? targetM0 / m0Raw : 0;
+      const random = seededRandom(seed);
+
+      return raw.map(({ f, value }) => ({
+        f,
+        omega: 2 * Math.PI * f,
+        k: solveWaveNumber(1 / f, model.h),
+        amp: Math.sqrt(2 * value * scale * df),
+        phase: 2 * Math.PI * random()
+      }));
+    }
+
+    function generateIrregularTimeSeries(model, dt, totalTime) {
+      const rows = [];
+      const safeDt = clamp(Number(dt) || 0.05, 0.000001, 100000);
+      const duration = clamp(Number(totalTime) || model.T * 20, safeDt, 100000000);
+      const samples = clamp(Math.floor(duration / safeDt) + 1, 2, 1000000);
+      const nyquist = 0.5 / safeDt;
+      const components = buildSpectrumComponents(model, duration).filter((component) => component.f < nyquist * 0.95);
+
+      for (let i = 0; i < samples; i += 1) {
+        const time = Math.min(i * safeDt, duration);
+        let eta = 0;
+        components.forEach((component) => {
+          eta += component.amp * Math.cos(2 * Math.PI * component.f * time + component.phase);
+        });
+        rows.push({ time_s: time, eta_m: eta });
+      }
+
+      return rows;
+    }
+
+    function buildSpectrumCurve(model) {
+      const Hs = model.H;
+      const Tp = model.T;
+      const fp = 1 / Tp;
+      const type = controls.spectrumType.value;
+      const gamma = Number(controls.gamma.value) || 3.3;
+      const count = 240;
+      const fMin = fp * 0.2;
+      const fMax = fp * 5;
+      const df = (fMax - fMin) / (count - 1);
+      const raw = [];
+      let m0Raw = 0;
+
+      for (let i = 0; i < count; i += 1) {
+        const f = fMin + i * df;
+        const value = spectrumShape(type, f, fp, model.h, gamma);
+        raw.push({ f, value });
+        if (i > 0) m0Raw += value * df;
+      }
+
+      const targetM0 = (Hs * Hs) / 16;
+      const scale = m0Raw > 0 ? targetM0 / m0Raw : 0;
+      const curve = raw.map(({ f, value }) => {
+        const S = value * scale;
+        return {
+          f,
+          S,
+          nondimF: f / fp,
+          nondimS: targetM0 > 0 ? (S * fp) / targetM0 : 0
+        };
+      });
+
+      return { curve, fp, m0: targetM0 };
+    }
+
+    function drawLineChart(chartCanvas, chartCtx, points, xKey, yKey, title, xLabel, yLabel) {
+      const rect = chartCanvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const left = 56;
+      const right = 18;
+      const top = 34;
+      const bottom = 46;
+      const plotW = width - left - right;
+      const plotH = height - top - bottom;
+      const xMin = Math.min(...points.map((p) => p[xKey]));
+      // =====================================================
+      // 無因次頻譜 X 軸限制
+      // 若 xKey 為 nondimF，代表 X 軸是 f/fp。
+      // 工程頻譜分析中，f/fp > 4.5 後多半屬於高頻尾端、
+      // FFT leakage、aliasing 或短時序造成的雜訊，因此固定顯示到 4.5。
+      // =====================================================
+      const xMax =
+        xKey === "nondimF"
+          ? 4.5
+          : Math.max(...points.map((p) => p[xKey]));
+      const yMax = Math.max(...points.map((p) => p[yKey]), 1e-9);
+      const xToPx = (value) => left + ((value - xMin) / (xMax - xMin || 1)) * plotW;
+      const yToPx = (value) => top + (1 - value / yMax) * plotH;
+
+      chartCtx.clearRect(0, 0, width, height);
+      chartCtx.fillStyle = "#ffffff";
+      chartCtx.fillRect(0, 0, width, height);
+      chartCtx.strokeStyle = "#d8e0ea";
+      chartCtx.lineWidth = 1;
+      chartCtx.fillStyle = "#637083";
+      chartCtx.font = "12px Segoe UI, sans-serif";
+
+      for (let i = 0; i <= 4; i += 1) {
+        const x = left + (plotW * i) / 4;
+        const value = xMin + ((xMax - xMin) * i) / 4;
+        chartCtx.beginPath();
+        chartCtx.moveTo(x, top);
+        chartCtx.lineTo(x, top + plotH);
+        chartCtx.stroke();
+        chartCtx.textAlign = "center";
+        chartCtx.textBaseline = "top";
+        chartCtx.fillText(value.toFixed(value < 1 ? 2 : 1), x, top + plotH + 8);
+      }
+
+      for (let i = 0; i <= 4; i += 1) {
+        const y = top + (plotH * i) / 4;
+        const value = yMax * (1 - i / 4);
+        chartCtx.beginPath();
+        chartCtx.moveTo(left, y);
+        chartCtx.lineTo(left + plotW, y);
+        chartCtx.stroke();
+        chartCtx.textAlign = "right";
+        chartCtx.textBaseline = "middle";
+        chartCtx.fillText(value.toPrecision(2), left - 8, y);
+      }
+
+      chartCtx.strokeStyle = "#17212b";
+      chartCtx.lineWidth = 1.4;
+      chartCtx.strokeRect(left, top, plotW, plotH);
+      chartCtx.strokeStyle = "#087388";
+      chartCtx.lineWidth = 2.5;
+      chartCtx.beginPath();
+      points.forEach((point, index) => {
+        const x = xToPx(point[xKey]);
+        const y = yToPx(point[yKey]);
+        if (index === 0) chartCtx.moveTo(x, y);
+        else chartCtx.lineTo(x, y);
+      });
+      chartCtx.stroke();
+
+      chartCtx.fillStyle = "#17212b";
+      chartCtx.font = "700 14px Segoe UI, sans-serif";
+      chartCtx.textAlign = "left";
+      chartCtx.textBaseline = "alphabetic";
+      chartCtx.fillText(title, left, 22);
+      chartCtx.textAlign = "center";
+      chartCtx.fillText(xLabel, left + plotW / 2, height - 10);
+      chartCtx.save();
+      chartCtx.translate(16, top + plotH / 2);
+      chartCtx.rotate(-Math.PI / 2);
+      chartCtx.fillText(yLabel, 0, 0);
+      chartCtx.restore();
+    }
+
+    function drawSpectrumCharts(model) {
+      if (activeWaveMode !== "irregular") return;
+      const { curve } = buildSpectrumCurve(model);
+      drawLineChart(spectrumDimCanvas, spectrumDimCtx, curve, "f", "S", "Dimensional spectrum", "f (Hz)", "S(f) (m²/Hz)");
+
+      // =====================================================
+      // 不規則波產生器：無因次頻譜裁切
+      // X 軸為 f/fp，僅保留 f/fp <= 4.5。
+      // 目的：避免高頻尾端雜訊讓圖形比例失真。
+      // =====================================================
+      const filteredNonDimCurve = curve.filter((point) => point.nondimF <= 4.5);
+      drawLineChart(spectrumNonDimCanvas, spectrumNonDimCtx, filteredNonDimCurve, "nondimF", "nondimS", "Non-dimensional spectrum", "f / fp", "S(f) fp / m0");
+    }
+
+    function updateLabels(model) {
+      labels.heightValue.textContent = format(model.H, "m", 2);
+      labels.periodValue.textContent = format(model.T, "s", 2);
+      labels.depthValue.textContent = format(model.h, "m", 2);
+      labels.wavelength.textContent = format(model.L, "m", 3);
+      labels.wavenumber.textContent = format(model.k, "1/m", 5);
+      labels.omega.textContent = format(model.omega, "rad/s", 4);
+      labels.celerity.textContent = format(model.c, "m/s", 3);
+      labels.group.textContent = format(model.Cg, "m/s", 3);
+
+      labels.validity.textContent = `${model.classification.type} (${model.classification.note})`;
+      labels.validity.className = model.classification.severity === "ok" ? "" : "warning";
+      labels.depthRegime.textContent = depthRegime(model);
+      labels.steepnessMetric.textContent = model.classification.steepness.toFixed(4);
+      labels.relativeDepthMetric.textContent = model.classification.relativeDepth.toFixed(4);
+      labels.ursellMetric.textContent = model.classification.ursell.toFixed(2);
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      const theoryRect = theoryCanvas.getBoundingClientRect();
+      theoryCanvas.width = Math.round(theoryRect.width * ratio);
+      theoryCanvas.height = Math.round(theoryRect.height * ratio);
+      theoryCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      [spectrumDimCanvas, spectrumNonDimCanvas].forEach((chartCanvas) => {
+        const chartRect = chartCanvas.getBoundingClientRect();
+        chartCanvas.width = Math.round(chartRect.width * ratio);
+        chartCanvas.height = Math.round(chartRect.height * ratio);
+      });
+      spectrumDimCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      spectrumNonDimCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      [analysisWaveCanvas, analysisSpectrumCanvas, analysisNonDimSpectrumCanvas, analysisCompareSpectrumCanvas].forEach((chartCanvas) => {
+        const chartRect = chartCanvas.getBoundingClientRect();
+        chartCanvas.width = Math.round(chartRect.width * ratio);
+        chartCanvas.height = Math.round(chartRect.height * ratio);
+      });
+      analysisWaveCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      analysisSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      analysisNonDimSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      analysisCompareSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function drawIrregularPreview(model) {
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const pad = Math.max(54, width * 0.055);
+      const topPad = Math.max(24, height * 0.07);
+      const bottomPad = Math.max(46, height * 0.11);
+      const duration = clamp(Number(controls.totalTime.value) || model.T * 20, 0.001, 100000000);
+      const key = [
+        model.H, model.T, model.h, controls.spectrumType.value, controls.gamma.value,
+        controls.components.value, controls.seed.value, duration
+      ].join("|");
+
+      if (!irregularPreviewCache || irregularPreviewCache.key !== key) {
+        const components = buildSpectrumComponents(model, duration);
+        const rows = generateIrregularTimeSeries(model, Math.max(Number(controls.dt.value) || 0.05, duration / 1200), duration);
+        irregularPreviewCache = { key, components, rows };
+      }
+
+      const rows = irregularPreviewCache.rows;
+      const components = irregularPreviewCache.components;
+      const visibleLength = Math.max(160, model.L * 2);
+      const maxAbs = Math.max(...rows.map((row) => Math.abs(row.eta_m)), 0.001);
+      const verticalExtent = Math.max(model.h + 2 * maxAbs, 4);
+      const pxPerM = (height - topPad - bottomPad) / verticalExtent;
+      const stillY = topPad + maxAbs * pxPerM;
+      const bedY = stillY + model.h * pxPerM;
+      const xToPx = (x) => pad + (x / visibleLength) * (width - 2 * pad);
+      const etaAt = (x, time) => {
+        let eta = 0;
+        components.forEach((component) => {
+          eta += component.amp * Math.cos(component.k * x - component.omega * time + component.phase);
+        });
+        return eta;
+      };
+      const time = ((performance.now() - startTime) / 1000) % duration;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#f8fbfd";
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = "#d8e0ea";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#637083";
+      ctx.font = "15px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+
+      const xStep = 20;
+      for (let xTick = 0; xTick <= visibleLength; xTick += xStep) {
+        const x = xToPx(xTick);
+        ctx.beginPath();
+        ctx.moveTo(x, topPad);
+        ctx.lineTo(x, bedY);
+        ctx.stroke();
+        ctx.fillText(`${xTick}`, x, bedY + 9);
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      const yMin = -model.h;
+      const yMax = maxAbs;
+      const yStep = niceStep(yMax - yMin, 6);
+      for (let yTick = Math.ceil(yMin / yStep) * yStep; yTick <= yMax + 1e-9; yTick += yStep) {
+        const y = stillY - yTick * pxPerM;
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(width - pad, y);
+        ctx.stroke();
+        ctx.fillText(`${Number(Math.abs(yTick) < 1e-9 ? 0 : yTick).toFixed(yStep < 1 ? 1 : 0)}`, pad - 8, y);
+      }
+
+      ctx.strokeStyle = "#637083";
+      ctx.beginPath();
+      ctx.moveTo(pad, stillY);
+      ctx.lineTo(width - pad, stillY);
+      ctx.stroke();
+
+      const surface = [];
+      for (let px = pad; px <= width - pad; px += 3) {
+        const x = ((px - pad) / (width - 2 * pad)) * visibleLength;
+        const eta = etaAt(x, time);
+        surface.push([px, stillY - eta * pxPerM]);
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(pad, bedY);
+      surface.forEach(([x, y], index) => {
+        if (index === 0) ctx.lineTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(width - pad, bedY);
+      ctx.closePath();
+      const waterGradient = ctx.createLinearGradient(0, stillY - maxAbs * pxPerM, 0, bedY);
+      waterGradient.addColorStop(0, "rgba(77, 178, 199, 0.78)");
+      waterGradient.addColorStop(1, "rgba(25, 116, 142, 0.86)");
+      ctx.fillStyle = waterGradient;
+      ctx.fill();
+
+      ctx.strokeStyle = "#087388";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      surface.forEach(([x, y], index) => {
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = "#d7a85f";
+      ctx.fillRect(pad, bedY, width - 2 * pad, Math.max(12, height - bedY));
+      ctx.strokeStyle = "#9d7433";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad, bedY);
+      ctx.lineTo(width - pad, bedY);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#17212b";
+      ctx.fillStyle = "#17212b";
+      ctx.font = "700 16px Segoe UI, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(`irregular spectrum: ${controls.spectrumType.value}`, pad, topPad - 8);
+      ctx.fillText("seabed", pad + 6, bedY - 10);
+      ctx.textAlign = "right";
+      ctx.fillText("still water level", width - pad - 8, stillY - 8);
+      ctx.textAlign = "center";
+      ctx.fillText("x (m)", width / 2, height - 8);
+      ctx.save();
+      ctx.translate(15, (topPad + bedY) / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("elevation z (m)", 0, 0);
+      ctx.restore();
+      labels.time.textContent = `t = ${time.toFixed(2)} s`;
+    }
+
+    function draw(model, elapsedSeconds) {
+      if (activeWaveMode === "irregular") {
+        drawIrregularPreview(model);
+        return;
+      }
+
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const pad = Math.max(54, width * 0.055);
+      const topPad = Math.max(24, height * 0.07);
+      const bottomPad = Math.max(46, height * 0.11);
+      const visibleLength = 160;
+      const verticalExtent = Math.max(model.h + model.H, 4);
+      const pxPerM = (height - topPad - bottomPad) / verticalExtent;
+      const stillY = topPad + (model.H / 2) * pxPerM;
+      const bedY = stillY + model.h * pxPerM;
+      const ampPx = (model.H / 2) * pxPerM;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = "#f8fbfd";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = "rgba(99, 112, 131, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#637083";
+      ctx.font = "15px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      const xStep = 20;
+      for (let xTick = 0; xTick <= visibleLength; xTick += xStep) {
+        const px = pad + (xTick / visibleLength) * (width - 2 * pad);
+        ctx.beginPath();
+        ctx.moveTo(px, topPad);
+        ctx.lineTo(px, bedY);
+        ctx.stroke();
+      }
+
+      const yMin = -model.h;
+      const yMax = model.H / 2;
+      const yStep = niceStep(yMax - yMin, 6);
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      const firstYTick = Math.ceil(yMin / yStep) * yStep;
+      for (let yTick = firstYTick; yTick <= yMax + 1e-9; yTick += yStep) {
+        const py = stillY - yTick * pxPerM;
+        ctx.beginPath();
+        ctx.moveTo(pad, py);
+        ctx.lineTo(width - pad, py);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "#bdc9d5";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(pad, stillY);
+      ctx.lineTo(width - pad, stillY);
+      ctx.stroke();
+
+      const surface = [];
+      const phaseT = model.omega * elapsedSeconds;
+      for (let px = pad; px <= width - pad; px += 3) {
+        const x = ((px - pad) / (width - 2 * pad)) * visibleLength;
+        const eta = waveEta(model, model.k * x - phaseT);
+        const y = stillY - eta * pxPerM;
+        surface.push([px, y]);
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(pad, bedY);
+      surface.forEach(([x, y], index) => {
+        if (index === 0) ctx.lineTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(width - pad, bedY);
+      ctx.closePath();
+      const waterGradient = ctx.createLinearGradient(0, stillY - ampPx, 0, bedY);
+      waterGradient.addColorStop(0, "rgba(77, 178, 199, 0.78)");
+      waterGradient.addColorStop(1, "rgba(25, 116, 142, 0.86)");
+      ctx.fillStyle = waterGradient;
+      ctx.fill();
+
+      ctx.strokeStyle = "#087388";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      surface.forEach(([x, y], index) => {
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = "#d7a85f";
+      ctx.fillRect(pad, bedY, width - 2 * pad, Math.max(12, height - bedY));
+      ctx.strokeStyle = "#9d7433";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad, bedY);
+      ctx.lineTo(width - pad, bedY);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(23, 33, 43, 0.34)";
+      ctx.fillStyle = "#17212b";
+      ctx.lineWidth = 1;
+      ctx.font = "15px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      for (let xTick = 0; xTick <= visibleLength; xTick += xStep) {
+        const px = pad + (xTick / visibleLength) * (width - 2 * pad);
+        ctx.beginPath();
+        ctx.moveTo(px, bedY);
+        ctx.lineTo(px, bedY + 6);
+        ctx.stroke();
+        ctx.fillText(`${xTick}`, px, bedY + 9);
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let yTick = firstYTick; yTick <= yMax + 1e-9; yTick += yStep) {
+        const py = stillY - yTick * pxPerM;
+        const label = Number(Math.abs(yTick) < 1e-9 ? 0 : yTick).toFixed(yStep < 1 ? 1 : 0);
+        ctx.beginPath();
+        ctx.moveTo(pad - 6, py);
+        ctx.lineTo(pad, py);
+        ctx.stroke();
+        ctx.fillText(label, pad - 10, py);
+      }
+
+      ctx.fillStyle = "#17212b";
+      ctx.font = "700 16px Segoe UI, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText("still water level", width - pad - 8, stillY - 8);
+      ctx.textAlign = "left";
+      ctx.fillText("seabed", pad + 6, bedY - 10);
+      ctx.textAlign = "center";
+      ctx.fillText("x (m)", width / 2, height - 10);
+      ctx.save();
+      ctx.translate(15, (topPad + bedY) / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("elevation z (m)", 0, 0);
+      ctx.restore();
+      ctx.textAlign = "left";
+      ctx.fillText(`view width ${visibleLength} m`, width - pad - 120, height - 20);
+      ctx.fillText(`shape: ${model.classification.type}`, pad, height - 20);
+
+      labels.time.textContent = `t = ${(elapsedSeconds % model.T).toFixed(2)} s`;
+    }
+
+    function drawTheoryChart(model) {
+      const rect = theoryCanvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const left = 76;
+      const right = 28;
+      const top = 26;
+      const bottom = 72;
+      const plotW = width - left - right;
+      const plotH = height - top - bottom;
+      const xMin = 0.0005;
+      const xMax = 0.2;
+      const yMin = 0.00005;
+      const yMax = 0.05;
+      const log10 = (value) => Math.log10(value);
+      const xToPx = (value) => {
+        const safe = clamp(value, xMin, xMax);
+        return left + ((log10(safe) - log10(xMin)) / (log10(xMax) - log10(xMin))) * plotW;
+      };
+      const yToPx = (value) => {
+        const safe = clamp(value, yMin, yMax);
+        return top + (1 - (log10(safe) - log10(yMin)) / (log10(yMax) - log10(yMin))) * plotH;
+      };
+
+      theoryCtx.clearRect(0, 0, width, height);
+      theoryCtx.fillStyle = "#fbfcfd";
+      theoryCtx.fillRect(0, 0, width, height);
+
+      const drawPolygon = (points, fill, stroke = null, widthPx = 1, dash = []) => {
+        theoryCtx.beginPath();
+        points.forEach(([x, y], index) => {
+          const px = xToPx(x);
+          const py = yToPx(y);
+          if (index === 0) theoryCtx.moveTo(px, py);
+          else theoryCtx.lineTo(px, py);
+        });
+        theoryCtx.closePath();
+        theoryCtx.fillStyle = fill;
+        theoryCtx.fill();
+        if (stroke) {
+          theoryCtx.save();
+          theoryCtx.setLineDash(dash);
+          theoryCtx.strokeStyle = stroke;
+          theoryCtx.lineWidth = widthPx;
+          theoryCtx.stroke();
+          theoryCtx.restore();
+        }
+      };
+
+      const drawCurve = (points, stroke, widthPx = 2, dash = []) => {
+        theoryCtx.save();
+        theoryCtx.setLineDash(dash);
+        theoryCtx.strokeStyle = stroke;
+        theoryCtx.lineWidth = widthPx;
+        theoryCtx.beginPath();
+        points.forEach(([x, y], index) => {
+          const px = xToPx(x);
+          const py = yToPx(y);
+          if (index === 0) theoryCtx.moveTo(px, py);
+          else theoryCtx.lineTo(px, py);
+        });
+        theoryCtx.stroke();
+        theoryCtx.restore();
+      };
+
+      const breaking = [
+        [0.0005, 0.00035], [0.0008, 0.00055], [0.0012, 0.0009],
+        [0.002, 0.0017], [0.004, 0.0035], [0.008, 0.0065],
+        [0.015, 0.011], [0.03, 0.020], [0.06, 0.026], [0.10, 0.028], [0.20, 0.028]
+      ];
+      const streamLow = [
+        [0.0014, 0.00005], [0.002, 0.00012], [0.003, 0.00028],
+        [0.005, 0.00075], [0.008, 0.0015], [0.012, 0.0028],
+        [0.02, 0.006], [0.035, 0.012], [0.06, 0.018], [0.10, 0.020], [0.20, 0.020]
+      ];
+      const streamHigh = [
+        [0.0008, 0.00005], [0.001, 0.00012], [0.0015, 0.00026],
+        [0.0025, 0.00055], [0.004, 0.0011], [0.007, 0.0024],
+        [0.012, 0.005], [0.02, 0.010], [0.035, 0.017], [0.06, 0.022], [0.10, 0.025]
+      ];
+      const airyBoundary = [
+        [0.0015, 0.00005], [0.002, 0.00008], [0.003, 0.00013],
+        [0.005, 0.00023], [0.008, 0.00036], [0.012, 0.00052],
+        [0.02, 0.00075], [0.035, 0.00095], [0.06, 0.00105], [0.10, 0.00108], [0.20, 0.00108]
+      ];
+      const hbQuarter = [
+        [0.006, 0.0015], [0.009, 0.0021], [0.015, 0.0034],
+        [0.025, 0.0055], [0.04, 0.0075], [0.07, 0.0085], [0.20, 0.0085]
+      ];
+
+      drawPolygon([[0.0005, yMin], [0.20, yMin], [0.20, yMax], ...breaking.slice().reverse()], "rgba(232,232,232,0.72)");
+      drawPolygon([[0.0005, yMin], [0.20, yMin], [0.20, 0.00108], ...airyBoundary.slice().reverse()], "rgba(255,248,124,0.72)");
+      drawPolygon([[0.0005, yMin], [0.0015, yMin], ...streamLow, ...breaking.slice().reverse(), [0.0005, breaking[0][1]]], "rgba(122,238,245,0.70)");
+      drawPolygon([...streamLow, ...streamHigh.slice().reverse()], "rgba(106,220,236,0.80)");
+
+      theoryCtx.strokeStyle = "#d8e0ea";
+      theoryCtx.lineWidth = 1;
+      theoryCtx.fillStyle = "#637083";
+      theoryCtx.font = "12px Segoe UI, sans-serif";
+      theoryCtx.textAlign = "center";
+      theoryCtx.textBaseline = "top";
+      const xTicks = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2];
+      const yTicks = [0.00005, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05];
+      const tickLabel = (value) => {
+        if (value === 0.00005) return "0.00005";
+        if (value < 0.001) return value.toFixed(4);
+        if (value < 0.01) return value.toFixed(3);
+        return value.toFixed(value < 0.1 ? 2 : 1);
+      };
+      xTicks.forEach((x) => {
+        const px = xToPx(x);
+        theoryCtx.beginPath();
+        theoryCtx.moveTo(px, top);
+        theoryCtx.lineTo(px, top + plotH);
+        theoryCtx.stroke();
+        theoryCtx.fillText(tickLabel(x), px, top + plotH + 8);
+      });
+
+      theoryCtx.textAlign = "right";
+      theoryCtx.textBaseline = "middle";
+      yTicks.forEach((y) => {
+        const py = yToPx(y);
+        theoryCtx.beginPath();
+        theoryCtx.moveTo(left, py);
+        theoryCtx.lineTo(left + plotW, py);
+        theoryCtx.stroke();
+        theoryCtx.fillText(tickLabel(y), left - 8, py);
+      });
+
+      theoryCtx.strokeStyle = "#17212b";
+      theoryCtx.lineWidth = 1.5;
+      theoryCtx.strokeRect(left, top, plotW, plotH);
+
+      drawCurve(breaking, "#0a35ff", 2.5);
+      drawCurve(streamLow, "#0a35ff", 2);
+      drawCurve(streamHigh, "#0a35ff", 2);
+      drawCurve(airyBoundary, "#0a35ff", 2, [8, 4]);
+      drawCurve(hbQuarter, "#0a35ff", 2, [8, 4]);
+      drawCurve([[0.0015, yMin], [0.0015, yMax]], "#6f6f6f", 1.3, [12, 8]);
+      drawCurve([[0.08, yMin], [0.08, 0.02]], "#6f6f6f", 1.3, [12, 8]);
+
+      const orderCurves = [
+        { label: "Stokes 2nd order", points: [[0.014, 0.0022], [0.025, 0.0037], [0.05, 0.0060], [0.10, 0.0068], [0.20, 0.0068]] },
+        { label: "Stokes 3rd order", points: [[0.018, 0.0052], [0.035, 0.0090], [0.06, 0.012], [0.10, 0.014], [0.20, 0.014]] },
+        { label: "Stokes 4th order", points: [[0.026, 0.010], [0.045, 0.016], [0.075, 0.020], [0.12, 0.022], [0.20, 0.022]] }
+      ];
+      orderCurves.forEach((curve) => drawCurve(curve.points, "#0a35ff", 1.8, [8, 4]));
+
+      theoryCtx.fillStyle = "#17212b";
+      theoryCtx.font = "18px Georgia, serif";
+      theoryCtx.textAlign = "center";
+      theoryCtx.textBaseline = "middle";
+      theoryCtx.fillText("linear theory", xToPx(0.045), yToPx(0.00028));
+      theoryCtx.fillText("cnoidal", xToPx(0.0014), yToPx(0.00022));
+      theoryCtx.fillText("theory", xToPx(0.0014), yToPx(0.00015));
+      theoryCtx.fillText("shallow", xToPx(0.00085), yToPx(0.00009));
+      theoryCtx.fillText("water", xToPx(0.00085), yToPx(0.000065));
+      theoryCtx.fillText("waves", xToPx(0.00085), yToPx(0.000052));
+      theoryCtx.fillText("intermediate depth", xToPx(0.018), yToPx(0.00009));
+      theoryCtx.fillText("waves", xToPx(0.018), yToPx(0.000063));
+      theoryCtx.fillText("deep", xToPx(0.13), yToPx(0.00009));
+      theoryCtx.fillText("water", xToPx(0.13), yToPx(0.000063));
+      theoryCtx.fillText("waves", xToPx(0.13), yToPx(0.0000505));
+
+      theoryCtx.font = "18px Georgia, serif";
+      theoryCtx.fillText("Stokes 2nd order", xToPx(0.055), yToPx(0.0028));
+      theoryCtx.fillText("Stokes 3rd order", xToPx(0.06), yToPx(0.010));
+      theoryCtx.font = "11px Georgia, serif";
+      theoryCtx.fillText("Stokes 4th order", xToPx(0.09), yToPx(0.023));
+
+      theoryCtx.save();
+      theoryCtx.translate(xToPx(0.003), yToPx(0.004));
+      theoryCtx.rotate(-0.82);
+      theoryCtx.font = "14px Georgia, serif";
+      theoryCtx.textAlign = "center";
+      theoryCtx.fillText("breaking limit (H / h ≈ 0.8)", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.save();
+      theoryCtx.translate(xToPx(0.012), yToPx(0.007));
+      theoryCtx.rotate(-0.86);
+      theoryCtx.font = "16px Georgia, serif";
+      theoryCtx.fillText("stream function theory", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.save();
+      theoryCtx.translate(xToPx(0.004), yToPx(0.0012));
+      theoryCtx.rotate(-0.88);
+      theoryCtx.font = "15px Georgia, serif";
+      theoryCtx.fillText("5th order", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.font = "16px Georgia, serif";
+      theoryCtx.fillText("H = HB / 4", xToPx(0.026), yToPx(0.00155));
+      theoryCtx.fillText("Hλ² / h³ = 26", xToPx(0.026), yToPx(0.00078));
+      theoryCtx.fillText("H₀ / λ₀ ≈ 0.14", xToPx(0.012), yToPx(0.020));
+
+      const pointX = xToPx(model.classification.periodDepth);
+      const pointY = yToPx(model.classification.periodHeight);
+      theoryCtx.fillStyle = "#d9272e";
+      theoryCtx.strokeStyle = "#ffffff";
+      theoryCtx.lineWidth = 3;
+      theoryCtx.beginPath();
+      theoryCtx.arc(pointX, pointY, 7, 0, Math.PI * 2);
+      theoryCtx.fill();
+      theoryCtx.stroke();
+
+      theoryCtx.fillStyle = "#17212b";
+      theoryCtx.font = "700 13px Segoe UI, sans-serif";
+      theoryCtx.textAlign = pointX > width * 0.72 ? "right" : "left";
+      theoryCtx.textBaseline = pointY < top + 34 ? "top" : "bottom";
+      const labelX = pointX > width * 0.72 ? pointX - 12 : pointX + 12;
+      const labelY = pointY < top + 34 ? pointY + 14 : pointY - 10;
+      theoryCtx.fillText("current input", labelX, labelY);
+
+      theoryCtx.textAlign = "center";
+      theoryCtx.textBaseline = "alphabetic";
+      theoryCtx.font = "18px Georgia, serif";
+      theoryCtx.fillText("h / gT²", left + plotW / 2, height - 14);
+      theoryCtx.save();
+      theoryCtx.translate(20, top + plotH / 2);
+      theoryCtx.rotate(-Math.PI / 2);
+      theoryCtx.fillText("H / gT²", 0, 0);
+      theoryCtx.restore();
+
+      theoryCtx.textAlign = "left";
+      theoryCtx.font = "12px Segoe UI, sans-serif";
+      theoryCtx.fillStyle = "#637083";
+      theoryCtx.fillText(`x=${model.classification.periodDepth.toPrecision(3)}, y=${model.classification.periodHeight.toPrecision(3)}, Ur=${model.classification.ursell.toFixed(2)}`, left + 6, top + 15);
+    }
+
+
+    function parseAnalysisInput() {
+      const lines = controls.analysisInput.value.split(/\r?\n/);
+      const rows = [];
+      lines.forEach((line) => {
+        const clean = line.trim();
+        if (!clean || /^[a-zA-Z#]/.test(clean)) return;
+        const parts = clean.split(/[\s,;]+/).map(Number).filter(Number.isFinite);
+        if (parts.length >= 2) rows.push({ time_s: parts[0], eta_m: parts[1] });
+      });
+      rows.sort((a, b) => a.time_s - b.time_s);
+      if (controls.demeanMode.value === "yes" && rows.length) {
+        const mean = rows.reduce((sum, row) => sum + row.eta_m, 0) / rows.length;
+        rows.forEach((row) => { row.eta_m -= mean; });
+      }
+      return rows;
+    }
+
+    function findCrossings(rows, mode) {
+      const crossings = [];
+      for (let i = 1; i < rows.length; i += 1) {
+        const a = rows[i - 1];
+        const b = rows[i];
+        const up = a.eta_m <= 0 && b.eta_m > 0;
+        const down = a.eta_m >= 0 && b.eta_m < 0;
+        if ((mode === "up" && up) || (mode === "down" && down)) {
+          const r = Math.abs(b.eta_m - a.eta_m) > 1e-12 ? -a.eta_m / (b.eta_m - a.eta_m) : 0;
+          crossings.push({ time_s: a.time_s + r * (b.time_s - a.time_s), index: i });
+        }
+      }
+      return crossings;
+    }
+
+    function zeroCrossingStats(rows, mode) {
+      const crossings = findCrossings(rows, mode);
+      const waves = [];
+      for (let i = 1; i < crossings.length; i += 1) {
+        const start = crossings[i - 1];
+        const end = crossings[i];
+        const segment = rows.filter((row) => row.time_s >= start.time_s && row.time_s <= end.time_s);
+        if (segment.length < 2) continue;
+        const maxEta = Math.max(...segment.map((row) => row.eta_m));
+        const minEta = Math.min(...segment.map((row) => row.eta_m));
+        waves.push({
+          no: waves.length + 1,
+          start_s: start.time_s,
+          end_s: end.time_s,
+          T_s: end.time_s - start.time_s,
+          H_m: maxEta - minEta,
+          crest_m: maxEta,
+          trough_m: minEta
+        });
+      }
+      const heights = waves.map((w) => w.H_m).filter(Number.isFinite).sort((a, b) => b - a);
+      const periods = waves.map((w) => w.T_s).filter(Number.isFinite);
+      const mean = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : NaN;
+      const topMean = (fraction) => {
+        if (!heights.length) return NaN;
+        const count = Math.max(1, Math.ceil(heights.length * fraction));
+        return mean(heights.slice(0, count));
+      };
+      return {
+        crossings,
+        waves,
+        samples: rows.length,
+        Hmax: heights[0] ?? NaN,
+        Hmean: mean(heights),
+        H13: topMean(1 / 3),
+        H10: topMean(1 / 10),
+        Tmean: mean(periods),
+        Tz: mean(periods)
+      };
+    }
+
+    function interpolateToUniform(rows) {
+      if (rows.length < 2) return [];
+      const sorted = rows.slice().sort((a, b) => a.time_s - b.time_s);
+      const dts = [];
+      for (let i = 1; i < sorted.length; i += 1) {
+        const dt = sorted[i].time_s - sorted[i - 1].time_s;
+        if (dt > 0 && Number.isFinite(dt)) dts.push(dt);
+      }
+      if (!dts.length) return [];
+      dts.sort((a, b) => a - b);
+      const dt = dts[Math.floor(dts.length / 2)];
+      const t0 = sorted[0].time_s;
+      const t1 = sorted[sorted.length - 1].time_s;
+      const n = clamp(Math.floor((t1 - t0) / dt) + 1, 2, 4096);
+      const uniform = [];
+      let j = 0;
+      for (let i = 0; i < n; i += 1) {
+        const t = t0 + i * dt;
+        while (j < sorted.length - 2 && sorted[j + 1].time_s < t) j += 1;
+        const a = sorted[j];
+        const b = sorted[Math.min(j + 1, sorted.length - 1)];
+        const ratio = b.time_s !== a.time_s ? (t - a.time_s) / (b.time_s - a.time_s) : 0;
+        uniform.push({ time_s: t, eta_m: a.eta_m + ratio * (b.eta_m - a.eta_m) });
+      }
+      return uniform;
+    }
+
+    function hannWindow(n) {
+      if (n <= 1) return [1];
+      return Array.from({ length: n }, (_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1)));
+    }
+
+    function rectangularWindow(n) {
+      return Array.from({ length: n }, () => 1);
+    }
+
+    function dftSpectrum(values, dt, windowKind = "hann") {
+      const n = values.length;
+      if (n < 8 || !Number.isFinite(dt) || dt <= 0) return [];
+      const mean = values.reduce((sum, value) => sum + value, 0) / n;
+      const window = windowKind === "rect" ? rectangularWindow(n) : hannWindow(n);
+      const u = window.reduce((sum, w) => sum + w * w, 0) / n || 1;
+      const x = values.map((value, i) => (value - mean) * window[i]);
+      const out = [];
+      const maxM = Math.floor(n / 2);
+      for (let m = 1; m <= maxM; m += 1) {
+        let re = 0;
+        let im = 0;
+        for (let j = 0; j < n; j += 1) {
+          const angle = (-2 * Math.PI * m * j) / n;
+          re += x[j] * Math.cos(angle);
+          im += x[j] * Math.sin(angle);
+        }
+        const f = m / (n * dt);
+        const S = (2 * dt / (n * u)) * (re * re + im * im);
+        out.push({ f, S });
+      }
+      return out;
+    }
+
+    function averageSpectra(spectra) {
+      const valid = spectra.filter((s) => s.length);
+      if (!valid.length) return [];
+      const minLength = Math.min(...valid.map((s) => s.length));
+      const out = [];
+      for (let i = 0; i < minLength; i += 1) {
+        out.push({
+          f: valid[0][i].f,
+          S: valid.reduce((sum, spec) => sum + spec[i].S, 0) / valid.length
+        });
+      }
+      return out;
+    }
+
+    function smoothSpectrum(points, halfWindow = 2) {
+      return points.map((point, i) => {
+        const a = Math.max(0, i - halfWindow);
+        const b = Math.min(points.length, i + halfWindow + 1);
+        const segment = points.slice(a, b);
+        return {
+          f: point.f,
+          S: segment.reduce((sum, p) => sum + p.S, 0) / segment.length
+        };
+      });
+    }
+
+    function estimateSpectrum(rows, method = "hann") {
+      const uniform = interpolateToUniform(rows);
+      if (uniform.length < 8) return [];
+      const nLimit = Math.min(2048, uniform.length);
+      const sampled = uniform.slice(0, nLimit);
+      const dt = (sampled[sampled.length - 1].time_s - sampled[0].time_s) / Math.max(1, sampled.length - 1);
+      const values = sampled.map((row) => row.eta_m);
+
+      if (method === "raw") {
+        return dftSpectrum(values, dt, "rect");
+      }
+
+      if (method === "welch" || method === "smooth") {
+        const segmentLength = Math.max(32, Math.min(256, Math.floor(values.length / 2)));
+        const hop = Math.max(1, Math.floor(segmentLength / 2));
+        const spectra = [];
+        for (let start = 0; start + segmentLength <= values.length; start += hop) {
+          spectra.push(dftSpectrum(values.slice(start, start + segmentLength), dt, "hann"));
+        }
+        const averaged = averageSpectra(spectra.length ? spectra : [dftSpectrum(values, dt, "hann")]);
+        return method === "smooth" ? smoothSpectrum(averaged, 2) : averaged;
+      }
+
+      return dftSpectrum(values, dt, "hann");
+    }
+
+    function spectrumMoments(spectrum) {
+      if (spectrum.length < 2) return { m0: NaN, Hm0: NaN, Tp: NaN, Tm01: NaN, Tm02: NaN };
+      let m0 = 0;
+      let m1 = 0;
+      let m2 = 0;
+      for (let i = 1; i < spectrum.length; i += 1) {
+        const a = spectrum[i - 1];
+        const b = spectrum[i];
+        const df = b.f - a.f;
+        const sAvg = 0.5 * (a.S + b.S);
+        const fAvg = 0.5 * (a.f + b.f);
+        if (df <= 0) continue;
+        m0 += sAvg * df;
+        m1 += fAvg * sAvg * df;
+        m2 += fAvg * fAvg * sAvg * df;
+      }
+      const peak = spectrum.reduce((best, point) => point.S > best.S ? point : best, spectrum[0]);
+      return {
+        m0,
+        Hm0: Number.isFinite(m0) && m0 > 0 ? 4 * Math.sqrt(m0) : NaN,
+        Tp: peak && peak.f > 0 ? 1 / peak.f : NaN,
+        Tm01: m1 > 0 ? m0 / m1 : NaN,
+        Tm02: m2 > 0 ? Math.sqrt(m0 / m2) : NaN
+      };
+    }
+
+
+
+    function getPaddedRange(values, fallbackMin = -1, fallbackMax = 1) {
+      const finite = values.filter(Number.isFinite);
+      if (!finite.length) return { min: fallbackMin, max: fallbackMax };
+      let min = Math.min(...finite);
+      let max = Math.max(...finite);
+      if (Math.abs(max - min) < 1e-12) {
+        const pad = Math.max(Math.abs(max) * 0.1, 1);
+        min -= pad;
+        max += pad;
+      } else {
+        const pad = (max - min) * 0.08;
+        min -= pad;
+        max += pad;
+      }
+      return { min, max };
+    }
+
+    function formatAxisTick(value) {
+      if (!Number.isFinite(value)) return "";
+      const abs = Math.abs(value);
+      if (abs >= 1000 || (abs > 0 && abs < 0.001)) return value.toExponential(1);
+      if (abs >= 100) return value.toFixed(0);
+      if (abs >= 10) return value.toFixed(1);
+      if (abs >= 1) return value.toFixed(2);
+      return value.toFixed(3);
+    }
+
+    function drawAutoLineChart(chartCanvas, chartCtx, points, xKey, yKey, title, xLabel, yLabel, options = {}) {
+      const rect = chartCanvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const left = 62;
+      const right = 22;
+      const top = 34;
+      const bottom = 50;
+      const plotW = Math.max(1, width - left - right);
+      const plotH = Math.max(1, height - top - bottom);
+      const xRange = getPaddedRange(points.map((p) => p[xKey]), 0, 1);
+      const yRange = getPaddedRange(points.map((p) => p[yKey]), -1, 1);
+      const xMin = options.xMin ?? xRange.min;
+      const xMax = options.xMax ?? xRange.max;
+      const yMin = options.yMin ?? yRange.min;
+      const yMax = options.yMax ?? yRange.max;
+      const xToPx = (value) => left + ((value - xMin) / (xMax - xMin || 1)) * plotW;
+      const yToPx = (value) => top + (1 - (value - yMin) / (yMax - yMin || 1)) * plotH;
+
+      chartCtx.clearRect(0, 0, width, height);
+      chartCtx.fillStyle = "#ffffff";
+      chartCtx.fillRect(0, 0, width, height);
+      chartCtx.strokeStyle = "#d8e0ea";
+      chartCtx.lineWidth = 1;
+      chartCtx.fillStyle = "#637083";
+      chartCtx.font = "12px Segoe UI, sans-serif";
+
+      for (let i = 0; i <= 5; i += 1) {
+        const x = left + (plotW * i) / 5;
+        const value = xMin + ((xMax - xMin) * i) / 5;
+        chartCtx.beginPath();
+        chartCtx.moveTo(x, top);
+        chartCtx.lineTo(x, top + plotH);
+        chartCtx.stroke();
+        chartCtx.textAlign = "center";
+        chartCtx.textBaseline = "top";
+        chartCtx.fillText(formatAxisTick(value), x, top + plotH + 8);
+      }
+
+      for (let i = 0; i <= 5; i += 1) {
+        const y = top + (plotH * i) / 5;
+        const value = yMax - ((yMax - yMin) * i) / 5;
+        chartCtx.beginPath();
+        chartCtx.moveTo(left, y);
+        chartCtx.lineTo(left + plotW, y);
+        chartCtx.stroke();
+        chartCtx.textAlign = "right";
+        chartCtx.textBaseline = "middle";
+        chartCtx.fillText(formatAxisTick(value), left - 8, y);
+      }
+
+      if (yMin < 0 && yMax > 0) {
+        const zeroY = yToPx(0);
+        chartCtx.strokeStyle = "#8b98a8";
+        chartCtx.lineWidth = 1.3;
+        chartCtx.beginPath();
+        chartCtx.moveTo(left, zeroY);
+        chartCtx.lineTo(left + plotW, zeroY);
+        chartCtx.stroke();
+      }
+
+      chartCtx.strokeStyle = "#17212b";
+      chartCtx.lineWidth = 1.4;
+      chartCtx.strokeRect(left, top, plotW, plotH);
+      chartCtx.strokeStyle = options.lineColor || "#087388";
+      chartCtx.lineWidth = 2.4;
+      chartCtx.beginPath();
+      points.forEach((point, index) => {
+        const x = xToPx(point[xKey]);
+        const y = yToPx(point[yKey]);
+        if (index === 0) chartCtx.moveTo(x, y);
+        else chartCtx.lineTo(x, y);
+      });
+      chartCtx.stroke();
+
+      if (options.crossings) {
+        const crossingColor = controls.crossingMode.value === "up" ? "#2e9d44" : "#d63b3b";
+        chartCtx.strokeStyle = crossingColor;
+        chartCtx.fillStyle = crossingColor;
+        chartCtx.lineWidth = 1;
+        options.crossings.forEach((crossing) => {
+          const x = xToPx(crossing.time_s);
+          if (x < left || x > left + plotW) return;
+          chartCtx.beginPath();
+          chartCtx.moveTo(x, top);
+          chartCtx.lineTo(x, top + plotH);
+          chartCtx.stroke();
+          chartCtx.beginPath();
+          chartCtx.arc(x, yToPx(0), 4, 0, Math.PI * 2);
+          chartCtx.fill();
+        });
+      }
+
+      chartCtx.fillStyle = "#17212b";
+      chartCtx.font = "700 14px Segoe UI, sans-serif";
+      chartCtx.textAlign = "left";
+      chartCtx.textBaseline = "alphabetic";
+      chartCtx.fillText(title, left, 22);
+      chartCtx.textAlign = "center";
+      chartCtx.fillText(xLabel, left + plotW / 2, height - 10);
+      chartCtx.save();
+      chartCtx.translate(17, top + plotH / 2);
+      chartCtx.rotate(-Math.PI / 2);
+      chartCtx.fillText(yLabel, 0, 0);
+      chartCtx.restore();
+    }
+
+    function drawChartLegend(chartCtx, items, x, y) {
+      chartCtx.save();
+      chartCtx.font = "12px Segoe UI, sans-serif";
+      chartCtx.textAlign = "left";
+      chartCtx.textBaseline = "middle";
+      items.forEach((item, index) => {
+        const yy = y + index * 21;
+        if (item.type === "line") {
+          chartCtx.strokeStyle = item.color;
+          chartCtx.lineWidth = 3;
+          chartCtx.beginPath();
+          chartCtx.moveTo(x, yy);
+          chartCtx.lineTo(x + 26, yy);
+          chartCtx.stroke();
+        } else {
+          chartCtx.fillStyle = item.color;
+          chartCtx.beginPath();
+          chartCtx.arc(x + 13, yy, 5, 0, Math.PI * 2);
+          chartCtx.fill();
+        }
+        chartCtx.fillStyle = "#17212b";
+        chartCtx.fillText(item.label, x + 36, yy);
+      });
+      chartCtx.restore();
+    }
+
+    function drawAnalysisMainCanvas(rows, crossings) {
+      if (!rows.length) return;
+      const points = rows.map((row) => ({ x: row.time_s, y: row.eta_m }));
+      drawAutoLineChart(canvas, ctx, points, "x", "y", "Imported water level signal", "t (s)", "eta (m)", { crossings });
+      const rect = canvas.getBoundingClientRect();
+      const crossingLabel = controls.crossingMode.value === "up" ? "Zero-up crossing" : "Zero-down crossing";
+      const crossingColor = controls.crossingMode.value === "up" ? "#2e9d44" : "#d63b3b";
+      drawChartLegend(ctx, [
+        { type: "line", color: "#087388", label: "Water surface" },
+        { type: "dot", color: crossingColor, label: crossingLabel }
+      ], Math.max(70, rect.width - 230), 32);
+      ctx.fillStyle = "#637083";
+      ctx.font = "12px Segoe UI, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+      ctx.fillText(`${controls.crossingMode.value === "up" ? "zero-up" : "zero-down"} crossings: ${crossings.length}`, rect.width - 22, 14);
+      labels.time.textContent = `samples = ${rows.length}`;
+    }
+
+    function drawAnalysisTimeSeries(rows) {
+      if (!rows.length) return;
+      const points = rows.map((row) => ({ x: row.time_s, y: row.eta_m }));
+      drawAutoLineChart(analysisWaveCanvas, analysisWaveCtx, points, "x", "y", "Water Surface Signal", "t (s)", "eta (m)");
+      const rect = analysisWaveCanvas.getBoundingClientRect();
+      drawChartLegend(analysisWaveCtx, [
+        { type: "line", color: "#087388", label: "Water surface" }
+      ], Math.max(70, rect.width - 190), 32);
+    }
+
+
+    function normalizeSpectrumForPlot(spectrum, specStats) {
+      const m0 = specStats?.m0;
+      const fp = Number.isFinite(specStats?.Tp) && specStats.Tp > 0 ? 1 / specStats.Tp : NaN;
+      if (!Number.isFinite(m0) || m0 <= 0 || !Number.isFinite(fp) || fp <= 0) return [];
+      return spectrum
+        .filter((point) => point.f > 0 && point.S >= 0)
+        .map((point) => ({
+          nondimF: point.f / fp,
+          nondimS: (point.S * fp) / m0
+        }))
+        // =====================================================
+        // 分析模組：無因次頻譜裁切
+        // 僅保留 f/fp <= 4.5。
+        // 高於此範圍的頻率通常為高頻尾端，
+        // 容易受到 FFT leakage、aliasing、取樣間距與資料長度影響。
+        // =====================================================
+        .filter((point) => Number.isFinite(point.nondimF) && Number.isFinite(point.nondimS) && point.nondimF <= 4.5);
+    }
+
+    function theoreticalSpectrumCurve(type, Hs, Tp, depth, gamma, fMin, fMax, count = 220) {
+      if (!Number.isFinite(Hs) || Hs <= 0 || !Number.isFinite(Tp) || Tp <= 0) return [];
+      const fp = 1 / Tp;
+      const safeFMin = Math.max(fMin || fp * 0.2, fp * 0.05, 1e-5);
+      const safeFMax = Math.max(fMax || fp * 5, safeFMin * 1.1);
+      const n = Math.max(20, count);
+      const df = (safeFMax - safeFMin) / (n - 1);
+      const raw = [];
+      let m0Raw = 0;
+      for (let i = 0; i < n; i += 1) {
+        const f = safeFMin + i * df;
+        const value = spectrumShape(type, f, fp, depth, gamma);
+        raw.push({ f, value });
+        if (i > 0) m0Raw += value * df;
+      }
+      const targetM0 = Hs * Hs / 16;
+      const scale = m0Raw > 0 ? targetM0 / m0Raw : 0;
+      return raw.map((point) => ({ f: point.f, S: point.value * scale }));
+    }
+
+    function drawMultiLineChart(chartCanvas, chartCtx, seriesList, title, xLabel, yLabel, options = {}) {
+      const rect = chartCanvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const left = 62;
+      const right = 24;
+      const top = 34;
+      const bottom = 50;
+      const plotW = Math.max(1, width - left - right);
+      const plotH = Math.max(1, height - top - bottom);
+      const allPoints = seriesList.flatMap((series) => series.points || []);
+      const xRange = getPaddedRange(allPoints.map((p) => p.x), 0, 1);
+      const yRange = getPaddedRange(allPoints.map((p) => p.y), 0, 1);
+      const xMin = options.xMin ?? xRange.min;
+      const xMax = options.xMax ?? xRange.max;
+      const yMin = options.yMin ?? Math.min(0, yRange.min);
+      const yMax = options.yMax ?? yRange.max;
+      const xToPx = (value) => left + ((value - xMin) / (xMax - xMin || 1)) * plotW;
+      const yToPx = (value) => top + (1 - (value - yMin) / (yMax - yMin || 1)) * plotH;
+
+      chartCtx.clearRect(0, 0, width, height);
+      chartCtx.fillStyle = "#ffffff";
+      chartCtx.fillRect(0, 0, width, height);
+      chartCtx.strokeStyle = "#d8e0ea";
+      chartCtx.lineWidth = 1;
+      chartCtx.fillStyle = "#637083";
+      chartCtx.font = "12px Segoe UI, sans-serif";
+
+      for (let i = 0; i <= 5; i += 1) {
+        const x = left + (plotW * i) / 5;
+        const value = xMin + ((xMax - xMin) * i) / 5;
+        chartCtx.beginPath();
+        chartCtx.moveTo(x, top);
+        chartCtx.lineTo(x, top + plotH);
+        chartCtx.stroke();
+        chartCtx.textAlign = "center";
+        chartCtx.textBaseline = "top";
+        chartCtx.fillText(formatAxisTick(value), x, top + plotH + 8);
+      }
+      for (let i = 0; i <= 5; i += 1) {
+        const y = top + (plotH * i) / 5;
+        const value = yMax - ((yMax - yMin) * i) / 5;
+        chartCtx.beginPath();
+        chartCtx.moveTo(left, y);
+        chartCtx.lineTo(left + plotW, y);
+        chartCtx.stroke();
+        chartCtx.textAlign = "right";
+        chartCtx.textBaseline = "middle";
+        chartCtx.fillText(formatAxisTick(value), left - 8, y);
+      }
+
+      chartCtx.strokeStyle = "#17212b";
+      chartCtx.lineWidth = 1.4;
+      chartCtx.strokeRect(left, top, plotW, plotH);
+
+      seriesList.forEach((series) => {
+        const pts = (series.points || []).filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+        if (!pts.length) return;
+        chartCtx.save();
+        chartCtx.setLineDash(series.dash || []);
+        chartCtx.strokeStyle = series.color;
+        chartCtx.lineWidth = series.width || 2;
+        chartCtx.beginPath();
+        pts.forEach((point, index) => {
+          const x = xToPx(point.x);
+          const y = yToPx(point.y);
+          if (index === 0) chartCtx.moveTo(x, y);
+          else chartCtx.lineTo(x, y);
+        });
+        chartCtx.stroke();
+        chartCtx.restore();
+      });
+
+      chartCtx.fillStyle = "#17212b";
+      chartCtx.font = "700 14px Segoe UI, sans-serif";
+      chartCtx.textAlign = "left";
+      chartCtx.textBaseline = "alphabetic";
+      chartCtx.fillText(title, left, 22);
+      chartCtx.textAlign = "center";
+      chartCtx.fillText(xLabel, left + plotW / 2, height - 10);
+      chartCtx.save();
+      chartCtx.translate(17, top + plotH / 2);
+      chartCtx.rotate(-Math.PI / 2);
+      chartCtx.fillText(yLabel, 0, 0);
+      chartCtx.restore();
+
+      const legendItems = seriesList.map((series) => ({ type: "line", color: series.color, label: series.label }));
+      drawChartLegend(chartCtx, legendItems, Math.max(left + 10, width - 210), top + 16);
+    }
+
+    function drawAnalysisNonDimSpectrum(spectrum, specStats) {
+      const points = normalizeSpectrumForPlot(spectrum, specStats).map((point) => ({ x: point.nondimF, y: point.nondimS }));
+      if (!points.length) {
+        analysisNonDimSpectrumCtx.clearRect(0, 0, analysisNonDimSpectrumCanvas.getBoundingClientRect().width, analysisNonDimSpectrumCanvas.getBoundingClientRect().height);
+        return;
+      }
+      // =====================================================
+      // 無因次頻譜圖
+      // X 軸固定為 0 ~ 4.5，避免高頻尾端壓縮主要波峰區。
+      // =====================================================
+      drawAutoLineChart(analysisNonDimSpectrumCanvas, analysisNonDimSpectrumCtx, points, "x", "y", "Non-dimensional spectrum", "f / fp", "S(f) fp / m0", { xMin: 0, xMax: 4.5, yMin: 0 });
+    }
+
+    function drawAnalysisSpectrumComparison(spectrum, specStats) {
+      if (!spectrum.length || !Number.isFinite(specStats.Hm0) || !Number.isFinite(specStats.Tp)) {
+        analysisCompareSpectrumCtx.clearRect(0, 0, analysisCompareSpectrumCanvas.getBoundingClientRect().width, analysisCompareSpectrumCanvas.getBoundingClientRect().height);
+        return;
+      }
+      // =====================================================
+      // 頻譜比對圖裁切
+      // 以實測尖峰週期 Tp 換算 fp = 1/Tp，
+      // 比對圖只顯示到 f/fp <= 4.5，也就是 f <= 4.5fp。
+      // 這樣 PM / JONSWAP / Bretschneider / TMA 與實測頻譜
+      // 會集中在主要能量範圍，避免高頻尾端雜訊影響判讀。
+      // =====================================================
+      const fp = 1 / specStats.Tp;
+      const maxCompareFrequency = 4.5 * fp;
+      const measured = spectrum
+        .filter((point) => point.f <= maxCompareFrequency)
+        .map((point) => ({ x: point.f, y: point.S }));
+      const fValues = spectrum.map((point) => point.f).filter((f) => f > 0 && f <= maxCompareFrequency);
+      const fMin = Math.min(...fValues);
+      const fMax = Math.max(...fValues);
+      const depth = Number(controls.depthNumber.value) || 15;
+      const gamma = Number(controls.gamma.value) || 3.3;
+      const toPoints = (curve) => curve.map((point) => ({ x: point.f, y: point.S }));
+      const series = [
+        { label: "Measured", color: "#087388", width: 2.8, points: measured },
+        { label: "PM", color: "#9b4a1f", dash: [8, 5], points: toPoints(theoreticalSpectrumCurve("pm", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) },
+        { label: "JONSWAP", color: "#2e9d44", dash: [5, 4], points: toPoints(theoreticalSpectrumCurve("jonswap", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) },
+        { label: "Bretschneider", color: "#6f42c1", dash: [10, 4], points: toPoints(theoreticalSpectrumCurve("bretschneider", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) },
+        { label: "TMA", color: "#d63b3b", dash: [3, 4], points: toPoints(theoreticalSpectrumCurve("tma", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) }
+      ];
+      drawMultiLineChart(analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx, series, "Spectrum comparison", "f (Hz)", "S(f) (m²/Hz)", { xMin: 0, xMax: fMax, yMin: 0 });
+    }
+
+    function runWaveAnalysis() {
+      const rows = parseAnalysisInput();
+      if (rows.length < 4) {
+        controls.analysisNote.textContent = "請貼上至少 4 筆兩欄資料：time, eta。";
+        ctx.clearRect(0, 0, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+        analysisWaveCtx.clearRect(0, 0, analysisWaveCanvas.getBoundingClientRect().width, analysisWaveCanvas.getBoundingClientRect().height);
+        analysisSpectrumCtx.clearRect(0, 0, analysisSpectrumCanvas.getBoundingClientRect().width, analysisSpectrumCanvas.getBoundingClientRect().height);
+        analysisNonDimSpectrumCtx.clearRect(0, 0, analysisNonDimSpectrumCanvas.getBoundingClientRect().width, analysisNonDimSpectrumCanvas.getBoundingClientRect().height);
+        analysisCompareSpectrumCtx.clearRect(0, 0, analysisCompareSpectrumCanvas.getBoundingClientRect().width, analysisCompareSpectrumCanvas.getBoundingClientRect().height);
+        return;
+      }
+      const stats = zeroCrossingStats(rows, controls.crossingMode.value);
+      const spectrum = estimateSpectrum(rows, controls.analysisSpectrumMethod.value);
+      const specStats = spectrumMoments(spectrum);
+      controls.analysisSummary.innerHTML = `
+        <div class="metric"><span>資料筆數 Samples</span><strong>${stats.samples}</strong></div>
+        <div class="metric"><span>波數 Waves</span><strong>${stats.waves.length}</strong></div>
+        <div class="metric"><span>Hmax</span><strong>${Number.isFinite(stats.Hmax) ? stats.Hmax.toFixed(3) + " m" : "-"}</strong></div>
+        <div class="metric"><span>H1/3 / Hs</span><strong>${Number.isFinite(stats.H13) ? stats.H13.toFixed(3) + " m" : "-"}</strong></div>
+        <div class="metric"><span>H1/10</span><strong>${Number.isFinite(stats.H10) ? stats.H10.toFixed(3) + " m" : "-"}</strong></div>
+        <div class="metric"><span>Hmean</span><strong>${Number.isFinite(stats.Hmean) ? stats.Hmean.toFixed(3) + " m" : "-"}</strong></div>
+        <div class="metric"><span>Tz</span><strong>${Number.isFinite(stats.Tz) ? stats.Tz.toFixed(3) + " s" : "-"}</strong></div>
+        <div class="metric"><span>Hm0</span><strong>${Number.isFinite(specStats.Hm0) ? specStats.Hm0.toFixed(3) + " m" : "-"}</strong></div>
+        <div class="metric"><span>Tp</span><strong>${Number.isFinite(specStats.Tp) ? specStats.Tp.toFixed(3) + " s" : "-"}</strong></div>
+        <div class="metric"><span>Tm01 / Tm02</span><strong>${Number.isFinite(specStats.Tm01) && Number.isFinite(specStats.Tm02) ? specStats.Tm01.toFixed(3) + " / " + specStats.Tm02.toFixed(3) + " s" : "-"}</strong></div>
+        <div class="metric"><span>切割法 Method</span><strong>${controls.crossingMode.value === "up" ? "Zero-up" : "Zero-down"}</strong></div>`;
+      drawAnalysisMainCanvas(rows, stats.crossings);
+      drawAnalysisTimeSeries(rows);
+      if (spectrum.length) {
+        drawAutoLineChart(analysisSpectrumCanvas, analysisSpectrumCtx, spectrum, "f", "S", `${controls.analysisSpectrumMethod.options[controls.analysisSpectrumMethod.selectedIndex].text}`, "f (Hz)", "S(f) (m²/Hz)", { yMin: 0 });
+        drawAnalysisNonDimSpectrum(spectrum, specStats);
+        drawAnalysisSpectrumComparison(spectrum, specStats);
+      }
+      controls.analysisNote.textContent = `完成：偵測到 ${stats.crossings.length} 個零切點、${stats.waves.length} 個完整波；頻譜方法為 ${controls.analysisSpectrumMethod.options[controls.analysisSpectrumMethod.selectedIndex].text}，並計算 Hm0、Tp、Tm01、Tm02。下方新增無因次頻譜與 PM / JONSWAP / Bretschneider / TMA 理論頻譜比對。`;
+    }
+
+    function loadAnalysisSample() {
+      const rows = [];
+      const dt = 0.1;
+      for (let i = 0; i <= 600; i += 1) {
+        const t = i * dt;
+        const eta = 0.55 * Math.cos((2 * Math.PI / 6) * t) + 0.22 * Math.cos((2 * Math.PI / 3.8) * t + 0.7);
+        rows.push(`${t.toFixed(2)},${eta.toFixed(4)}`);
+      }
+      controls.analysisInput.value = rows.join("\n");
+      runWaveAnalysis();
+    }
+
+    function generateTimeSeries(model, dt, totalTime) {
+      if (activeWaveMode === "irregular") {
+        return generateIrregularTimeSeries(model, dt, totalTime);
+      }
+
+      const rows = [];
+      const safeDt = clamp(Number(dt) || 0.05, 0.000001, 100000);
+      const duration = clamp(Number(totalTime) || model.T, safeDt, 100000000);
+      const samples = clamp(Math.floor(duration / safeDt) + 1, 2, 1000000);
+      const phase0 = timeStartPhase(model);
+      for (let i = 0; i < samples; i += 1) {
+        const time = Math.min(i * safeDt, duration);
+        const eta = waveEta(model, phase0 + model.omega * time);
+        rows.push({ time_s: time, eta_m: eta });
+      }
+      return rows;
+    }
+
+    function exportText(model, rows, type) {
+      if (type === "json") {
+        return {
+          text: JSON.stringify(rows.map((row) => [Number(row.time_s.toFixed(6)), Number(row.eta_m.toFixed(6))]), null, 2),
+          mime: "application/json",
+          ext: "json"
+        };
+      }
+
+      if (type === "txt") {
+        const body = rows.map((row) => `${row.time_s.toFixed(6)}\t${row.eta_m.toFixed(6)}`).join("\n");
+        return {
+          text: `${body}\n`,
+          mime: "text/plain",
+          ext: "txt"
+        };
+      }
+
+      const lines = rows.map((row) => `${row.time_s.toFixed(6)},${row.eta_m.toFixed(6)}`);
+      return { text: `${lines.join("\n")}\n`, mime: "text/csv", ext: "csv" };
+    }
+
+    function exportSpectrum(model, type) {
+      const rows = buildSpectrumCurve(model).curve;
+
+      if (type === "json") {
+        return {
+          text: JSON.stringify(rows.map((row) => [Number(row.f.toFixed(8)), Number(row.S.toPrecision(8))]), null, 2),
+          mime: "application/json",
+          ext: "json"
+        };
+      }
+
+      if (type === "txt") {
+        const body = rows.map((row) => `${row.f.toFixed(8)}\t${row.S.toPrecision(8)}`).join("\n");
+        return { text: `${body}\n`, mime: "text/plain", ext: "txt" };
+      }
+
+      const lines = rows.map((row) => `${row.f.toFixed(8)},${row.S.toPrecision(8)}`);
+      return { text: `${lines.join("\n")}\n`, mime: "text/csv", ext: "csv" };
+    }
+
+    function buildSpectrumSvg(model) {
+      const { curve } = buildSpectrumCurve(model);
+      const width = 1200;
+      const height = 650;
+      const left = 90;
+      const right = 50;
+      const top = 70;
+      const bottom = 80;
+      const plotW = width - left - right;
+      const plotH = height - top - bottom;
+      const xMin = Math.min(...curve.map((row) => row.f));
+      const xMax = Math.max(...curve.map((row) => row.f));
+      const yMax = Math.max(...curve.map((row) => row.S), 1e-9);
+      const xToPx = (value) => left + ((value - xMin) / (xMax - xMin || 1)) * plotW;
+      const yToPx = (value) => top + (1 - value / yMax) * plotH;
+      const points = curve.map((row) => `${xToPx(row.f).toFixed(2)},${yToPx(row.S).toFixed(2)}`).join(" ");
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="100%" height="100%" fill="#f8fbfd"/>
+  ${Array.from({ length: 6 }, (_, index) => {
+    const f = xMin + ((xMax - xMin) * index) / 5;
+    const x = xToPx(f);
+    return `<line x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${top + plotH}" stroke="#d8e0ea"/>
+  <text x="${x.toFixed(2)}" y="${top + plotH + 24}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#17212b">${f.toFixed(3)}</text>`;
+  }).join("\n  ")}
+  ${Array.from({ length: 6 }, (_, index) => {
+    const s = (yMax * index) / 5;
+    const y = yToPx(s);
+    return `<line x1="${left}" y1="${y.toFixed(2)}" x2="${left + plotW}" y2="${y.toFixed(2)}" stroke="#d8e0ea"/>
+  <text x="${left - 12}" y="${(y + 5).toFixed(2)}" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="15" fill="#17212b">${s.toPrecision(3)}</text>`;
+  }).join("\n  ")}
+  <polyline points="${points}" fill="none" stroke="#087388" stroke-width="5"/>
+  <rect x="${left}" y="${top}" width="${plotW}" height="${plotH}" fill="none" stroke="#17212b" stroke-width="2"/>
+  <text x="${left}" y="42" font-family="Segoe UI, sans-serif" font-size="25" font-weight="700" fill="#17212b">${controls.spectrumType.value.toUpperCase()} spectrum</text>
+  <text x="${width / 2}" y="${height - 22}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#17212b">f (Hz)</text>
+  <text x="28" y="${(top + plotH / 2).toFixed(2)}" text-anchor="middle" transform="rotate(-90 28 ${(top + plotH / 2).toFixed(2)})" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#17212b">S(f) (m^2/Hz)</text>
+</svg>`;
+    }
+
+    function buildSvg(model, rows) {
+      const width = 1200;
+      const height = 600;
+      const pad = 70;
+      const topPad = 85;
+      const bottomPad = 80;
+      const plotW = width - 2 * pad;
+      const plotH = height - topPad - bottomPad;
+      const yMax = model.H / 2;
+      const yMin = -model.H / 2;
+      const yToPx = (value) => topPad + (1 - (value - yMin) / (yMax - yMin || 1)) * plotH;
+      const duration = rows.length ? rows[rows.length - 1].time_s : model.T;
+      const dt = rows.length > 1 ? rows[1].time_s - rows[0].time_s : 0;
+      const xToPx = (time) => pad + (time / duration) * plotW;
+      const points = rows.map((row) => {
+        const x = xToPx(row.time_s);
+        const y = yToPx(row.eta_m);
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      }).join(" ");
+      const zeroY = yToPx(0);
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="100%" height="100%" fill="#f8fbfd"/>
+  ${Array.from({ length: 6 }, (_, index) => {
+    const time = (duration * index) / 5;
+    const x = xToPx(time);
+    return `<line x1="${x.toFixed(2)}" y1="${topPad}" x2="${x.toFixed(2)}" y2="${topPad + plotH}" stroke="#d8e0ea"/>
+  <text x="${x.toFixed(2)}" y="${topPad + plotH + 24}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" fill="#17212b">${time.toFixed(2)}</text>`;
+  }).join("\n  ")}
+  ${(() => {
+    const yStep = niceStep(yMax - yMin, 6);
+    const ticks = [];
+    for (let yTick = Math.ceil(yMin / yStep) * yStep; yTick <= yMax + 1e-9; yTick += yStep) {
+      const y = yToPx(yTick);
+      const label = Number(Math.abs(yTick) < 1e-9 ? 0 : yTick).toFixed(yStep < 1 ? 1 : 0);
+      ticks.push(`<line x1="${pad}" y1="${y.toFixed(2)}" x2="${width - pad}" y2="${y.toFixed(2)}" stroke="#d8e0ea"/>
+  <text x="${pad - 12}" y="${(y + 5).toFixed(2)}" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="14" fill="#17212b">${label}</text>`);
+    }
+    return ticks.join("\n  ");
+  })()}
+  <line x1="${pad}" y1="${zeroY.toFixed(2)}" x2="${width - pad}" y2="${zeroY.toFixed(2)}" stroke="#637083"/>
+  <polyline points="${points}" fill="none" stroke="#087388" stroke-width="5"/>
+  <rect x="${pad}" y="${topPad}" width="${plotW}" height="${plotH}" fill="none" stroke="#17212b" stroke-width="2"/>
+  <text x="${pad}" y="42" font-family="Segoe UI, sans-serif" font-size="24" font-weight="700" fill="#17212b">Eta time series: H/Hs=${model.H.toFixed(2)} m, T/Tp=${model.T.toFixed(2)} s, h=${model.h.toFixed(2)} m</text>
+  <text x="${pad}" y="70" font-family="Segoe UI, sans-serif" font-size="18" fill="#637083">${activeWaveMode === "irregular" ? `spectrum=${controls.spectrumType.value}` : `shape=${model.classification.type}`}, dt=${dt.toFixed(6)} s, total time=${duration.toFixed(3)} s, samples=${rows.length}</text>
+  <text x="${width / 2}" y="${height - 20}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#17212b">time (s)</text>
+  <text x="24" y="${(topPad + plotH / 2).toFixed(2)}" text-anchor="middle" transform="rotate(-90 24 ${(topPad + plotH / 2).toFixed(2)})" font-family="Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#17212b">eta (m)</text>
+</svg>`;
+    }
+
+    function downloadOutput() {
+      if (activeWaveMode === "analysis") {
+        const rows = parseAnalysisInput();
+        const stats = zeroCrossingStats(rows, controls.crossingMode.value);
+        const lines = ["no,start_s,end_s,T_s,H_m,crest_m,trough_m", ...stats.waves.map((w) => `${w.no},${w.start_s.toFixed(6)},${w.end_s.toFixed(6)},${w.T_s.toFixed(6)},${w.H_m.toFixed(6)},${w.crest_m.toFixed(6)},${w.trough_m.toFixed(6)}`)];
+        const blob = new Blob([`${lines.join("\n")}\n`], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "zero-crossing-wave-statistics.csv";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+        return;
+      }
+      const model = current || calculate();
+      const rows = generateTimeSeries(model, Number(controls.dt.value), Number(controls.totalTime.value));
+      const type = controls.fileType.value;
+      const exportingSpectrum = activeWaveMode === "irregular" && controls.outputKind.value === "spectrum";
+      const exported = exportingSpectrum
+        ? type === "svg"
+          ? { text: buildSpectrumSvg(model), mime: "image/svg+xml", ext: "svg" }
+          : exportSpectrum(model, type)
+        : type === "svg"
+          ? { text: buildSvg(model, rows), mime: "image/svg+xml", ext: "svg" }
+          : exportText(model, rows, type);
+      const blob = new Blob([exported.text], { type: `${exported.mime};charset=utf-8` });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      const modeName = activeWaveMode === "irregular" ? `irregular-${controls.spectrumType.value}` : "regular";
+      const outputName = exportingSpectrum ? "spectrum" : "eta-time";
+      anchor.download = `${modeName}-${outputName}-H${model.H.toFixed(2)}-T${model.T.toFixed(2)}-h${model.h.toFixed(2)}.${exported.ext}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function update() {
+      current = calculate();
+      irregularPreviewCache = null;
+      syncPair(controls.height, controls.heightNumber, current.H);
+      syncPair(controls.period, controls.periodNumber, current.T);
+      syncPair(controls.depth, controls.depthNumber, current.h);
+      updateLabels(current);
+      drawTheoryChart(current);
+      drawSpectrumCharts(current);
+    }
+
+    function animate(now) {
+      if (activeWaveMode !== "analysis") {
+        if (!current) update();
+        draw(current, (now - startTime) / 1000);
+      }
+      animationId = requestAnimationFrame(animate);
+    }
+
+    [
+      ["height", "heightNumber"],
+      ["period", "periodNumber"],
+      ["depth", "depthNumber"]
+    ].forEach(([rangeKey, numberKey]) => {
+      controls[rangeKey].addEventListener("input", () => {
+        controls[numberKey].value = controls[rangeKey].value;
+        update();
+      });
+      controls[numberKey].addEventListener("input", update);
+    });
+
+    function setWaveMode(mode) {
+      activeWaveMode = mode;
+      controls.regularTab.classList.toggle("active", mode === "regular");
+      controls.irregularTab.classList.toggle("active", mode === "irregular");
+      controls.analysisTab.classList.toggle("active", mode === "analysis");
+      controls.regularTab.setAttribute("aria-pressed", mode === "regular");
+      controls.irregularTab.setAttribute("aria-pressed", mode === "irregular");
+      controls.analysisTab.setAttribute("aria-pressed", mode === "analysis");
+      controls.regularPanel.classList.toggle("active", mode === "regular");
+      controls.irregularPanel.classList.toggle("active", mode === "irregular");
+      controls.analysisPanel.classList.toggle("active", mode === "analysis");
+      controls.theoryWrap.style.display = mode === "regular" ? "" : "none";
+      controls.spectrumInfo.classList.toggle("active", mode === "irregular");
+      controls.analysisInfo.classList.toggle("active", mode === "analysis");
+      controls.lowerTitle.textContent = mode === "regular" ? "波浪理論分類圖" : mode === "irregular" ? "波譜名詞說明" : "Water Surface Signal";
+      controls.outputKind.disabled = mode === "regular" || mode === "analysis";
+      if (mode === "regular" || mode === "analysis") controls.outputKind.value = "eta";
+      resizeCanvas();
+      if (mode === "analysis") runWaveAnalysis();
+      else update();
+    }
+
+    controls.regularTab.addEventListener("click", () => setWaveMode("regular"));
+    controls.irregularTab.addEventListener("click", () => setWaveMode("irregular"));
+    controls.analysisTab.addEventListener("click", () => setWaveMode("analysis"));
+
+    [controls.spectrumType, controls.gamma, controls.components, controls.seed, controls.dt, controls.totalTime, controls.outputKind].forEach((control) => {
+      control.addEventListener("input", update);
+      control.addEventListener("change", update);
+    });
+
+    [controls.analysisInput, controls.crossingMode, controls.demeanMode, controls.analysisSpectrumMethod].forEach((control) => {
+      control.addEventListener("input", () => { if (activeWaveMode === "analysis") runWaveAnalysis(); });
+      control.addEventListener("change", () => { if (activeWaveMode === "analysis") runWaveAnalysis(); });
+    });
+    document.getElementById("runAnalysis").addEventListener("click", runWaveAnalysis);
+    document.getElementById("loadSample").addEventListener("click", loadAnalysisSample);
+
+    document.getElementById("download").addEventListener("click", downloadOutput);
+    document.getElementById("reset").addEventListener("click", () => {
+      controls.heightNumber.value = 2;
+      controls.periodNumber.value = 8;
+      controls.depthNumber.value = 15;
+      controls.spectrumType.value = "pm";
+      controls.gamma.value = 3.3;
+      controls.components.value = 128;
+      controls.seed.value = 12345;
+      controls.dt.value = 0.05;
+      controls.totalTime.value = 8;
+      controls.fileType.value = "csv";
+      controls.outputKind.value = "eta";
+      controls.analysisInput.value = "";
+      startTime = performance.now();
+      if (activeWaveMode === "analysis") {
+        runWaveAnalysis();
+      } else {
+        update();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      if (current) {
+        if (activeWaveMode === "analysis") {
+          runWaveAnalysis();
+        } else {
+          draw(current, 0);
+          drawTheoryChart(current);
+          drawSpectrumCharts(current);
+        }
+      }
+    });
+
+    resizeCanvas();
+    update();
+    cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(animate);
+  </script>
+
+  <script id="module-split-init">
+    // =====================================================
+    // 模組初始化
+    // 目的：由主控頁載入本 HTML 時，自動切到指定功能模組。
+    // 目前模組：irregular
+    // =====================================================
+    window.addEventListener('load', () => {
+      document.body.classList.add('module-irregular');
+      if (typeof setWaveMode === 'function') {
+        setWaveMode('irregular');
+      }
+    });
+  </script>
+</body>
+</html>
