@@ -568,6 +568,31 @@
     }
 
 
+
+    .definition-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .definition-card h3 {
+      margin: 0;
+      color: var(--accent-dark);
+      font-size: 1rem;
+    }
+
+    .definition-card ul {
+      margin: 0;
+      padding-left: 1.2em;
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+
     @media (max-width: 860px) {
       .fit-detail-grid {
         grid-template-columns: 1fr;
@@ -637,7 +662,7 @@
     <header>
       <div>
         <h1>零上/下切與頻譜分析<br><span lang="en">Zero Crossing & Spectral Analysis</span></h1>
-        <p class="subtitle">匯入水位時序列，執行零上/零下切、波浪統計、無因次頻譜與理論頻譜比對。</p>
+        <p class="subtitle">匯入水位時序列，執行零上/零下切時域統計與頻譜統計。H1/3 可與 Hs / Hm0 對照；Tz 為零切平均週期，不等同於 Tp。</p>
       </div>
     </header>
 
@@ -652,7 +677,7 @@
 
           <div class="control">
             <div class="label-row">
-              <label for="height">波高 H</label>
+              <label for="height">參考波高 H / Hs</label>
               <span class="value" id="heightValue">2.00 m</span>
             </div>
             <input id="height" type="range" min="0.1" max="12" step="0.1" value="2">
@@ -661,7 +686,7 @@
 
           <div class="control">
             <div class="label-row">
-              <label for="period">週期 T</label>
+              <label for="period">參考週期 T / Tp</label>
               <span class="value" id="periodValue">8.00 s</span>
             </div>
             <input id="period" type="range" min="1" max="25" step="0.1" value="8">
@@ -678,7 +703,7 @@
           </div>
 
           <div class="tab-panel active" id="regularPanel">
-            <p class="hint">規則波一律使用完整線性色散關係計算，水深分類顯示在結果區。</p>
+            <p class="hint">規則波以 H 與 T 表示單一波高與週期；不規則波與頻譜比對則以 Hs 與 Tp 表示頻譜尺度。</p>
           </div>
 
           <div class="tab-panel" id="irregularPanel">
@@ -712,7 +737,7 @@
 
 
           <div class="tab-panel" id="analysisPanel">
-            <p class="hint">貼上兩欄資料：時間 t(s) 與水位 η(m)，可用逗號、Tab 或空白分隔。Paste two columns: time and surface elevation.</p>
+            <p class="hint">貼上兩欄資料：時間 t(s) 與水位 η(m)，可用逗號、Tab 或空白分隔。分析結果會同時提供時域零切統計與頻域頻譜統計。</p>
             <div class="control">
               <label for="analysisInput">時間序列資料 Time series</label>
               <textarea id="analysisInput" placeholder="0,0.00&#10;0.05,0.03&#10;0.10,0.07"></textarea>
@@ -837,11 +862,23 @@
           </div>
         </div>
         <div class="analysis-info" id="analysisInfo">
+
+          <div class="definition-card" id="analysisTermCard">
+            <h3>名詞定義與比對原則 Terminology</h3>
+            <ul>
+              <li><strong>H1/3</strong>：零切法取得所有個別波高後，取最高三分之一波高之平均；常作為時域 significant wave height。</li>
+              <li><strong>Hm0 = 4√m0</strong>：由頻譜零階矩 m0 計算之顯著波高；理論上常與 Hs、H1/3 接近。</li>
+              <li><strong>Tz</strong>：零上切或零下切平均週期，為時域平均週期。</li>
+              <li><strong>Tp</strong>：頻譜尖峰週期，Tp = 1 / fp；不規則波中通常不可直接拿 Tz 與 Tp 比。</li>
+              <li><strong>Tm01、Tm02</strong>：由頻譜矩計算的平均週期；Tz 通常較適合與 Tm02 對照。</li>
+            </ul>
+          </div>
+
           <div class="analysis-summary" id="analysisSummary">
             <div class="metric"><span>資料筆數 Samples</span><strong>-</strong></div>
             <div class="metric"><span>波數 Waves</span><strong>-</strong></div>
-            <div class="metric"><span>H1/3 / Hs</span><strong>-</strong></div>
-            <div class="metric"><span>Tz</span><strong>-</strong></div>
+            <div class="metric"><span>H1/3 ≈ Hs</span><strong>-</strong></div>
+            <div class="metric"><span>Tz 零切平均週期</span><strong>-</strong></div>
           </div>
           <div class="spectrum-charts">
             <div class="analysis-chart"><canvas id="analysisWaveCanvas" width="600" height="360" aria-label="波浪時間序列與零切點" role="img"></canvas></div>
@@ -860,16 +897,16 @@
                 <div class="fit-card">
                   <p class="fit-note-title">說明與主要參數</p>
                   <ul class="fit-note" id="fitNoteList">
-                    <li>右下角圖表會顯示實測頻譜與四種理論波譜擬合結果。</li>
+                    <li>右下角圖表顯示實測頻譜與四種理論頻譜擬合結果；擬合參數中的 Hs 為 significant wave height，Tp 為 peak period。</li>
                   </ul>
                   <div id="fitParamTableWrap"></div>
                 </div>
                 </div>
               </div>
-              <div class="fit-hint">NRMSE 越小表示擬合越好；綠色星號 ★ 為最佳擬合結果。判讀時仍建議搭配資料長度、頻率解析度與時序列穩定性一起確認。</div>
+              <div class="fit-hint">NRMSE 越小表示擬合越好；綠色星號 ★ 為最佳擬合結果。判讀時請注意：Hs/Hm0/H1/3 是波高對照組，Tp 與 Tz 則不是同一種週期。</div>
             </div>
           </div>
-          <p class="hint" id="analysisNote">零切分析會依所選零上切或零下切分割個別波，波高取每段內 max(η)-min(η)。頻譜可選 Raw、Hann、Welch、Smoothed Welch 四種方法。</p>
+          <p class="hint" id="analysisNote">零切分析依零上切或零下切分割個別波，波高取每段 max(η)-min(η)。時域 H1/3 可與頻域 Hm0 對照；Tz 是零切平均週期，通常不等於頻譜尖峰週期 Tp。</p>
         </div>
       </section>
     </section>
@@ -2854,7 +2891,7 @@
         { ...specStats, ...stats, rows },
         controls.analysisSpectrumMethod?.selectedOptions?.[0]?.textContent || ""
       );
-      controls.analysisNote.textContent = `完成：偵測到 ${stats.crossings.length} 個零切點、${stats.waves.length} 個完整波；頻譜方法為 ${controls.analysisSpectrumMethod.options[controls.analysisSpectrumMethod.selectedIndex].text}，並計算 Hm0、Tp、Tm01、Tm02。右下角已改為 PM / JONSWAP / Bretschneider / TMA 最小 RMSE 擬合比對，最佳擬合：${fitSummary}。`;
+      controls.analysisNote.textContent = `完成：偵測到 ${stats.crossings.length} 個零切點、${stats.waves.length} 個完整波；頻譜方法為 ${controls.analysisSpectrumMethod.options[controls.analysisSpectrumMethod.selectedIndex].text}，並計算 Hm0、Tp、Tm01、Tm02；其中 Tp 為頻譜尖峰週期，Tz 為零切平均週期。右下角已改為 PM / JONSWAP / Bretschneider / TMA 最小 RMSE 擬合比對，最佳擬合：${fitSummary}。`;
     }
 
     function loadAnalysisSample() {
