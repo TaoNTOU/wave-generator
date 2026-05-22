@@ -443,4 +443,250 @@ document
 
 updateSpectrumUI();
 
+  // =====================================================
+// Spectrum Shape Function
+// 真正頻譜計算核心
+// =====================================================
+
+function spectrumShape(
+  type,
+  f,
+  fp,
+  depth
+) {
+
+  if (f <= 0) {
+    return 0;
+  }
+
+  // ===================================================
+  // PM Parameters
+  // ===================================================
+
+  const pmAlpha =
+    Number(
+      document.getElementById("pmAlpha").value
+    ) || 0.0081;
+
+  const pmBeta =
+    Number(
+      document.getElementById("pmBeta").value
+    ) || 1.25;
+
+  // ===================================================
+  // JONSWAP Parameters
+  // ===================================================
+
+  const gamma =
+    Number(
+      document.getElementById("jonswapGamma").value
+    ) || 3.3;
+
+  const sigmaA =
+    Number(
+      document.getElementById("jonswapSigmaA").value
+    ) || 0.07;
+
+  const sigmaB =
+    Number(
+      document.getElementById("jonswapSigmaB").value
+    ) || 0.09;
+
+  const jonswapAlpha =
+    Number(
+      document.getElementById("jonswapAlpha").value
+    ) || 0.0081;
+
+  // ===================================================
+  // Bretschneider Parameters
+  // ===================================================
+
+  const Hs =
+    Number(
+      document.getElementById("bretschneiderHs").value
+    ) || 2.0;
+
+  const Tp =
+    Number(
+      document.getElementById("bretschneiderTp").value
+    ) || 8.0;
+
+  // ===================================================
+  // TMA Parameters
+  // ===================================================
+
+  const tmaGamma =
+    Number(
+      document.getElementById("tmaGamma").value
+    ) || 3.3;
+
+  const tmaDepthFactor =
+    Number(
+      document.getElementById("tmaDepthFactor").value
+    ) || 1.0;
+
+  const tmaShallowCoeff =
+    Number(
+      document.getElementById("tmaShallowCoeff").value
+    ) || 1.0;
+
+  // ===================================================
+  // PM Spectrum
+  // ===================================================
+
+  if (type === "pm") {
+
+    return (
+      pmAlpha *
+      g * g *
+      Math.pow(2 * Math.PI, -4) *
+      Math.pow(f, -5) *
+      Math.exp(
+        -pmBeta *
+        Math.pow(fp / f, 4)
+      )
+    );
+
+  }
+
+  // ===================================================
+  // JONSWAP Spectrum
+  // ===================================================
+
+  if (type === "jonswap") {
+
+    const sigma =
+      f <= fp
+        ? sigmaA
+        : sigmaB;
+
+    const pm =
+      jonswapAlpha *
+      g * g *
+      Math.pow(2 * Math.PI, -4) *
+      Math.pow(f, -5) *
+      Math.exp(
+        -1.25 *
+        Math.pow(fp / f, 4)
+      );
+
+    const enhancement =
+      Math.pow(
+        gamma,
+        Math.exp(
+          -Math.pow(f - fp, 2) /
+          (
+            2 *
+            sigma *
+            sigma *
+            fp *
+            fp
+          )
+        )
+      );
+
+    return pm * enhancement;
+
+  }
+
+  // ===================================================
+  // Bretschneider Spectrum
+  // ===================================================
+
+  if (type === "bretschneider") {
+
+    return (
+      (5 / 16) *
+      Hs *
+      Hs *
+      Math.pow(fp, 4) *
+      Math.pow(f, -5) *
+      Math.exp(
+        -1.25 *
+        Math.pow(fp / f, 4)
+      )
+    );
+
+  }
+
+  // ===================================================
+  // TMA Spectrum
+  // ===================================================
+
+  if (type === "tma") {
+
+    const sigma =
+      f <= fp
+        ? sigmaA
+        : sigmaB;
+
+    const pm =
+      jonswapAlpha *
+      g * g *
+      Math.pow(2 * Math.PI, -4) *
+      Math.pow(f, -5) *
+      Math.exp(
+        -1.25 *
+        Math.pow(fp / f, 4)
+      );
+
+    const enhancement =
+      Math.pow(
+        tmaGamma,
+        Math.exp(
+          -Math.pow(f - fp, 2) /
+          (
+            2 *
+            sigma *
+            sigma *
+            fp *
+            fp
+          )
+        )
+      );
+
+    // ===============================================
+    // shallow water correction
+    // ===============================================
+
+    const omega =
+      2 * Math.PI * f;
+
+    const k =
+      solveWaveNumber(
+        1 / f,
+        depth
+      );
+
+    const kh =
+      k * depth;
+
+    let phi =
+      Math.pow(
+        Math.tanh(kh),
+        2
+      );
+
+    phi *=
+      tmaDepthFactor;
+
+    phi *=
+      tmaShallowCoeff;
+
+    return (
+      pm *
+      enhancement *
+      phi
+    );
+
+  }
+
+  // ===================================================
+  // fallback
+  // ===================================================
+
+  return 0;
+
+}
+
 </script>
