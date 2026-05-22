@@ -1,201 +1,277 @@
 <!-- ===================================================== -->
-<!-- Interactive Spectrum Information Panel -->
-<!-- 放在不規則波右下角 -->
+<!-- 不規則波參數控制 + 頻譜理論互動模組 -->
+<!-- 完整版 -->
 <!-- ===================================================== -->
 
-<div id="spectrumInfoBox" class="spectrum-info-box">
+<div class="control">
 
-  <!-- ================================================= -->
-  <!-- PM Spectrum -->
-  <!-- ================================================= -->
+  <label for="spectrumType">
+    Spectrum Method
+  </label>
 
-  <div id="pmInfo" class="spectrum-info-panel">
+  <select id="spectrumType">
 
-    <h3>Pierson-Moskowitz Spectrum</h3>
+    <option value="pm">
+      Pierson-Moskowitz
+    </option>
 
-    <p>
-      Fully developed sea spectrum under steady wind conditions.
-    </p>
+    <option value="jonswap">
+      JONSWAP
+    </option>
 
-<pre>
-S(f)=αg²(2π)^-4 f^-5 exp[-5/4(fp/f)^4]
-</pre>
+    <option value="bretschneider">
+      Bretschneider
+    </option>
 
-    <table class="info-table">
+    <option value="tma">
+      TMA
+    </option>
 
-      <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-      </tr>
+  </select>
 
-      <tr>
-        <td>α</td>
-        <td>Phillips constant</td>
-      </tr>
+</div>
 
-      <tr>
-        <td>fp</td>
-        <td>Peak frequency</td>
-      </tr>
+<!-- ===================================================== -->
+<!-- PM Parameters -->
+<!-- ===================================================== -->
 
-      <tr>
-        <td>f</td>
-        <td>Frequency (Hz)</td>
-      </tr>
+<div id="pmControls"
+     class="spectrum-control-panel">
 
-      <tr>
-        <td>S(f)</td>
-        <td>Spectral density (m²/Hz)</td>
-      </tr>
+  <div class="control">
 
-    </table>
+    <label>
+      α (Phillips constant)
+    </label>
+
+    <input id="pmAlpha"
+           type="number"
+           step="0.0001"
+           value="0.0081">
 
   </div>
 
-  <!-- ================================================= -->
-  <!-- JONSWAP Spectrum -->
-  <!-- ================================================= -->
+  <div class="control">
+
+    <label>
+      β (Decay coefficient)
+    </label>
+
+    <input id="pmBeta"
+           type="number"
+           step="0.01"
+           value="1.25">
+
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- JONSWAP Parameters -->
+<!-- ===================================================== -->
+
+<div id="jonswapControls"
+     class="spectrum-control-panel"
+     style="display:none;">
+
+  <div class="control">
+
+    <label>
+      γ (Peak enhancement)
+    </label>
+
+    <input id="jonswapGamma"
+           type="number"
+           step="0.1"
+           value="3.3">
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      σa
+    </label>
+
+    <input id="jonswapSigmaA"
+           type="number"
+           step="0.01"
+           value="0.07">
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      σb
+    </label>
+
+    <input id="jonswapSigmaB"
+           type="number"
+           step="0.01"
+           value="0.09">
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      α
+    </label>
+
+    <input id="jonswapAlpha"
+           type="number"
+           step="0.0001"
+           value="0.0081">
+
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- Bretschneider Parameters -->
+<!-- ===================================================== -->
+
+<div id="bretschneiderControls"
+     class="spectrum-control-panel"
+     style="display:none;">
+
+  <div class="control">
+
+    <label>
+      Hs (m)
+    </label>
+
+    <input id="bretschneiderHs"
+           type="number"
+           step="0.1"
+           value="2.0">
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      Tp (s)
+    </label>
+
+    <input id="bretschneiderTp"
+           type="number"
+           step="0.1"
+           value="8.0">
+
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- TMA Parameters -->
+<!-- ===================================================== -->
+
+<div id="tmaControls"
+     class="spectrum-control-panel"
+     style="display:none;">
+
+  <div class="control">
+
+    <label>
+      γ
+    </label>
+
+    <input id="tmaGamma"
+           type="number"
+           step="0.1"
+           value="3.3">
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      Depth correction
+    </label>
+
+    <input id="tmaDepthFactor"
+           type="number"
+           step="0.01"
+           value="1.0">
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      Shallow coefficient
+    </label>
+
+    <input id="tmaShallowCoeff"
+           type="number"
+           step="0.01"
+           value="1.0">
+
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- 頻譜理論說明 -->
+<!-- ===================================================== -->
+
+<div id="spectrumInfoBox"
+     class="spectrum-info-box">
+
+  <div id="pmInfo"
+       class="spectrum-info-panel">
+
+    <h3>
+      Pierson-Moskowitz Spectrum
+    </h3>
+
+<pre>
+S(f)=αg²(2π)^-4 f^-5 exp[-β(fp/f)^4]
+</pre>
+
+  </div>
 
   <div id="jonswapInfo"
        class="spectrum-info-panel"
        style="display:none;">
 
-    <h3>JONSWAP Spectrum</h3>
-
-    <p>
-      Fetch-limited growing sea spectrum with peak enhancement.
-    </p>
+    <h3>
+      JONSWAP Spectrum
+    </h3>
 
 <pre>
-S(f)=PM(f)·γ^exp[-(f-fp)²/(2σ²fp²)]
+S(f)=PM(f)·γ^exp[-(f-fp)^2/(2σ^2fp^2)]
 </pre>
 
-    <table class="info-table">
-
-      <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-      </tr>
-
-      <tr>
-        <td>γ</td>
-        <td>Peak enhancement factor</td>
-      </tr>
-
-      <tr>
-        <td>σ</td>
-        <td>Spectral width parameter</td>
-      </tr>
-
-      <tr>
-        <td>fp</td>
-        <td>Peak frequency</td>
-      </tr>
-
-      <tr>
-        <td>S(f)</td>
-        <td>Spectral density (m²/Hz)</td>
-      </tr>
-
-    </table>
-
   </div>
-
-  <!-- ================================================= -->
-  <!-- Bretschneider Spectrum -->
-  <!-- ================================================= -->
 
   <div id="bretschneiderInfo"
        class="spectrum-info-panel"
        style="display:none;">
 
-    <h3>Bretschneider Spectrum</h3>
-
-    <p>
-      Engineering two-parameter spectrum commonly used in coastal engineering.
-    </p>
+    <h3>
+      Bretschneider Spectrum
+    </h3>
 
 <pre>
 S(f)=5/16 Hs² fp⁴ f^-5 exp[-5/4(fp/f)^4]
 </pre>
 
-    <table class="info-table">
-
-      <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-      </tr>
-
-      <tr>
-        <td>Hs</td>
-        <td>Significant wave height</td>
-      </tr>
-
-      <tr>
-        <td>fp</td>
-        <td>Peak frequency</td>
-      </tr>
-
-      <tr>
-        <td>f</td>
-        <td>Frequency (Hz)</td>
-      </tr>
-
-      <tr>
-        <td>S(f)</td>
-        <td>Spectral density (m²/Hz)</td>
-      </tr>
-
-    </table>
-
   </div>
-
-  <!-- ================================================= -->
-  <!-- TMA Spectrum -->
-  <!-- ================================================= -->
 
   <div id="tmaInfo"
        class="spectrum-info-panel"
        style="display:none;">
 
-    <h3>TMA Spectrum</h3>
-
-    <p>
-      Shallow water modified JONSWAP spectrum.
-    </p>
+    <h3>
+      TMA Spectrum
+    </h3>
 
 <pre>
 S_TMA(f)=S_JONSWAP(f)·Φ(ω,h)
 </pre>
-
-    <table class="info-table">
-
-      <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-      </tr>
-
-      <tr>
-        <td>Φ</td>
-        <td>Shallow water correction factor</td>
-      </tr>
-
-      <tr>
-        <td>ω</td>
-        <td>Angular frequency</td>
-      </tr>
-
-      <tr>
-        <td>h</td>
-        <td>Water depth</td>
-      </tr>
-
-      <tr>
-        <td>S(f)</td>
-        <td>Spectral density (m²/Hz)</td>
-      </tr>
-
-    </table>
 
   </div>
 
@@ -204,36 +280,34 @@ S_TMA(f)=S_JONSWAP(f)·Φ(ω,h)
 <style>
 
 /* ===================================================== */
-/* Spectrum Information Panel */
+/* Spectrum Panel */
 /* ===================================================== */
 
-.spectrum-info-box {
+.spectrum-control-panel {
 
-  margin-top: 18px;
+  margin-top: 12px;
 
-  padding: 16px;
+  padding: 12px;
 
   border: 1px solid #d8e0ea;
 
-  border-radius: 10px;
+  border-radius: 8px;
 
   background: #fbfcfd;
 
 }
 
-.spectrum-info-box h3 {
+.spectrum-info-box {
 
-  margin-top: 0;
+  margin-top: 16px;
 
-  margin-bottom: 8px;
+  padding: 14px;
 
-}
+  border: 1px solid #d8e0ea;
 
-.spectrum-info-box p {
+  border-radius: 8px;
 
-  margin-bottom: 10px;
-
-  color: #4c5968;
+  background: #fbfcfd;
 
 }
 
@@ -247,35 +321,6 @@ S_TMA(f)=S_JONSWAP(f)·Φ(ω,h)
 
   overflow-x: auto;
 
-  font-size: 14px;
-
-}
-
-.info-table {
-
-  width: 100%;
-
-  border-collapse: collapse;
-
-  margin-top: 10px;
-
-}
-
-.info-table th,
-.info-table td {
-
-  border: 1px solid #d8e0ea;
-
-  padding: 8px;
-
-  text-align: left;
-
-}
-
-.info-table th {
-
-  background: #eef4f8;
-
 }
 
 </style>
@@ -283,14 +328,29 @@ S_TMA(f)=S_JONSWAP(f)·Φ(ω,h)
 <script>
 
 // =====================================================
-// Interactive Spectrum Information
-// 根據 Spectrum Type 切換說明
+// Spectrum UI Update
 // =====================================================
 
-function updateSpectrumInfo() {
+function updateSpectrumUI() {
 
   const type =
-    controls.spectrumType.value;
+    document.getElementById("spectrumType").value;
+
+  // ===================================================
+  // hide all control panels
+  // ===================================================
+
+  document
+    .querySelectorAll(".spectrum-control-panel")
+    .forEach(panel => {
+
+      panel.style.display = "none";
+
+    });
+
+  // ===================================================
+  // hide all info panels
+  // ===================================================
 
   document
     .querySelectorAll(".spectrum-info-panel")
@@ -307,6 +367,10 @@ function updateSpectrumInfo() {
   if (type === "pm") {
 
     document
+      .getElementById("pmControls")
+      .style.display = "block";
+
+    document
       .getElementById("pmInfo")
       .style.display = "block";
 
@@ -317,6 +381,10 @@ function updateSpectrumInfo() {
   // ===================================================
 
   if (type === "jonswap") {
+
+    document
+      .getElementById("jonswapControls")
+      .style.display = "block";
 
     document
       .getElementById("jonswapInfo")
@@ -331,6 +399,10 @@ function updateSpectrumInfo() {
   if (type === "bretschneider") {
 
     document
+      .getElementById("bretschneiderControls")
+      .style.display = "block";
+
+    document
       .getElementById("bretschneiderInfo")
       .style.display = "block";
 
@@ -341,6 +413,10 @@ function updateSpectrumInfo() {
   // ===================================================
 
   if (type === "tma") {
+
+    document
+      .getElementById("tmaControls")
+      .style.display = "block";
 
     document
       .getElementById("tmaInfo")
@@ -354,16 +430,17 @@ function updateSpectrumInfo() {
 // Spectrum Type Change Event
 // =====================================================
 
-controls.spectrumType
+document
+  .getElementById("spectrumType")
   .addEventListener(
     "change",
-    updateSpectrumInfo
+    updateSpectrumUI
   );
 
 // =====================================================
 // Initial Update
 // =====================================================
 
-updateSpectrumInfo();
+updateSpectrumUI();
 
 </script>
