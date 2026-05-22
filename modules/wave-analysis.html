@@ -211,7 +211,7 @@
     .canvas-wrap {
       width: 100%;
       aspect-ratio: 16 / 9;
-      min-height: 300px;
+      min-height: 240px;
       border: 1px solid var(--line);
       border-radius: 8px;
       overflow: hidden;
@@ -246,6 +246,10 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 6px;
+    }
+
+    .analysis-info .spectrum-charts {
+      grid-template-columns: 1fr;
     }
 
     .spectrum-chart {
@@ -337,8 +341,8 @@
     }
 
     .analysis-chart {
-      height: 300px;
-      min-height: 300px;
+      height: 240px;
+      min-height: 240px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
@@ -357,6 +361,228 @@
       padding: 10px;
       background: #fff;
     }
+
+
+    .fit-dashboard {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(28, 41, 56, 0.06);
+      gap: 12px;
+    }
+
+    .fit-dashboard.active {
+      display: grid;
+    }
+
+    .fit-title {
+      margin: 0;
+      font-size: 1.12rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fit-title::before {
+      content: "▧";
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+
+    .fit-chart {
+      height: 300px;
+      min-height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .fit-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .fit-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+    }
+
+    .fit-best {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #0d7c3b;
+    }
+
+    .fit-best::before {
+      content: "🏆 ";
+    }
+
+    .fit-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .fit-table th,
+    .fit-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .fit-table th {
+      color: var(--muted);
+      font-weight: 800;
+      background: #f7f9fb;
+    }
+
+    .fit-table td:nth-child(2),
+    .fit-table th:nth-child(2) {
+      text-align: left;
+    }
+
+    .fit-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .fit-rank-1 td {
+      font-weight: 800;
+      color: #087a3a;
+    }
+
+    .fit-note-title {
+      margin: 0 0 8px;
+      font-weight: 900;
+      color: var(--accent-dark);
+    }
+
+    .fit-note-title::before {
+      content: "ℹ ";
+    }
+
+    .fit-note {
+      margin: 0;
+      padding-left: 1.2em;
+      color: var(--ink);
+      line-height: 1.65;
+      font-size: 0.92rem;
+    }
+
+    .fit-hint {
+      border: 1px solid #bfdff0;
+      border-radius: 8px;
+      background: #f4fbff;
+      color: #075985;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+
+    .fit-model-title {
+      margin: 0 0 10px;
+      font-weight: 900;
+      color: #075985;
+    }
+
+    .fit-model-title::before {
+      content: "◉ ";
+    }
+
+    .fit-param-table,
+    .fit-model-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      margin-top: 10px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .fit-param-table th,
+    .fit-param-table td,
+    .fit-model-table th,
+    .fit-model-table td {
+      border: 1px solid var(--line);
+      padding: 7px 8px;
+      vertical-align: top;
+      line-height: 1.45;
+    }
+
+    .fit-param-table th,
+    .fit-model-table th {
+      background: #f7f9fb;
+      color: var(--muted);
+      font-weight: 900;
+      text-align: left;
+    }
+
+    .fit-model-table td:first-child {
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .fit-model-best {
+      color: #087a3a;
+      font-weight: 900;
+    }
+
+    .fit-model-good {
+      color: #087388;
+      font-weight: 800;
+    }
+
+    .fit-model-mid {
+      color: #9b4a1f;
+      font-weight: 800;
+    }
+
+
+    .fit-detail-grid .fit-card {
+      width: 100%;
+    }
+
+    #fitTableWrap,
+    #fitParamTableWrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .fit-model-low {
+      color: #6f42c1;
+      font-weight: 800;
+    }
+
+
+    @media (max-width: 860px) {
+      .fit-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .fit-chart {
+        height: 360px;
+        min-height: 360px;
+      }
+
+      .fit-table {
+        font-size: 0.84rem;
+      }
+    }
+
 
     @media (max-width: 860px) {
       header,
@@ -623,7 +849,25 @@
           </div>
           <div class="spectrum-charts">
             <div class="analysis-chart"><canvas id="analysisNonDimSpectrumCanvas" width="600" height="360" aria-label="無因次頻譜圖" role="img"></canvas></div>
-            <div class="analysis-chart"><canvas id="analysisCompareSpectrumCanvas" width="600" height="360" aria-label="實測頻譜與理論頻譜比對圖" role="img"></canvas></div>
+            <div class="fit-dashboard" id="fitDashboard">
+              <h3 class="fit-title">頻譜比對（擬合結果）</h3>
+              <div class="fit-chart"><canvas id="analysisCompareSpectrumCanvas" width="900" height="420" aria-label="實測頻譜與理論頻譜比對圖" role="img"></canvas></div>
+              <div class="fit-detail-grid">
+                <div class="fit-card">
+                  <p class="fit-best" id="fitBestLabel">最佳擬合：-</p>
+                  <div id="fitTableWrap"></div>
+                </div>
+                <div class="fit-card">
+                  <p class="fit-note-title">說明與主要參數</p>
+                  <ul class="fit-note" id="fitNoteList">
+                    <li>右下角圖表會顯示實測頻譜與四種理論波譜擬合結果。</li>
+                  </ul>
+                  <div id="fitParamTableWrap"></div>
+                </div>
+                </div>
+              </div>
+              <div class="fit-hint">NRMSE 越小表示擬合越好；綠色星號 ★ 為最佳擬合結果。判讀時仍建議搭配資料長度、頻率解析度與時序列穩定性一起確認。</div>
+            </div>
           </div>
           <p class="hint" id="analysisNote">零切分析會依所選零上切或零下切分割個別波，波高取每段內 max(η)-min(η)。頻譜可選 Raw、Hann、Welch、Smoothed Welch 四種方法。</p>
         </div>
@@ -656,6 +900,12 @@
       analysisSpectrumMethod: document.getElementById("analysisSpectrumMethod"),
       analysisSummary: document.getElementById("analysisSummary"),
       analysisNote: document.getElementById("analysisNote"),
+      fitDashboard: document.getElementById("fitDashboard"),
+      fitBestLabel: document.getElementById("fitBestLabel"),
+      fitTableWrap: document.getElementById("fitTableWrap"),
+      fitParamTableWrap: document.getElementById("fitParamTableWrap"),
+      fitModelTableWrap: document.getElementById("fitModelTableWrap"),
+      fitNoteList: document.getElementById("fitNoteList"),
       spectrumType: document.getElementById("spectrumType"),
       gamma: document.getElementById("gamma"),
       components: document.getElementById("components"),
@@ -992,6 +1242,190 @@
       });
 
       return { curve, fp, m0: targetM0 };
+    }
+
+
+    function updateFitDashboardFromResults(fitResults, analysisStats = {}, spectrumMethodName = "") {
+      if (!controls.fitDashboard || !Array.isArray(fitResults) || fitResults.length === 0) return;
+
+      const displayName = {
+        pm: "PM",
+        jonswap: "JONSWAP",
+        bretschneider: "Bretschneider",
+        tma: "TMA"
+      };
+
+      const normalized = fitResults.map((fit) => {
+        const type = fit.type || fit.name || "-";
+        return {
+          ...fit,
+          type,
+          name: displayName[type] || type,
+          Hs: Number.isFinite(fit.Hs) ? fit.Hs : NaN,
+          Tp: Number.isFinite(fit.Tp) ? fit.Tp : NaN,
+          gamma: Number.isFinite(fit.gamma) ? fit.gamma : NaN,
+          rmse: Number.isFinite(fit.rmse) ? fit.rmse : (Number.isFinite(fit.score?.rmse) ? fit.score.rmse : NaN),
+          nrmse: Number.isFinite(fit.nrmse) ? fit.nrmse : (Number.isFinite(fit.score?.nrmse) ? fit.score.nrmse : NaN)
+        };
+      }).sort((a, b) => (a.nrmse ?? Infinity) - (b.nrmse ?? Infinity));
+
+      const best = normalized[0];
+      controls.fitDashboard.classList.add("active");
+      controls.fitBestLabel.textContent = `最佳擬合：${best.name}`;
+
+      const metricClass = (index) => index === 0 ? "fit-model-best" : index === 1 ? "fit-model-good" : index === 2 ? "fit-model-mid" : "fit-model-low";
+      const fmt = (value, digits = 2, suffix = "") => Number.isFinite(value) ? `${value.toFixed(digits)}${suffix}` : "–";
+
+      const tableRows = normalized.map((item, index) => {
+        const star = index === 0 ? " ★" : "";
+        const gammaText = (item.type === "jonswap" || item.type === "tma") ? fmt(item.gamma, 2) : "–";
+        return `<tr class="${index === 0 ? "fit-rank-1" : ""}">
+          <td>${index + 1}</td>
+          <td class="${metricClass(index)}">${item.name}${star}</td>
+          <td>${fmt(item.Hs, 2)}</td>
+          <td>${fmt(item.Tp, 2)}</td>
+          <td>${gammaText}</td>
+          <td>${fmt(item.nrmse, 2, " %")}</td>
+          <td>${fmt(item.rmse, 4)}</td>
+        </tr>`;
+      }).join("");
+
+      controls.fitTableWrap.innerHTML = `<table class="fit-table">
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>波譜型式</th>
+            <th>Hs (m)</th>
+            <th>Tp (s)</th>
+            <th>γ</th>
+            <th>NRMSE ↓</th>
+            <th>RMSE</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>`;
+
+      const waveCount = Array.isArray(analysisStats.waves) ? analysisStats.waves.length : (analysisStats.waveCount ?? "-");
+      const crossingCount = Array.isArray(analysisStats.crossings) ? analysisStats.crossings.length : (analysisStats.crossingCount ?? "-");
+      const methodText = spectrumMethodName || controls.analysisSpectrumMethod?.selectedOptions?.[0]?.textContent || "依目前選擇";
+
+      controls.fitNoteList.innerHTML = `
+        <li>完成：偵測到 ${crossingCount} 個零切點、${waveCount} 個完整波。</li>
+        <li>頻譜方法：${methodText}。</li>
+        <li>擬合方式：以四種理論波譜進行參數搜尋，並最小化 NRMSE。</li>
+        <li>最佳擬合：${best.name}；Hs = ${fmt(best.Hs, 2)} m，Tp = ${fmt(best.Tp, 2)} s，γ = ${(best.type === "jonswap" || best.type === "tma") ? fmt(best.gamma, 2) : "–"}，NRMSE = ${fmt(best.nrmse, 2, " %")}。</li>
+      `;
+
+      const getFirstFinite = (...values) => {
+        for (const value of values) {
+          const number = Number(value);
+          if (Number.isFinite(number)) return number;
+        }
+        return NaN;
+      };
+
+      let rowDt = NaN;
+      let rowDuration = NaN;
+      let rowSampleCount = NaN;
+      if (Array.isArray(analysisStats.rows) && analysisStats.rows.length >= 2) {
+        const times = analysisStats.rows
+          .map((row) => Number(row.t ?? row.time ?? row.time_s))
+          .filter(Number.isFinite)
+          .sort((a, b) => a - b);
+        if (times.length >= 2) {
+          const diffs = [];
+          for (let i = 1; i < times.length; i += 1) {
+            const d = times[i] - times[i - 1];
+            if (Number.isFinite(d) && d > 0) diffs.push(d);
+          }
+          diffs.sort((a, b) => a - b);
+          rowDt = diffs.length ? diffs[Math.floor(diffs.length / 2)] : NaN;
+          rowDuration = times[times.length - 1] - times[0];
+          rowSampleCount = times.length;
+        }
+      }
+
+      const dtValue = getFirstFinite(analysisStats.dt, analysisStats.meanDt, analysisStats.timeStep, rowDt);
+      const sampleCount = getFirstFinite(analysisStats.sampleCount, analysisStats.samples, analysisStats.n, rowSampleCount);
+      const timeStart = getFirstFinite(analysisStats.timeStart, analysisStats.tStart, analysisStats.startTime);
+      const timeEnd = getFirstFinite(analysisStats.timeEnd, analysisStats.tEnd, analysisStats.endTime);
+      const durationValue =
+        Number.isFinite(rowDuration) && rowDuration > 0
+          ? rowDuration
+          : getFirstFinite(
+              analysisStats.duration,
+              analysisStats.totalDuration,
+              Number.isFinite(timeEnd) && Number.isFinite(timeStart) ? timeEnd - timeStart : NaN,
+              Number.isFinite(sampleCount) && Number.isFinite(dtValue) ? (sampleCount - 1) * dtValue : NaN
+            );
+
+      const fsValue =
+        Number.isFinite(dtValue) && dtValue > 0
+          ? 1 / dtValue
+          : getFirstFinite(
+              analysisStats.fs,
+              analysisStats.sampleRate,
+              analysisStats.samplingFrequency
+            );
+
+      const dfValue =
+        Number.isFinite(durationValue) && durationValue > 0
+          ? 1 / durationValue
+          : getFirstFinite(
+              analysisStats.df,
+              analysisStats.deltaF,
+              analysisStats.frequencyResolution
+            );
+
+      controls.fitParamTableWrap.innerHTML = `<table class="fit-param-table">
+        <tbody>
+          <tr><th>Hm0</th><td>${fmt(analysisStats.Hm0, 2)} m</td></tr>
+          <tr><th>Tp</th><td>${fmt(analysisStats.Tp, 2)} s</td></tr>
+          <tr><th>Tm01</th><td>${fmt(analysisStats.Tm01, 2)} s</td></tr>
+          <tr><th>Tm02</th><td>${fmt(analysisStats.Tm02, 2)} s</td></tr>
+          <tr><th>頻率解析度 Δf</th><td>${fmt(dfValue, 5)} Hz</td></tr>
+          <tr><th>資料長度</th><td>${fmt(durationValue, 1)} s</td></tr>
+          <tr><th>採樣頻率 fs</th><td>${fmt(fsValue, 2)} Hz</td></tr>
+        </tbody>
+      </table>`;
+
+      const rankByType = Object.fromEntries(normalized.map((item, index) => [item.type, index]));
+      const performanceText = (type) => {
+        const fit = normalized.find((item) => item.type === type);
+        const rank = rankByType[type];
+        if (!fit) return "未完成擬合。";
+        const nrmse = fmt(fit.nrmse * 100, 2, " %");
+        if (rank === 0) return `峰值與整體能量最接近實測，NRMSE 最小（${nrmse}）。`;
+        if (rank === 1) return `整體接近，但部分頻段仍略有差異（NRMSE ${nrmse}）。`;
+        if (rank === 2) return `可描述主要能量範圍，但峰值或尾端誤差較明顯（NRMSE ${nrmse}）。`;
+        return `相對誤差最大，僅作為輔助比較（NRMSE ${nrmse}）。`;
+      };
+
+      const modelRows = [
+        ["jonswap", "JONSWAP", "風浪常用，含尖峰因子 γ，可描述較尖銳峰值。"],
+        ["tma", "TMA", "JONSWAP 加入有限水深修正，適合近岸或淺水影響。"],
+        ["pm", "PM", "完全發展波浪，無尖峰因子，形狀較受限制。"],
+        ["bretschneider", "Bretschneider", "工程常用雙參數波譜，能量分布通常較寬。"]
+      ].map(([type, name, feature]) => {
+        const rank = rankByType[type];
+        const star = rank === 0 ? " ★<br><small>（最佳擬合）</small>" : "";
+        return `<tr>
+          <td class="${Number.isFinite(rank) ? metricClass(rank) : ""}">${name}${star}</td>
+          <td>${feature}</td>
+          <td>${performanceText(type)}</td>
+        </tr>`;
+      }).join("");
+
+      controls.fitModelTableWrap.innerHTML = `<table class="fit-model-table">
+        <thead>
+          <tr>
+            <th>波譜型式</th>
+            <th>特徵說明</th>
+            <th>擬合表現</th>
+          </tr>
+        </thead>
+        <tbody>${modelRows}</tbody>
+      </table>`;
     }
 
     function drawLineChart(chartCanvas, chartCtx, points, xKey, yKey, title, xLabel, yLabel) {
@@ -1845,10 +2279,24 @@
     }
 
     function spectrumMoments(spectrum) {
-      if (spectrum.length < 2) return { m0: NaN, Hm0: NaN, Tp: NaN, Tm01: NaN, Tm02: NaN };
+      if (spectrum.length < 2) {
+        return {
+          m0: NaN,
+          Hm0: NaN,
+          Tp: NaN,
+          Tm01: NaN,
+          Tm02: NaN,
+          df: NaN,
+          duration: NaN,
+          fs: NaN
+        };
+      }
+
       let m0 = 0;
       let m1 = 0;
       let m2 = 0;
+      const dfList = [];
+
       for (let i = 1; i < spectrum.length; i += 1) {
         const a = spectrum[i - 1];
         const b = spectrum[i];
@@ -1856,17 +2304,27 @@
         const sAvg = 0.5 * (a.S + b.S);
         const fAvg = 0.5 * (a.f + b.f);
         if (df <= 0) continue;
+        dfList.push(df);
         m0 += sAvg * df;
         m1 += fAvg * sAvg * df;
         m2 += fAvg * fAvg * sAvg * df;
       }
+
+      dfList.sort((a, b) => a - b);
+      const df = dfList.length ? dfList[Math.floor(dfList.length / 2)] : NaN;
+      const duration = Number.isFinite(df) && df > 0 ? 1 / df : NaN;
+      const fs = NaN;
+
       const peak = spectrum.reduce((best, point) => point.S > best.S ? point : best, spectrum[0]);
       return {
         m0,
         Hm0: Number.isFinite(m0) && m0 > 0 ? 4 * Math.sqrt(m0) : NaN,
         Tp: peak && peak.f > 0 ? 1 / peak.f : NaN,
         Tm01: m1 > 0 ? m0 / m1 : NaN,
-        Tm02: m2 > 0 ? Math.sqrt(m0 / m2) : NaN
+        Tm02: m2 > 0 ? Math.sqrt(m0 / m2) : NaN,
+        df,
+        duration,
+        fs
       };
     }
 
@@ -2204,6 +2662,110 @@
       drawAutoLineChart(analysisNonDimSpectrumCanvas, analysisNonDimSpectrumCtx, points, "x", "y", "Non-dimensional spectrum", "f / fp", "S(f) fp / m0", { xMin: 0, xMax: 4.5, yMin: 0 });
     }
 
+
+    function interpolateSpectrumValue(points, frequency) {
+      if (!points.length || !Number.isFinite(frequency)) return NaN;
+      if (frequency < points[0].f || frequency > points[points.length - 1].f) return NaN;
+      let lo = 0;
+      let hi = points.length - 1;
+      while (hi - lo > 1) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (points[mid].f <= frequency) lo = mid;
+        else hi = mid;
+      }
+      const a = points[lo];
+      const b = points[hi];
+      const span = b.f - a.f;
+      if (!Number.isFinite(span) || span <= 0) return a.S;
+      const r = (frequency - a.f) / span;
+      return a.S + r * (b.S - a.S);
+    }
+
+    function scoreSpectrumFit(measured, curve) {
+      const curveSorted = curve
+        .filter((point) => Number.isFinite(point.f) && Number.isFinite(point.S) && point.S >= 0)
+        .sort((a, b) => a.f - b.f);
+      const measuredPoints = measured.filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y) && point.y >= 0);
+      if (curveSorted.length < 2 || measuredPoints.length < 4) return { rmse: Infinity, nrmse: Infinity, mae: Infinity, points: 0 };
+      let sse = 0;
+      let sae = 0;
+      let sy = 0;
+      let count = 0;
+      measuredPoints.forEach((point) => {
+        const estimate = interpolateSpectrumValue(curveSorted, point.x);
+        if (!Number.isFinite(estimate)) return;
+        const diff = estimate - point.y;
+        sse += diff * diff;
+        sae += Math.abs(diff);
+        sy += point.y;
+        count += 1;
+      });
+      if (!count) return { rmse: Infinity, nrmse: Infinity, mae: Infinity, points: 0 };
+      const rmse = Math.sqrt(sse / count);
+      const mae = sae / count;
+      const meanY = sy / count;
+      return { rmse, nrmse: meanY > 0 ? rmse / meanY : rmse, mae, points: count };
+    }
+
+    function fitTheoreticalSpectrum(type, measured, specStats, depth, fMin, fMax) {
+      if (!measured.length || !Number.isFinite(specStats.Hm0) || !Number.isFinite(specStats.Tp)) return null;
+      const baseHs = specStats.Hm0;
+      const baseTp = specStats.Tp;
+      const hsFactors = [0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30];
+      const tpFactors = [0.75, 0.85, 0.95, 1.00, 1.05, 1.15, 1.25];
+      const gammaValues = type === "jonswap" || type === "tma" ? [1.0, 1.5, 2.0, 2.5, 3.3, 4.0, 5.0, 6.0, 7.0] : [1.0];
+      let best = null;
+
+      hsFactors.forEach((hf) => {
+        tpFactors.forEach((tf) => {
+          gammaValues.forEach((gamma) => {
+            const Hs = baseHs * hf;
+            const Tp = baseTp * tf;
+            const curve = theoreticalSpectrumCurve(type, Hs, Tp, depth, gamma, fMin, fMax, 260);
+            const score = scoreSpectrumFit(measured, curve);
+            if (!best || score.rmse < best.score.rmse) {
+              best = { type, Hs, Tp, gamma, curve, score };
+            }
+          });
+        });
+      });
+
+      if (!best) return null;
+
+      // 第二階段：在第一階段最佳值附近做細網格搜尋，提高擬合穩定度。
+      const hsStep = baseHs * 0.04;
+      const tpStep = baseTp * 0.04;
+      const gammaStep = type === "jonswap" || type === "tma" ? 0.35 : 0;
+      const hsCandidates = [];
+      const tpCandidates = [];
+      const gammaCandidates = [];
+      for (let i = -3; i <= 3; i += 1) {
+        hsCandidates.push(Math.max(baseHs * 0.25, best.Hs + i * hsStep));
+        tpCandidates.push(Math.max(baseTp * 0.25, best.Tp + i * tpStep));
+        if (gammaStep > 0) gammaCandidates.push(clamp(best.gamma + i * gammaStep, 1, 9));
+      }
+      const refinedGamma = gammaCandidates.length ? gammaCandidates : [best.gamma];
+      hsCandidates.forEach((Hs) => {
+        tpCandidates.forEach((Tp) => {
+          refinedGamma.forEach((gamma) => {
+            const curve = theoreticalSpectrumCurve(type, Hs, Tp, depth, gamma, fMin, fMax, 320);
+            const score = scoreSpectrumFit(measured, curve);
+            if (score.rmse < best.score.rmse) {
+              best = { type, Hs, Tp, gamma, curve, score };
+            }
+          });
+        });
+      });
+
+      return best;
+    }
+
+    function spectrumFitLabel(fit) {
+      if (!fit) return "-";
+      const gammaText = fit.type === "jonswap" || fit.type === "tma" ? `, γ=${fit.gamma.toFixed(2)}` : "";
+      return `Hs=${fit.Hs.toFixed(2)}m, Tp=${fit.Tp.toFixed(2)}s${gammaText}, NRMSE=${fit.score.nrmse.toFixed(2)}`;
+    }
+
     function drawAnalysisSpectrumComparison(spectrum, specStats) {
       if (!spectrum.length || !Number.isFinite(specStats.Hm0) || !Number.isFinite(specStats.Tp)) {
         analysisCompareSpectrumCtx.clearRect(0, 0, analysisCompareSpectrumCanvas.getBoundingClientRect().width, analysisCompareSpectrumCanvas.getBoundingClientRect().height);
@@ -2225,16 +2787,32 @@
       const fMin = Math.min(...fValues);
       const fMax = Math.max(...fValues);
       const depth = Number(controls.depthNumber.value) || 15;
-      const gamma = Number(controls.gamma.value) || 3.3;
       const toPoints = (curve) => curve.map((point) => ({ x: point.f, y: point.S }));
+      const fits = ["pm", "jonswap", "bretschneider", "tma"]
+        .map((type) => fitTheoreticalSpectrum(type, measured, specStats, depth, fMin, fMax))
+        .filter(Boolean)
+        .sort((a, b) => a.score.rmse - b.score.rmse);
+      const fitByType = Object.fromEntries(fits.map((fit) => [fit.type, fit]));
+      const bestFit = fits[0];
       const series = [
         { label: "Measured", color: "#087388", width: 2.8, points: measured },
-        { label: "PM", color: "#9b4a1f", dash: [8, 5], points: toPoints(theoreticalSpectrumCurve("pm", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) },
-        { label: "JONSWAP", color: "#2e9d44", dash: [5, 4], points: toPoints(theoreticalSpectrumCurve("jonswap", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) },
-        { label: "Bretschneider", color: "#6f42c1", dash: [10, 4], points: toPoints(theoreticalSpectrumCurve("bretschneider", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) },
-        { label: "TMA", color: "#d63b3b", dash: [3, 4], points: toPoints(theoreticalSpectrumCurve("tma", specStats.Hm0, specStats.Tp, depth, gamma, fMin, fMax)) }
+        { label: bestFit?.type === "pm" ? "PM fit ★" : "PM fit", color: "#9b4a1f", dash: [8, 5], points: toPoints(fitByType.pm?.curve || []) },
+        { label: bestFit?.type === "jonswap" ? "JONSWAP fit ★" : "JONSWAP fit", color: "#2e9d44", dash: [5, 4], points: toPoints(fitByType.jonswap?.curve || []) },
+        { label: bestFit?.type === "bretschneider" ? "Bretschneider fit ★" : "Bretschneider fit", color: "#6f42c1", dash: [10, 4], points: toPoints(fitByType.bretschneider?.curve || []) },
+        { label: bestFit?.type === "tma" ? "TMA fit ★" : "TMA fit", color: "#d63b3b", dash: [3, 4], points: toPoints(fitByType.tma?.curve || []) }
       ];
-      drawMultiLineChart(analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx, series, "Spectrum comparison", "f (Hz)", "S(f) (m²/Hz)", { xMin: 0, xMax: fMax, yMin: 0 });
+      drawMultiLineChart(analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx, series, "Fitted spectrum comparison", "f (Hz)", "S(f) (m²/Hz)", { xMin: 0, xMax: fMax, yMin: 0 });
+
+      drawAnalysisSpectrumComparison.lastFits = fits;
+      updateFitDashboardFromResults(
+        fits,
+        specStats,
+        controls.analysisSpectrumMethod?.selectedOptions?.[0]?.textContent || ""
+      );
+
+      drawAnalysisSpectrumComparison.lastFitSummary = bestFit
+        ? `${bestFit.type.toUpperCase()}；${spectrumFitLabel(bestFit)}`
+        : "無法完成擬合";
     }
 
     function runWaveAnalysis() {
@@ -2270,7 +2848,13 @@
         drawAnalysisNonDimSpectrum(spectrum, specStats);
         drawAnalysisSpectrumComparison(spectrum, specStats);
       }
-      controls.analysisNote.textContent = `完成：偵測到 ${stats.crossings.length} 個零切點、${stats.waves.length} 個完整波；頻譜方法為 ${controls.analysisSpectrumMethod.options[controls.analysisSpectrumMethod.selectedIndex].text}，並計算 Hm0、Tp、Tm01、Tm02。下方新增無因次頻譜與 PM / JONSWAP / Bretschneider / TMA 理論頻譜比對。`;
+      const fitSummary = drawAnalysisSpectrumComparison.lastFitSummary || "尚未擬合";
+      updateFitDashboardFromResults(
+        drawAnalysisSpectrumComparison.lastFits || [],
+        { ...specStats, ...stats, rows },
+        controls.analysisSpectrumMethod?.selectedOptions?.[0]?.textContent || ""
+      );
+      controls.analysisNote.textContent = `完成：偵測到 ${stats.crossings.length} 個零切點、${stats.waves.length} 個完整波；頻譜方法為 ${controls.analysisSpectrumMethod.options[controls.analysisSpectrumMethod.selectedIndex].text}，並計算 Hm0、Tp、Tm01、Tm02。右下角已改為 PM / JONSWAP / Bretschneider / TMA 最小 RMSE 擬合比對，最佳擬合：${fitSummary}。`;
     }
 
     function loadAnalysisSample() {
