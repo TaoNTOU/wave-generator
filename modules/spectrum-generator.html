@@ -8,6 +8,11 @@
   <meta property="og:title" content="波浪產生器｜Wave Generator">
   <meta property="og:description" content="調整波高、週期與水深，快速產生波浪資料與波譜圖。">
   <meta property="og:type" content="website">
+
+  <!-- KaTeX：用來將公式區顯示為 LaTeX 數學排版 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <title>不規則波與波譜產生 | Irregular Wave & Spectrum Generator</title>
   <style>
     :root {
@@ -277,6 +282,27 @@
       line-height: 1.45;
     }
 
+
+    .formula-box {
+      margin: 8px 0 4px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      overflow-x: auto;
+    }
+
+    .formula-box .katex-display {
+      margin: 0.25em 0;
+    }
+
+    .param-note {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
     canvas {
       display: block;
       width: 100%;
@@ -379,58 +405,6 @@
       line-height: 1.45;
     }
 
-
-    .spectrum-detail-box {
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      margin-bottom: 8px;
-    }
-
-    .spectrum-detail-box h3 {
-      margin: 0;
-      font-size: 1.05rem;
-    }
-
-    .spectrum-formula {
-      margin: 0;
-      padding: 12px;
-      border-radius: 6px;
-      background: #eef4f8;
-      overflow-x: auto;
-      font: 0.92rem Consolas, "Courier New", monospace;
-      line-height: 1.45;
-      white-space: pre-wrap;
-    }
-
-    .spectrum-detail-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .spectrum-detail-grid div {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 10px;
-      background: #fbfcfd;
-      min-width: 0;
-    }
-
-    .spectrum-detail-grid strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .spectrum-detail-grid span {
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 0.88rem;
-    }
-
     @media (max-width: 860px) {
       header,
       .layout {
@@ -457,8 +431,7 @@
       .spectrum-charts,
       .button-row,
       .results,
-      .analysis-summary,
-      .spectrum-detail-grid {
+      .analysis-summary {
         grid-template-columns: 1fr;
       }
     }
@@ -750,26 +723,45 @@
               <canvas id="spectrumNonDimCanvas" width="600" height="320" aria-label="無因次波譜圖" role="img"></canvas>
             </div>
           </div>
-          <div class="spectrum-detail-box" id="spectrumDetailBox">
-            <h3 id="spectrumDetailTitle">Spectrum formula and parameters</h3>
-            <pre class="spectrum-formula" id="spectrumDetailFormula"></pre>
-            <div class="spectrum-detail-grid" id="spectrumDetailParams"></div>
-          </div>
           <div class="spectrum-item">
             <strong>Pierson-Moskowitz (PM)</strong>
+            <div class="formula-box">
+              \[
+              S(f)=A f^{-5}\exp\left[-\beta\left(\frac{f_p}{f}\right)^4\right]
+              \]
+            </div>
             <span>Fully developed sea spectrum, often used when wind has blown long enough over sufficient fetch.</span>
+            <div class="param-note">參數：β 控制低頻側衰減；f<sub>p</sub>=1/T<sub>p</sub>；A 由目標 m<sub>0</sub>=H<sub>s</sub><sup>2</sup>/16 正規化取得。</div>
           </div>
           <div class="spectrum-item">
             <strong>JONSWAP</strong>
+            <div class="formula-box">
+              \[
+              S(f)=A f^{-5}\exp\left[-\beta\left(\frac{f_p}{f}\right)^4\right]\gamma^{\exp\left[-\frac{(f/f_p-1)^2}{2\sigma^2}\right]}
+              \]
+            </div>
             <span>Fetch-limited sea spectrum with a sharper peak controlled by gamma; common for growing wind seas.</span>
+            <div class="param-note">參數：γ 控制尖峰增強；σ=σ<sub>a</sub> when f≤f<sub>p</sub>，σ=σ<sub>b</sub> when f&gt;f<sub>p</sub>；β 控制低頻側衰減。</div>
           </div>
           <div class="spectrum-item">
             <strong>Bretschneider / ISSC</strong>
+            <div class="formula-box">
+              \[
+              S(f)=\frac{5}{16}H_s^2 f_p^4 f^{-5}\exp\left[-\frac{5}{4}\left(\frac{f_p}{f}\right)^4\right]
+              \]
+            </div>
             <span>Two-parameter spectrum commonly described by Hs and Tp; useful for general engineering sea states.</span>
+            <div class="param-note">參數：H<sub>s</sub> 代表顯著波高；T<sub>p</sub> 為尖峰週期；f<sub>p</sub>=1/T<sub>p</sub>；本程式另提供 β 與 fmax/fp 供輸出範圍調整。</div>
           </div>
           <div class="spectrum-item">
             <strong>TMA</strong>
+            <div class="formula-box">
+              \[
+              S_{TMA}(f)=S_{JONSWAP}(f)\,\Phi(\omega,h)
+              \]
+            </div>
             <span>Finite-depth spectrum based on JONSWAP with shallow-water transformation, used for coastal water depths.</span>
+            <div class="param-note">參數：γ、σ<sub>a</sub>、σ<sub>b</sub> 延續 JONSWAP；h 為水深；shallow power 控制有限水深修正強度。</div>
           </div>
         </div>
         <div class="analysis-info" id="analysisInfo">
@@ -1315,73 +1307,6 @@
       chartCtx.rotate(-Math.PI / 2);
       chartCtx.fillText(yLabel, 0, 0);
       chartCtx.restore();
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function updateSpectrumTheoryInfo() {
-      const type = controls.spectrumType.value;
-      const params = getSpectrumParams(type);
-      const titleEl = document.getElementById("spectrumDetailTitle");
-      const formulaEl = document.getElementById("spectrumDetailFormula");
-      const paramsEl = document.getElementById("spectrumDetailParams");
-      if (!titleEl || !formulaEl || !paramsEl) return;
-
-      const info = {
-        pm: {
-          title: "Pierson-Moskowitz (PM)｜完全發展風浪頻譜",
-          formula: "S(f) = A f^-5 exp[-β(fp/f)^4]\nA 由 Hs 自動正規化，使 m0 = Hs²/16。\n輸出單位：S(f) = m²/Hz；η(t) = m。",
-          params: [
-            ["β", `目前 ${params.pmBeta.toFixed(2)}。控制低頻側能量衰減；β 越大，fp 左側下降越快。`],
-            ["fmin / fp", `目前 ${params.pmFminRatio.toFixed(2)}。控制輸出頻率下限。`],
-            ["fmax / fp", `目前 ${params.pmFmaxRatio.toFixed(2)}。控制輸出頻率上限與高頻尾端範圍。`],
-            ["Hs、Tp", "左側波高與週期作為目標顯著波高與尖峰週期；程式會正規化頻譜能量。"]
-          ]
-        },
-        jonswap: {
-          title: "JONSWAP｜成長中風浪／fetch-limited 頻譜",
-          formula: "S(f) = A f^-5 exp[-β(fp/f)^4] γ^r\nr = exp[-(f/fp - 1)² / (2σ²)]\nσ = σa, f ≤ fp；σ = σb, f > fp。",
-          params: [
-            ["γ", `目前 ${params.jonswapGamma.toFixed(2)}。尖峰增強因子；越大代表尖峰越集中。`],
-            ["β", `目前 ${params.jonswapBeta.toFixed(2)}。控制 PM 型基底頻譜的低頻衰減。`],
-            ["σa", `目前 ${params.jonswapSigmaA.toFixed(2)}。控制尖峰左側寬度。`],
-            ["σb", `目前 ${params.jonswapSigmaB.toFixed(2)}。控制尖峰右側寬度。`]
-          ]
-        },
-        bretschneider: {
-          title: "Bretschneider / ISSC｜雙參數工程頻譜",
-          formula: "S(f) = A f^-5 exp[-β(fp/f)^4]\n常用形式：S(f)=5/16 Hs² fp⁴ f^-5 exp[-5/4(fp/f)^4]\n本模組允許調整 β，並以 Hs 正規化總能量。",
-          params: [
-            ["β", `目前 ${params.bretschBeta.toFixed(2)}。預設 1.25；控制低頻側衰減。`],
-            ["fmax / fp", `目前 ${params.bretschFmaxRatio.toFixed(2)}。控制輸出頻率上限。`],
-            ["Hs", "由左側波高 H 指定，並令 m0 = Hs²/16。"],
-            ["Tp", "由左側週期 T 指定，fp = 1/Tp。"]
-          ]
-        },
-        tma: {
-          title: "TMA｜有限水深 JONSWAP 修正頻譜",
-          formula: "S_TMA(f) = S_JONSWAP(f) · Φ(kh)\nΦ(kh) ≈ [tanh(kh)² / (1 + 2kh/sinh(2kh))]^p\n其中 k 由線性色散關係解得，p 為 shallow power。",
-          params: [
-            ["γ", `目前 ${params.tmaGamma.toFixed(2)}。控制 JONSWAP 尖峰增強。`],
-            ["β", `目前 ${params.tmaBeta.toFixed(2)}。控制基底頻譜低頻衰減。`],
-            ["σa / σb", `目前 ${params.tmaSigmaA.toFixed(2)} / ${params.tmaSigmaB.toFixed(2)}。控制尖峰左右寬度。`],
-            ["shallow power", `目前 ${params.tmaShallowPower.toFixed(2)}。控制有限水深修正強度；越大高頻／淺水修正越明顯。`]
-          ]
-        }
-      }[type];
-
-      titleEl.textContent = info.title;
-      formulaEl.textContent = info.formula;
-      paramsEl.innerHTML = info.params
-        .map(([name, text]) => `<div><strong>${escapeHtml(name)}</strong><span>${escapeHtml(text)}</span></div>`)
-        .join("");
     }
 
     function drawSpectrumCharts(model) {
@@ -2792,7 +2717,6 @@
     function update() {
       current = calculate();
       updateSpectrumParamPanels();
-      updateSpectrumTheoryInfo();
       irregularPreviewCache = null;
       syncPair(controls.height, controls.heightNumber, current.H);
       syncPair(controls.period, controls.periodNumber, current.T);
@@ -2933,6 +2857,21 @@
       document.body.classList.add('module-irregular');
       if (typeof setWaveMode === 'function') {
         setWaveMode('irregular');
+      }
+    });
+  </script>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", function () {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "\\(", right: "\\)", display: false }
+          ],
+          throwOnError: false
+        });
       }
     });
   </script>
