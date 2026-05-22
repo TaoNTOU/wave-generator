@@ -358,6 +358,27 @@
       background: #fff;
     }
 
+
+    .spectrum-params {
+      display: none;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+
+    .spectrum-params.active {
+      display: grid;
+    }
+
+    .mini-note {
+      margin: -2px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
     @media (max-width: 860px) {
       header,
       .layout {
@@ -466,20 +487,99 @@
               </select>
             </div>
 
-            <div class="split">
-              <div class="control">
-                <label for="gamma">JONSWAP gamma</label>
-                <input id="gamma" type="number" min="1" step="0.1" value="3.3">
+            <div class="spectrum-params active" id="pmParams">
+              <p class="mini-note">PM 參數：β 控制尖峰左側衰減與低頻能量形狀；fmin/fp、fmax/fp 控制輸出頻率範圍。</p>
+              <div class="split">
+                <div class="control">
+                  <label for="pmBeta">PM β</label>
+                  <input id="pmBeta" type="number" min="0.1" step="0.05" value="1.25">
+                </div>
+                <div class="control">
+                  <label for="pmFmaxRatio">fmax / fp</label>
+                  <input id="pmFmaxRatio" type="number" min="1.5" step="0.1" value="5.0">
+                </div>
               </div>
+              <div class="control">
+                <label for="pmFminRatio">fmin / fp</label>
+                <input id="pmFminRatio" type="number" min="0.02" step="0.01" value="0.20">
+              </div>
+            </div>
+
+            <div class="spectrum-params" id="jonswapParams">
+              <p class="mini-note">JONSWAP 參數：γ 控制尖峰增強；σa、σb 控制尖峰左右寬度。</p>
+              <div class="split">
+                <div class="control">
+                  <label for="gamma">JONSWAP γ</label>
+                  <input id="gamma" type="number" min="1" step="0.1" value="3.3">
+                </div>
+                <div class="control">
+                  <label for="jonswapBeta">JONSWAP β</label>
+                  <input id="jonswapBeta" type="number" min="0.1" step="0.05" value="1.25">
+                </div>
+              </div>
+              <div class="split">
+                <div class="control">
+                  <label for="jonswapSigmaA">σa</label>
+                  <input id="jonswapSigmaA" type="number" min="0.01" step="0.01" value="0.07">
+                </div>
+                <div class="control">
+                  <label for="jonswapSigmaB">σb</label>
+                  <input id="jonswapSigmaB" type="number" min="0.01" step="0.01" value="0.09">
+                </div>
+              </div>
+            </div>
+
+            <div class="spectrum-params" id="bretschneiderParams">
+              <p class="mini-note">Bretschneider / ISSC 參數：β 控制低頻側衰減，尾端階數通常維持 f⁻⁵。</p>
+              <div class="split">
+                <div class="control">
+                  <label for="bretschBeta">Bretschneider β</label>
+                  <input id="bretschBeta" type="number" min="0.1" step="0.05" value="1.25">
+                </div>
+                <div class="control">
+                  <label for="bretschFmaxRatio">fmax / fp</label>
+                  <input id="bretschFmaxRatio" type="number" min="1.5" step="0.1" value="5.0">
+                </div>
+              </div>
+            </div>
+
+            <div class="spectrum-params" id="tmaParams">
+              <p class="mini-note">TMA 參數：γ 控制 JONSWAP 尖峰；shallow power 控制有限水深修正強度。</p>
+              <div class="split">
+                <div class="control">
+                  <label for="tmaGamma">TMA γ</label>
+                  <input id="tmaGamma" type="number" min="1" step="0.1" value="3.3">
+                </div>
+                <div class="control">
+                  <label for="tmaBeta">TMA β</label>
+                  <input id="tmaBeta" type="number" min="0.1" step="0.05" value="1.25">
+                </div>
+              </div>
+              <div class="split">
+                <div class="control">
+                  <label for="tmaSigmaA">σa</label>
+                  <input id="tmaSigmaA" type="number" min="0.01" step="0.01" value="0.07">
+                </div>
+                <div class="control">
+                  <label for="tmaSigmaB">σb</label>
+                  <input id="tmaSigmaB" type="number" min="0.01" step="0.01" value="0.09">
+                </div>
+              </div>
+              <div class="control">
+                <label for="tmaShallowPower">shallow power</label>
+                <input id="tmaShallowPower" type="number" min="0.1" step="0.1" value="1.0">
+              </div>
+            </div>
+
+            <div class="split">
               <div class="control">
                 <label for="components">components</label>
                 <input id="components" type="number" min="16" max="2048" step="1" value="128">
               </div>
-            </div>
-
-            <div class="control">
-              <label for="seed">random seed</label>
-              <input id="seed" type="number" step="1" value="12345">
+              <div class="control">
+                <label for="seed">random seed</label>
+                <input id="seed" type="number" step="1" value="12345">
+              </div>
             </div>
           </div>
 
@@ -553,8 +653,12 @@
           </div>
 
           <div class="button-row">
-            <button id="download">下載輸出</button>
+            <button id="download">依輸出方式下載</button>
             <button class="secondary" id="reset">重設</button>
+          </div>
+          <div class="button-row">
+            <button class="secondary" id="downloadEta" type="button">下載水位時序列</button>
+            <button class="secondary" id="downloadSpectrum" type="button">下載頻譜資料</button>
           </div>
         </div>
 
@@ -657,7 +761,24 @@
       analysisSummary: document.getElementById("analysisSummary"),
       analysisNote: document.getElementById("analysisNote"),
       spectrumType: document.getElementById("spectrumType"),
+      pmParams: document.getElementById("pmParams"),
+      jonswapParams: document.getElementById("jonswapParams"),
+      bretschneiderParams: document.getElementById("bretschneiderParams"),
+      tmaParams: document.getElementById("tmaParams"),
+      pmBeta: document.getElementById("pmBeta"),
+      pmFminRatio: document.getElementById("pmFminRatio"),
+      pmFmaxRatio: document.getElementById("pmFmaxRatio"),
       gamma: document.getElementById("gamma"),
+      jonswapBeta: document.getElementById("jonswapBeta"),
+      jonswapSigmaA: document.getElementById("jonswapSigmaA"),
+      jonswapSigmaB: document.getElementById("jonswapSigmaB"),
+      bretschBeta: document.getElementById("bretschBeta"),
+      bretschFmaxRatio: document.getElementById("bretschFmaxRatio"),
+      tmaGamma: document.getElementById("tmaGamma"),
+      tmaBeta: document.getElementById("tmaBeta"),
+      tmaSigmaA: document.getElementById("tmaSigmaA"),
+      tmaSigmaB: document.getElementById("tmaSigmaB"),
+      tmaShallowPower: document.getElementById("tmaShallowPower"),
       components: document.getElementById("components"),
       seed: document.getElementById("seed"),
       dt: document.getElementById("dt"),
@@ -883,23 +1004,80 @@
       };
     }
 
-    function spectrumShape(type, f, fp, depth, gamma) {
+    function spectrumParamNumber(control, fallback, min = -Infinity, max = Infinity) {
+      const value = Number(control?.value);
+      if (!Number.isFinite(value)) return fallback;
+      return clamp(value, min, max);
+    }
+
+    function getSpectrumParams(type = controls.spectrumType.value) {
+      return {
+        pmBeta: spectrumParamNumber(controls.pmBeta, 1.25, 0.1, 10),
+        pmFminRatio: spectrumParamNumber(controls.pmFminRatio, 0.2, 0.02, 2),
+        pmFmaxRatio: spectrumParamNumber(controls.pmFmaxRatio, 5.0, 1.5, 20),
+        jonswapGamma: spectrumParamNumber(controls.gamma, 3.3, 1, 20),
+        jonswapBeta: spectrumParamNumber(controls.jonswapBeta, 1.25, 0.1, 10),
+        jonswapSigmaA: spectrumParamNumber(controls.jonswapSigmaA, 0.07, 0.01, 0.5),
+        jonswapSigmaB: spectrumParamNumber(controls.jonswapSigmaB, 0.09, 0.01, 0.5),
+        bretschBeta: spectrumParamNumber(controls.bretschBeta, 1.25, 0.1, 10),
+        bretschFmaxRatio: spectrumParamNumber(controls.bretschFmaxRatio, 5.0, 1.5, 20),
+        tmaGamma: spectrumParamNumber(controls.tmaGamma, 3.3, 1, 20),
+        tmaBeta: spectrumParamNumber(controls.tmaBeta, 1.25, 0.1, 10),
+        tmaSigmaA: spectrumParamNumber(controls.tmaSigmaA, 0.07, 0.01, 0.5),
+        tmaSigmaB: spectrumParamNumber(controls.tmaSigmaB, 0.09, 0.01, 0.5),
+        tmaShallowPower: spectrumParamNumber(controls.tmaShallowPower, 1.0, 0.1, 5)
+      };
+    }
+
+    function updateSpectrumParamPanels() {
+      const type = controls.spectrumType.value;
+      controls.pmParams.classList.toggle("active", type === "pm");
+      controls.jonswapParams.classList.toggle("active", type === "jonswap");
+      controls.bretschneiderParams.classList.toggle("active", type === "bretschneider");
+      controls.tmaParams.classList.toggle("active", type === "tma");
+    }
+
+    function spectrumFrequencyRatios(type = controls.spectrumType.value) {
+      const params = getSpectrumParams(type);
+      const fMinRatio = type === "pm" ? params.pmFminRatio : 0.2;
+      const fMaxRatio = type === "pm" ? params.pmFmaxRatio : type === "bretschneider" ? params.bretschFmaxRatio : 5.0;
+      return {
+        fMinRatio: clamp(fMinRatio, 0.02, 2),
+        fMaxRatio: Math.max(clamp(fMaxRatio, 1.5, 20), fMinRatio * 1.1)
+      };
+    }
+
+    function spectrumShape(type, f, fp, depth, gammaOverride = null) {
       if (f <= 0) return 0;
-      const base = Math.pow(f, -5) * Math.exp(-1.25 * Math.pow(fp / f, 4));
+      const params = getSpectrumParams(type);
+      const beta = type === "pm"
+        ? params.pmBeta
+        : type === "bretschneider"
+          ? params.bretschBeta
+          : type === "tma"
+            ? params.tmaBeta
+            : params.jonswapBeta;
+
+      const base = Math.pow(f, -5) * Math.exp(-beta * Math.pow(fp / f, 4));
       let shape = base;
 
-      if (type === "jonswap" || type === "tma") {
-        const sigma = f <= fp ? 0.07 : 0.09;
+      if (type === "jonswap") {
+        const sigma = f <= fp ? params.jonswapSigmaA : params.jonswapSigmaB;
         const peak = Math.exp(-Math.pow(f / fp - 1, 2) / (2 * sigma * sigma));
-        shape *= Math.pow(Math.max(gamma, 1), peak);
+        const gammaValue = gammaOverride ?? params.jonswapGamma;
+        shape *= Math.pow(Math.max(gammaValue, 1), peak);
       }
 
       if (type === "tma") {
-        const omega = 2 * Math.PI * f;
+        const sigma = f <= fp ? params.tmaSigmaA : params.tmaSigmaB;
+        const peak = Math.exp(-Math.pow(f / fp - 1, 2) / (2 * sigma * sigma));
+        const gammaValue = gammaOverride ?? params.tmaGamma;
+        shape *= Math.pow(Math.max(gammaValue, 1), peak);
+
         const k = solveWaveNumber(1 / f, depth);
         const kh = k * depth;
         const shallowFactor = Math.pow(Math.tanh(kh), 2) / Math.max(1e-6, 1 + (2 * kh) / Math.sinh(2 * kh));
-        shape *= clamp(shallowFactor, 0, 1);
+        shape *= Math.pow(clamp(shallowFactor, 0, 1), params.tmaShallowPower);
       }
 
       return shape;
@@ -913,8 +1091,9 @@
       const gamma = Number(controls.gamma.value) || 3.3;
       const componentCount = clamp(Math.round(Number(controls.components.value) || 128), 16, 2048);
       const seed = Number(controls.seed.value) || 1;
-      const fMin = Math.max(1 / Math.max(totalTime, Tp * 8), fp * 0.2);
-      const fMax = Math.max(fMin * 1.1, fp * 5);
+      const { fMinRatio, fMaxRatio } = spectrumFrequencyRatios(type);
+      const fMin = Math.max(1 / Math.max(totalTime, Tp * 8), fp * fMinRatio);
+      const fMax = Math.max(fMin * 1.1, fp * fMaxRatio);
       const df = (fMax - fMin) / componentCount;
       const raw = [];
       let m0Raw = 0;
@@ -966,8 +1145,9 @@
       const type = controls.spectrumType.value;
       const gamma = Number(controls.gamma.value) || 3.3;
       const count = 240;
-      const fMin = fp * 0.2;
-      const fMax = fp * 5;
+      const { fMinRatio, fMaxRatio } = spectrumFrequencyRatios(type);
+      const fMin = fp * fMinRatio;
+      const fMax = fp * fMaxRatio;
       const df = (fMax - fMin) / (count - 1);
       const raw = [];
       let m0Raw = 0;
@@ -2476,8 +2656,17 @@
       URL.revokeObjectURL(url);
     }
 
+    function downloadIrregularOutput(kind) {
+      if (activeWaveMode !== "irregular") setWaveMode("irregular");
+      const previousKind = controls.outputKind.value;
+      controls.outputKind.value = kind;
+      downloadOutput();
+      controls.outputKind.value = previousKind;
+    }
+
     function update() {
       current = calculate();
+      updateSpectrumParamPanels();
       irregularPreviewCache = null;
       syncPair(controls.height, controls.heightNumber, current.H);
       syncPair(controls.period, controls.periodNumber, current.T);
@@ -2533,7 +2722,14 @@
     controls.irregularTab.addEventListener("click", () => setWaveMode("irregular"));
     controls.analysisTab.addEventListener("click", () => setWaveMode("analysis"));
 
-    [controls.spectrumType, controls.gamma, controls.components, controls.seed, controls.dt, controls.totalTime, controls.outputKind].forEach((control) => {
+    [
+      controls.spectrumType,
+      controls.pmBeta, controls.pmFminRatio, controls.pmFmaxRatio,
+      controls.gamma, controls.jonswapBeta, controls.jonswapSigmaA, controls.jonswapSigmaB,
+      controls.bretschBeta, controls.bretschFmaxRatio,
+      controls.tmaGamma, controls.tmaBeta, controls.tmaSigmaA, controls.tmaSigmaB, controls.tmaShallowPower,
+      controls.components, controls.seed, controls.dt, controls.totalTime, controls.outputKind
+    ].forEach((control) => {
       control.addEventListener("input", update);
       control.addEventListener("change", update);
     });
@@ -2546,12 +2742,27 @@
     document.getElementById("loadSample").addEventListener("click", loadAnalysisSample);
 
     document.getElementById("download").addEventListener("click", downloadOutput);
+    document.getElementById("downloadEta").addEventListener("click", () => downloadIrregularOutput("eta"));
+    document.getElementById("downloadSpectrum").addEventListener("click", () => downloadIrregularOutput("spectrum"));
     document.getElementById("reset").addEventListener("click", () => {
       controls.heightNumber.value = 2;
       controls.periodNumber.value = 8;
       controls.depthNumber.value = 15;
       controls.spectrumType.value = "pm";
+      controls.pmBeta.value = 1.25;
+      controls.pmFminRatio.value = 0.20;
+      controls.pmFmaxRatio.value = 5.0;
       controls.gamma.value = 3.3;
+      controls.jonswapBeta.value = 1.25;
+      controls.jonswapSigmaA.value = 0.07;
+      controls.jonswapSigmaB.value = 0.09;
+      controls.bretschBeta.value = 1.25;
+      controls.bretschFmaxRatio.value = 5.0;
+      controls.tmaGamma.value = 3.3;
+      controls.tmaBeta.value = 1.25;
+      controls.tmaSigmaA.value = 0.07;
+      controls.tmaSigmaB.value = 0.09;
+      controls.tmaShallowPower.value = 1.0;
       controls.components.value = 128;
       controls.seed.value = 12345;
       controls.dt.value = 0.05;
