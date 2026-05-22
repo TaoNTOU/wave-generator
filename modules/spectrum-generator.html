@@ -1,344 +1,370 @@
-<!-- ===================================================== -->
-<!-- 不規則波參數控制 + 頻譜理論互動模組 -->
-<!-- 完整版 -->
-<!-- ===================================================== -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Spectrum Interactive Module</title>
+
+<style>
+
+body{
+  font-family:Segoe UI,sans-serif;
+  background:#f5f7fa;
+  padding:24px;
+  color:#17212b;
+}
+
+.control{
+  margin-bottom:16px;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:700;
+}
+
+input,select{
+  width:100%;
+  padding:10px;
+  border:1px solid #d8e0ea;
+  border-radius:6px;
+}
+
+.spectrum-control-panel{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #d8e0ea;
+  border-radius:8px;
+  background:#fbfcfd;
+}
+
+.spectrum-info-box{
+  margin-top:16px;
+  padding:14px;
+  border:1px solid #d8e0ea;
+  border-radius:8px;
+  background:#fbfcfd;
+}
+
+.spectrum-info-box pre{
+  padding:12px;
+  border-radius:6px;
+  background:#eef4f8;
+  overflow-x:auto;
+}
+
+canvas{
+  margin-top:20px;
+  width:100%;
+  height:420px;
+  border:1px solid #d8e0ea;
+  border-radius:8px;
+  background:#fff;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Wave Spectrum Interactive Module</h1>
 
 <div class="control">
 
-  <label for="spectrumType">
-    Spectrum Method
-  </label>
+<label for="spectrumType">
+Spectrum Method
+</label>
 
-  <select id="spectrumType">
+<select id="spectrumType">
 
-    <option value="pm">
-      Pierson-Moskowitz
-    </option>
+<option value="pm">
+Pierson-Moskowitz
+</option>
 
-    <option value="jonswap">
-      JONSWAP
-    </option>
+<option value="jonswap">
+JONSWAP
+</option>
 
-    <option value="bretschneider">
-      Bretschneider
-    </option>
+<option value="bretschneider">
+Bretschneider
+</option>
 
-    <option value="tma">
-      TMA
-    </option>
+<option value="tma">
+TMA
+</option>
 
-  </select>
+</select>
 
 </div>
-
-<!-- ===================================================== -->
-<!-- PM Parameters -->
-<!-- ===================================================== -->
 
 <div id="pmControls"
      class="spectrum-control-panel">
 
-  <div class="control">
+<h3>PM Parameters</h3>
 
-    <label>
-      α (Phillips constant)
-    </label>
+<div class="control">
 
-    <input id="pmAlpha"
-           type="number"
-           step="0.0001"
-           value="0.0081">
+<label>
+α (Phillips constant)
+</label>
 
-  </div>
-
-  <div class="control">
-
-    <label>
-      β (Decay coefficient)
-    </label>
-
-    <input id="pmBeta"
-           type="number"
-           step="0.01"
-           value="1.25">
-
-  </div>
+<input id="pmAlpha"
+       type="number"
+       step="0.0001"
+       value="0.0081">
 
 </div>
 
-<!-- ===================================================== -->
-<!-- JONSWAP Parameters -->
-<!-- ===================================================== -->
+<div class="control">
+
+<label>
+β (Decay coefficient)
+</label>
+
+<input id="pmBeta"
+       type="number"
+       step="0.01"
+       value="1.25">
+
+</div>
+
+</div>
 
 <div id="jonswapControls"
      class="spectrum-control-panel"
      style="display:none;">
 
-  <div class="control">
+<h3>JONSWAP Parameters</h3>
 
-    <label>
-      γ (Peak enhancement)
-    </label>
+<div class="control">
 
-    <input id="jonswapGamma"
-           type="number"
-           step="0.1"
-           value="3.3">
+<label>
+γ (Peak enhancement)
+</label>
 
-  </div>
-
-  <div class="control">
-
-    <label>
-      σa
-    </label>
-
-    <input id="jonswapSigmaA"
-           type="number"
-           step="0.01"
-           value="0.07">
-
-  </div>
-
-  <div class="control">
-
-    <label>
-      σb
-    </label>
-
-    <input id="jonswapSigmaB"
-           type="number"
-           step="0.01"
-           value="0.09">
-
-  </div>
-
-  <div class="control">
-
-    <label>
-      α
-    </label>
-
-    <input id="jonswapAlpha"
-           type="number"
-           step="0.0001"
-           value="0.0081">
-
-  </div>
+<input id="jonswapGamma"
+       type="number"
+       step="0.1"
+       value="3.3">
 
 </div>
 
-<!-- ===================================================== -->
-<!-- Bretschneider Parameters -->
-<!-- ===================================================== -->
+<div class="control">
+
+<label>
+σa
+</label>
+
+<input id="jonswapSigmaA"
+       type="number"
+       step="0.01"
+       value="0.07">
+
+</div>
+
+<div class="control">
+
+<label>
+σb
+</label>
+
+<input id="jonswapSigmaB"
+       type="number"
+       step="0.01"
+       value="0.09">
+
+</div>
+
+<div class="control">
+
+<label>
+α
+</label>
+
+<input id="jonswapAlpha"
+       type="number"
+       step="0.0001"
+       value="0.0081">
+
+</div>
+
+</div>
 
 <div id="bretschneiderControls"
      class="spectrum-control-panel"
      style="display:none;">
 
-  <div class="control">
+<h3>Bretschneider Parameters</h3>
 
-    <label>
-      Hs (m)
-    </label>
+<div class="control">
 
-    <input id="bretschneiderHs"
-           type="number"
-           step="0.1"
-           value="2.0">
+<label>
+Hs (m)
+</label>
 
-  </div>
-
-  <div class="control">
-
-    <label>
-      Tp (s)
-    </label>
-
-    <input id="bretschneiderTp"
-           type="number"
-           step="0.1"
-           value="8.0">
-
-  </div>
+<input id="bretschneiderHs"
+       type="number"
+       step="0.1"
+       value="2.0">
 
 </div>
 
-<!-- ===================================================== -->
-<!-- TMA Parameters -->
-<!-- ===================================================== -->
+<div class="control">
+
+<label>
+Tp (s)
+</label>
+
+<input id="bretschneiderTp"
+       type="number"
+       step="0.1"
+       value="8.0">
+
+</div>
+
+</div>
 
 <div id="tmaControls"
      class="spectrum-control-panel"
      style="display:none;">
 
-  <div class="control">
+<h3>TMA Parameters</h3>
 
-    <label>
-      γ
-    </label>
+<div class="control">
 
-    <input id="tmaGamma"
-           type="number"
-           step="0.1"
-           value="3.3">
+<label>
+γ
+</label>
 
-  </div>
-
-  <div class="control">
-
-    <label>
-      Depth correction
-    </label>
-
-    <input id="tmaDepthFactor"
-           type="number"
-           step="0.01"
-           value="1.0">
-
-  </div>
-
-  <div class="control">
-
-    <label>
-      Shallow coefficient
-    </label>
-
-    <input id="tmaShallowCoeff"
-           type="number"
-           step="0.01"
-           value="1.0">
-
-  </div>
+<input id="tmaGamma"
+       type="number"
+       step="0.1"
+       value="3.3">
 
 </div>
 
-<!-- ===================================================== -->
-<!-- 頻譜理論說明 -->
-<!-- ===================================================== -->
+<div class="control">
+
+<label>
+Depth correction
+</label>
+
+<input id="tmaDepthFactor"
+       type="number"
+       step="0.01"
+       value="1.0">
+
+</div>
+
+<div class="control">
+
+<label>
+Shallow coefficient
+</label>
+
+<input id="tmaShallowCoeff"
+       type="number"
+       step="0.01"
+       value="1.0">
+
+</div>
+
+</div>
 
 <div id="spectrumInfoBox"
      class="spectrum-info-box">
 
-  <div id="pmInfo"
-       class="spectrum-info-panel">
+<div id="pmInfo"
+     class="spectrum-info-panel">
 
-    <h3>
-      Pierson-Moskowitz Spectrum
-    </h3>
+<h3>
+Pierson-Moskowitz Spectrum
+</h3>
 
 <pre>
 S(f)=αg²(2π)^-4 f^-5 exp[-β(fp/f)^4]
 </pre>
 
-  </div>
+</div>
 
-  <div id="jonswapInfo"
-       class="spectrum-info-panel"
-       style="display:none;">
+<div id="jonswapInfo"
+     class="spectrum-info-panel"
+     style="display:none;">
 
-    <h3>
-      JONSWAP Spectrum
-    </h3>
+<h3>
+JONSWAP Spectrum
+</h3>
 
 <pre>
 S(f)=PM(f)·γ^exp[-(f-fp)^2/(2σ^2fp^2)]
 </pre>
 
-  </div>
+</div>
 
-  <div id="bretschneiderInfo"
-       class="spectrum-info-panel"
-       style="display:none;">
+<div id="bretschneiderInfo"
+     class="spectrum-info-panel"
+     style="display:none;">
 
-    <h3>
-      Bretschneider Spectrum
-    </h3>
+<h3>
+Bretschneider Spectrum
+</h3>
 
 <pre>
 S(f)=5/16 Hs² fp⁴ f^-5 exp[-5/4(fp/f)^4]
 </pre>
 
-  </div>
+</div>
 
-  <div id="tmaInfo"
-       class="spectrum-info-panel"
-       style="display:none;">
+<div id="tmaInfo"
+     class="spectrum-info-panel"
+     style="display:none;">
 
-    <h3>
-      TMA Spectrum
-    </h3>
+<h3>
+TMA Spectrum
+</h3>
 
 <pre>
 S_TMA(f)=S_JONSWAP(f)·Φ(ω,h)
 </pre>
 
-  </div>
+</div>
 
 </div>
 
-<style>
-
-/* ===================================================== */
-/* Spectrum Panel */
-/* ===================================================== */
-
-.spectrum-control-panel {
-
-  margin-top: 12px;
-
-  padding: 12px;
-
-  border: 1px solid #d8e0ea;
-
-  border-radius: 8px;
-
-  background: #fbfcfd;
-
-}
-
-.spectrum-info-box {
-
-  margin-top: 16px;
-
-  padding: 14px;
-
-  border: 1px solid #d8e0ea;
-
-  border-radius: 8px;
-
-  background: #fbfcfd;
-
-}
-
-.spectrum-info-box pre {
-
-  padding: 12px;
-
-  border-radius: 6px;
-
-  background: #eef4f8;
-
-  overflow-x: auto;
-
-}
-
-</style>
+<canvas id="spectrumCanvas"></canvas>
 
 <script>
 
-// =====================================================
-// Spectrum UI Update
-// =====================================================
+const g = 9.81;
 
-function updateSpectrumUI() {
+const canvas =
+  document.getElementById("spectrumCanvas");
+
+const ctx =
+  canvas.getContext("2d");
+
+function resizeCanvas(){
+
+  canvas.width =
+    canvas.clientWidth;
+
+  canvas.height =
+    canvas.clientHeight;
+
+}
+
+window.addEventListener(
+  "resize",
+  resizeCanvas
+);
+
+resizeCanvas();
+
+function updateSpectrumUI(){
 
   const type =
     document.getElementById("spectrumType").value;
-
-  // ===================================================
-  // hide all control panels
-  // ===================================================
 
   document
     .querySelectorAll(".spectrum-control-panel")
@@ -348,10 +374,6 @@ function updateSpectrumUI() {
 
     });
 
-  // ===================================================
-  // hide all info panels
-  // ===================================================
-
   document
     .querySelectorAll(".spectrum-info-panel")
     .forEach(panel => {
@@ -360,221 +382,109 @@ function updateSpectrumUI() {
 
     });
 
-  // ===================================================
-  // PM
-  // ===================================================
+  if(type==="pm"){
 
-  if (type === "pm") {
-
-    document
-      .getElementById("pmControls")
-      .style.display = "block";
-
-    document
-      .getElementById("pmInfo")
-      .style.display = "block";
+    pmControls.style.display="block";
+    pmInfo.style.display="block";
 
   }
 
-  // ===================================================
-  // JONSWAP
-  // ===================================================
+  if(type==="jonswap"){
 
-  if (type === "jonswap") {
-
-    document
-      .getElementById("jonswapControls")
-      .style.display = "block";
-
-    document
-      .getElementById("jonswapInfo")
-      .style.display = "block";
+    jonswapControls.style.display="block";
+    jonswapInfo.style.display="block";
 
   }
 
-  // ===================================================
-  // Bretschneider
-  // ===================================================
+  if(type==="bretschneider"){
 
-  if (type === "bretschneider") {
-
-    document
-      .getElementById("bretschneiderControls")
-      .style.display = "block";
-
-    document
-      .getElementById("bretschneiderInfo")
-      .style.display = "block";
+    bretschneiderControls.style.display="block";
+    bretschneiderInfo.style.display="block";
 
   }
 
-  // ===================================================
-  // TMA
-  // ===================================================
+  if(type==="tma"){
 
-  if (type === "tma") {
-
-    document
-      .getElementById("tmaControls")
-      .style.display = "block";
-
-    document
-      .getElementById("tmaInfo")
-      .style.display = "block";
+    tmaControls.style.display="block";
+    tmaInfo.style.display="block";
 
   }
+
+  drawSpectrum();
 
 }
 
-// =====================================================
-// Spectrum Type Change Event
-// =====================================================
+function spectrumShape(type,f,fp,depth){
 
-document
-  .getElementById("spectrumType")
-  .addEventListener(
-    "change",
-    updateSpectrumUI
-  );
-
-// =====================================================
-// Initial Update
-// =====================================================
-
-updateSpectrumUI();
-
-  // =====================================================
-// Spectrum Shape Function
-// 真正頻譜計算核心
-// =====================================================
-
-function spectrumShape(
-  type,
-  f,
-  fp,
-  depth
-) {
-
-  if (f <= 0) {
+  if(f<=0){
     return 0;
   }
 
-  // ===================================================
-  // PM Parameters
-  // ===================================================
-
   const pmAlpha =
-    Number(
-      document.getElementById("pmAlpha").value
-    ) || 0.0081;
+    Number(pmAlphaInput.value);
 
   const pmBeta =
-    Number(
-      document.getElementById("pmBeta").value
-    ) || 1.25;
-
-  // ===================================================
-  // JONSWAP Parameters
-  // ===================================================
+    Number(pmBetaInput.value);
 
   const gamma =
-    Number(
-      document.getElementById("jonswapGamma").value
-    ) || 3.3;
+    Number(jonswapGamma.value);
 
   const sigmaA =
-    Number(
-      document.getElementById("jonswapSigmaA").value
-    ) || 0.07;
+    Number(jonswapSigmaA.value);
 
   const sigmaB =
-    Number(
-      document.getElementById("jonswapSigmaB").value
-    ) || 0.09;
+    Number(jonswapSigmaB.value);
 
-  const jonswapAlpha =
-    Number(
-      document.getElementById("jonswapAlpha").value
-    ) || 0.0081;
-
-  // ===================================================
-  // Bretschneider Parameters
-  // ===================================================
+  const jAlpha =
+    Number(jonswapAlpha.value);
 
   const Hs =
-    Number(
-      document.getElementById("bretschneiderHs").value
-    ) || 2.0;
-
-  const Tp =
-    Number(
-      document.getElementById("bretschneiderTp").value
-    ) || 8.0;
-
-  // ===================================================
-  // TMA Parameters
-  // ===================================================
+    Number(bretschneiderHs.value);
 
   const tmaGamma =
-    Number(
-      document.getElementById("tmaGamma").value
-    ) || 3.3;
+    Number(tmaGammaInput.value);
 
   const tmaDepthFactor =
-    Number(
-      document.getElementById("tmaDepthFactor").value
-    ) || 1.0;
+    Number(tmaDepthFactorInput.value);
 
   const tmaShallowCoeff =
-    Number(
-      document.getElementById("tmaShallowCoeff").value
-    ) || 1.0;
+    Number(tmaShallowCoeffInput.value);
 
-  // ===================================================
-  // PM Spectrum
-  // ===================================================
-
-  if (type === "pm") {
+  if(type==="pm"){
 
     return (
       pmAlpha *
-      g * g *
-      Math.pow(2 * Math.PI, -4) *
-      Math.pow(f, -5) *
+      g*g *
+      Math.pow(2*Math.PI,-4) *
+      Math.pow(f,-5) *
       Math.exp(
         -pmBeta *
-        Math.pow(fp / f, 4)
+        Math.pow(fp/f,4)
       )
     );
 
   }
 
-  // ===================================================
-  // JONSWAP Spectrum
-  // ===================================================
-
-  if (type === "jonswap") {
+  if(type==="jonswap"){
 
     const sigma =
-      f <= fp
-        ? sigmaA
-        : sigmaB;
+      f<=fp ? sigmaA : sigmaB;
 
     const pm =
-      jonswapAlpha *
-      g * g *
-      Math.pow(2 * Math.PI, -4) *
-      Math.pow(f, -5) *
+      jAlpha *
+      g*g *
+      Math.pow(2*Math.PI,-4) *
+      Math.pow(f,-5) *
       Math.exp(
         -1.25 *
-        Math.pow(fp / f, 4)
+        Math.pow(fp/f,4)
       );
 
     const enhancement =
       Math.pow(
         gamma,
         Math.exp(
-          -Math.pow(f - fp, 2) /
+          -Math.pow(f-fp,2) /
           (
             2 *
             sigma *
@@ -589,52 +499,42 @@ function spectrumShape(
 
   }
 
-  // ===================================================
-  // Bretschneider Spectrum
-  // ===================================================
-
-  if (type === "bretschneider") {
+  if(type==="bretschneider"){
 
     return (
-      (5 / 16) *
+      (5/16) *
       Hs *
       Hs *
-      Math.pow(fp, 4) *
-      Math.pow(f, -5) *
+      Math.pow(fp,4) *
+      Math.pow(f,-5) *
       Math.exp(
         -1.25 *
-        Math.pow(fp / f, 4)
+        Math.pow(fp/f,4)
       )
     );
 
   }
 
-  // ===================================================
-  // TMA Spectrum
-  // ===================================================
-
-  if (type === "tma") {
+  if(type==="tma"){
 
     const sigma =
-      f <= fp
-        ? sigmaA
-        : sigmaB;
+      f<=fp ? sigmaA : sigmaB;
 
     const pm =
-      jonswapAlpha *
-      g * g *
-      Math.pow(2 * Math.PI, -4) *
-      Math.pow(f, -5) *
+      jAlpha *
+      g*g *
+      Math.pow(2*Math.PI,-4) *
+      Math.pow(f,-5) *
       Math.exp(
         -1.25 *
-        Math.pow(fp / f, 4)
+        Math.pow(fp/f,4)
       );
 
     const enhancement =
       Math.pow(
         tmaGamma,
         Math.exp(
-          -Math.pow(f - fp, 2) /
+          -Math.pow(f-fp,2) /
           (
             2 *
             sigma *
@@ -645,21 +545,8 @@ function spectrumShape(
         )
       );
 
-    // ===============================================
-    // shallow water correction
-    // ===============================================
-
-    const omega =
-      2 * Math.PI * f;
-
-    const k =
-      solveWaveNumber(
-        1 / f,
-        depth
-      );
-
     const kh =
-      k * depth;
+      depth * f;
 
     let phi =
       Math.pow(
@@ -667,26 +554,195 @@ function spectrumShape(
         2
       );
 
-    phi *=
-      tmaDepthFactor;
+    phi *= tmaDepthFactor;
+    phi *= tmaShallowCoeff;
 
-    phi *=
-      tmaShallowCoeff;
-
-    return (
-      pm *
-      enhancement *
-      phi
-    );
+    return pm * enhancement * phi;
 
   }
-
-  // ===================================================
-  // fallback
-  // ===================================================
 
   return 0;
 
 }
 
+function drawSpectrum(){
+
+  resizeCanvas();
+
+  const type =
+    spectrumType.value;
+
+  const width =
+    canvas.width;
+
+  const height =
+    canvas.height;
+
+  ctx.clearRect(0,0,width,height);
+
+  const fp = 0.12;
+  const depth = 15;
+
+  const data = [];
+
+  for(let f=0.01;f<=1.0;f+=0.002){
+
+    data.push({
+
+      f,
+
+      S:
+        spectrumShape(
+          type,
+          f,
+          fp,
+          depth
+        )
+
+    });
+
+  }
+
+  const maxS =
+    Math.max(
+      ...data.map(d=>d.S)
+    );
+
+  const left = 60;
+  const right = 30;
+  const top = 30;
+  const bottom = 50;
+
+  const plotW =
+    width-left-right;
+
+  const plotH =
+    height-top-bottom;
+
+  ctx.strokeStyle="#d8e0ea";
+
+  for(let i=0;i<=5;i++){
+
+    const y =
+      top + plotH*i/5;
+
+    ctx.beginPath();
+    ctx.moveTo(left,y);
+    ctx.lineTo(left+plotW,y);
+    ctx.stroke();
+
+  }
+
+  ctx.strokeStyle="#087388";
+  ctx.lineWidth=2.5;
+
+  ctx.beginPath();
+
+  data.forEach((d,i)=>{
+
+    const x =
+      left +
+      (d.f/1.0) *
+      plotW;
+
+    const y =
+      top +
+      (1-d.S/maxS) *
+      plotH;
+
+    if(i===0){
+      ctx.moveTo(x,y);
+    }else{
+      ctx.lineTo(x,y);
+    }
+
+  });
+
+  ctx.stroke();
+
+  ctx.fillStyle="#17212b";
+  ctx.font="14px Segoe UI";
+
+  ctx.fillText(
+    "f (Hz)",
+    width/2,
+    height-12
+  );
+
+  ctx.save();
+
+  ctx.translate(
+    18,
+    height/2
+  );
+
+  ctx.rotate(-Math.PI/2);
+
+  ctx.fillText(
+    "S(f) (m²/Hz)",
+    0,
+    0
+  );
+
+  ctx.restore();
+
+}
+
+const spectrumType =
+  document.getElementById("spectrumType");
+
+const pmAlphaInput =
+  document.getElementById("pmAlpha");
+
+const pmBetaInput =
+  document.getElementById("pmBeta");
+
+const jonswapGamma =
+  document.getElementById("jonswapGamma");
+
+const jonswapSigmaA =
+  document.getElementById("jonswapSigmaA");
+
+const jonswapSigmaB =
+  document.getElementById("jonswapSigmaB");
+
+const jonswapAlpha =
+  document.getElementById("jonswapAlpha");
+
+const bretschneiderHs =
+  document.getElementById("bretschneiderHs");
+
+const bretschneiderTp =
+  document.getElementById("bretschneiderTp");
+
+const tmaGammaInput =
+  document.getElementById("tmaGamma");
+
+const tmaDepthFactorInput =
+  document.getElementById("tmaDepthFactor");
+
+const tmaShallowCoeffInput =
+  document.getElementById("tmaShallowCoeff");
+
+document
+  .querySelectorAll("input,select")
+  .forEach(el=>{
+
+    el.addEventListener(
+      "input",
+      drawSpectrum
+    );
+
+  });
+
+spectrumType.addEventListener(
+  "change",
+  updateSpectrumUI
+);
+
+updateSpectrumUI();
+
 </script>
+
+</body>
+</html>
