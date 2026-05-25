@@ -596,6 +596,23 @@ function fmt(value, digits) {
   return Number.isFinite(value) ? Number(value).toFixed(digits) : "";
 }
 
+
+function decimalToDMS(value, type) {
+  if (!Number.isFinite(value)) return "";
+
+  const abs = Math.abs(value);
+  const deg = Math.floor(abs);
+  const minFloat = (abs - deg) * 60;
+  const minute = Math.floor(minFloat);
+  const sec = (minFloat - minute) * 60;
+
+  let hemi = "";
+  if (type === "lon") hemi = value >= 0 ? "E" : "W";
+  if (type === "lat") hemi = value >= 0 ? "N" : "S";
+
+  return `${deg}°${minute.toString().padStart(2, "0")}'${sec.toFixed(2).padStart(5, "0")}"${hemi}`;
+}
+
 function convertRows() {
   const parsed = parseInput(els.inputText.value);
   const zone = els.zoneMode.value;
@@ -654,6 +671,8 @@ function convertRows() {
       target,
       lon,
       lat,
+      lonDMS: decimalToDMS(lon, "lon"),
+      latDMS: decimalToDMS(lat, "lat"),
       twdX,
       twdY,
       zone,
@@ -726,7 +745,7 @@ function renderTable() {
       ? "TWD97 TM2 121 → WGS84（台灣本島）"
       : "TWD97 TM2 119 → WGS84（澎湖／金門／馬祖）";
 
-    thead.innerHTML = `<tr><th>Lon</th><th>Lat</th><th>Z</th><th>附加資料</th></tr>`;
+    thead.innerHTML = `<tr><th>Lon</th><th>Lat</th><th>Lon DMS</th><th>Lat DMS</th><th>Z</th><th>附加資料</th></tr>`;
   } else {
     conversionText = "混合座標資料";
     thead.innerHTML = `<tr><th>X / Lon</th><th>Y / Lat</th><th>Z</th><th>附加資料</th></tr>`;
@@ -737,7 +756,7 @@ function renderTable() {
   }
 
   if (!lastResults.length) {
-    tbody.innerHTML = `<tr><td colspan="4">尚無資料</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${kind === "wgs" ? 6 : 4}">尚無資料</td></tr>`;
     return;
   }
 
@@ -750,6 +769,19 @@ function renderTable() {
     } else if (r.source === "TWD97") {
       out1 = fmt(r.lon, r.lonLatDigits);
       out2 = fmt(r.lat, r.lonLatDigits);
+    }
+
+    if (kind === "wgs") {
+      return `
+      <tr class="${r.valid ? "valid" : "invalid"}">
+        <td>${escapeHtml(out1)}</td>
+        <td>${escapeHtml(out2)}</td>
+        <td>${escapeHtml(r.lonDMS || "")}</td>
+        <td>${escapeHtml(r.latDMS || "")}</td>
+        <td>${escapeHtml(r.z)}</td>
+        <td>${escapeHtml(r.extra.join(" | "))}</td>
+      </tr>
+    `;
     }
 
     return `
@@ -768,43 +800,55 @@ function buildOutput(delimiter) {
   const keepOriginal = Boolean(els.keepOriginalXY?.checked);
   const keepMeta = Boolean(els.keepMetaColumns?.checked);
   const originalExtraCount = keepMeta ? Math.max(0, ...lastResults.map(r => r.extra.length)) : 0;
+
   const extraHeaders = Array.from({ length: originalExtraCount }, (_, i) => {
     const header = lastHeader[i + 3];
     return header || `extra_${i + 1}`;
   });
 
   const kind = targetKind();
-  let coordHeaders;
+  const zHeader = lastHeader[2] || "z";
+
+  let headers = [];
   if (kind === "twd") {
-    coordHeaders = ["x", "y"];
+    headers = ["x", "y", zHeader];
   } else if (kind === "wgs") {
-    coordHeaders = ["lon", "lat"];
+    headers = ["lon", "lat", "lon_dms", "lat_dms", zHeader];
   } else {
-    coordHeaders = ["converted_x_or_lon", "converted_y_or_lat"];
+    headers = ["converted_x_or_lon", "converted_y_or_lat", zHeader];
   }
 
-  const zHeader = lastHeader[2] || "z";
-  const originalHeaders = keepOriginal ? [lastHeader[0] || "original_col1", lastHeader[1] || "original_col2"] : [];
-  const headers = [...coordHeaders, zHeader, ...extraHeaders, ...originalHeaders];
+  if (keepMeta) headers.push(...extraHeaders);
+  if (keepOriginal) {
+    headers.push(lastHeader[0] || "original_col1");
+    headers.push(lastHeader[1] || "original_col2");
+  }
 
   const lines = [headers.map(v => csvCell(v, sep)).join(sep)];
 
   for (const r of lastResults) {
     if (!r.valid) continue;
 
-    let out1 = "";
-    let out2 = "";
+    let row = [];
+
     if (r.source === "WGS84") {
-      out1 = fmt(r.twdX, r.xyDigits);
-      out2 = fmt(r.twdY, r.xyDigits);
+      row.push(fmt(r.twdX, r.xyDigits));
+      row.push(fmt(r.twdY, r.xyDigits));
+      row.push(r.z);
     } else if (r.source === "TWD97") {
-      out1 = fmt(r.lon, r.lonLatDigits);
-      out2 = fmt(r.lat, r.lonLatDigits);
+      row.push(fmt(r.lon, r.lonLatDigits));
+      row.push(fmt(r.lat, r.lonLatDigits));
+      row.push(r.lonDMS || "");
+      row.push(r.latDMS || "");
+      row.push(r.z);
     }
 
-    const paddedExtra = keepMeta ? Array.from({ length: originalExtraCount }, (_, i) => r.extra[i] ?? "") : [];
-    const originalValues = keepOriginal ? [r.raw1, r.raw2] : [];
-    const row = [out1, out2, r.z, ...paddedExtra, ...originalValues];
+    if (keepMeta) row.push(...r.extra);
+    if (keepOriginal) {
+      row.push(r.raw1);
+      row.push(r.raw2);
+    }
+
     lines.push(row.map(v => csvCell(v, sep)).join(sep));
   }
 
