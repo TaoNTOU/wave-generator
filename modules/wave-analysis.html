@@ -829,6 +829,7 @@
                 <option value="welch">Welch spectrum Welch 平均頻譜</option>
                 <option value="smooth">Smoothed Welch 平滑 Welch 頻譜</option>
               </select>
+              <p class="hint method-description" id="spectrumMethodDescription">Raw periodogram：直接對完整水位序列做頻譜估計，解析度高，但較容易受 leakage 影響。</p>
             </div>
             <div class="button-row">
               <button id="runAnalysis" type="button">執行分析 Analyze</button>
@@ -926,17 +927,6 @@
         </div>
         <div class="analysis-info" id="analysisInfo">
 
-          <div class="definition-card" id="analysisTermCard">
-            <h3>名詞定義與比對原則 Terminology</h3>
-            <ul>
-              <li><strong>H1/3</strong>：零切法取得所有個別波高後，取最高三分之一波高之平均；常作為時域 significant wave height。</li>
-              <li><strong>Hm0 = 4√m0</strong>：由頻譜零階矩 m0 計算之顯著波高；理論上常與 Hs、H1/3 接近。</li>
-              <li><strong>Tz</strong>：零上切或零下切平均週期，為時域平均週期。</li>
-              <li><strong>Tp</strong>：頻譜尖峰週期，Tp = 1 / fp；不規則波中通常不可直接拿 Tz 與 Tp 比。</li>
-              <li><strong>Tm01、Tm02</strong>：由頻譜矩計算的平均週期；Tz 通常較適合與 Tm02 對照。</li>
-            </ul>
-          </div>
-
           <div class="analysis-summary" id="analysisSummary">
             <div class="metric"><span>資料筆數 Samples</span><strong>-</strong></div>
             <div class="metric"><span>波數 Waves</span><strong>-</strong></div>
@@ -963,6 +953,7 @@
                     <li>右下角圖表顯示實測頻譜與四種理論頻譜擬合結果；擬合參數中的 Hs 為 significant wave height，Tp 為 peak period。</li>
                   </ul>
                   <div id="fitParamTableWrap"></div>
+                  <div id="fitModelTableWrap"></div>
                 </div>
                 </div>
               </div>
@@ -970,6 +961,32 @@
             </div>
           </div>
           <p class="hint" id="analysisNote">零切分析依零上切或零下切分割個別波；零切點以線性內插定位，波峰與波谷以鄰近三點拋物線微調。時域 H1/3 可與頻域 Hm0 對照；Tz 是零切平均週期，通常不等於頻譜尖峰週期 Tp。</p>
+          
+        <div class="definition-card" id="moduleGuideCard">
+          <h3>模組功能說明 Modules</h3>
+          <ul>
+            <li><strong>波浪分析 Analysis</strong>：匯入量測或模擬水位時間序列，執行零上切／零下切分析、頻譜分析與理論波譜擬合。</li>
+            <li><strong>Zero-upcrossing</strong>：以水位由負轉正的過零點作為單一波浪切割基準，常用於海象統計分析。</li>
+            <li><strong>Zero-downcrossing</strong>：以水位由正轉負的過零點作為波浪切割基準，可與零上切結果互相比較。</li>
+            <li><strong>Raw periodogram</strong>：直接對完整訊號做 FFT 頻譜估計，解析度高，但較容易受到 spectral leakage 影響。</li>
+            <li><strong>Hann periodogram</strong>：加入 Hann window 降低 leakage，使頻譜較平滑，但尖峰解析度會略下降。</li>
+            <li><strong>Welch spectrum</strong>：將資料分段後平均頻譜，可降低隨機波動，提高穩定性。</li>
+            <li><strong>Smoothed Welch</strong>：在 Welch 基礎上進一步平滑，適合工程展示與理論擬合比較。</li>
+            <li><strong>H1/3 與 Hm0</strong>：H1/3 為時域顯著波高；Hm0 為頻域顯著波高，兩者通常接近但不一定完全相同。</li>
+            <li><strong>Tz 與 Tp</strong>：Tz 為零切平均週期；Tp 為頻譜尖峰週期，兩者物理意義不同。</li>
+          </ul>
+        </div>
+
+\1
+            <h3>名詞定義與比對原則 Terminology</h3>
+            <ul>
+              <li><strong>H1/3</strong>：零切法取得所有個別波高後，取最高三分之一波高之平均；常作為時域 significant wave height。</li>
+              <li><strong>Hm0 = 4√m0</strong>：由頻譜零階矩 m0 計算之顯著波高；理論上常與 Hs、H1/3 接近。</li>
+              <li><strong>Tz</strong>：零上切或零下切平均週期，為時域平均週期。</li>
+              <li><strong>Tp</strong>：頻譜尖峰週期，Tp = 1 / fp；不規則波中通常不可直接拿 Tz 與 Tp 比。</li>
+              <li><strong>Tm01、Tm02</strong>：由頻譜矩計算的平均週期；Tz 通常較適合與 Tm02 對照。</li>
+            </ul>
+          </div>
         </div>
       </section>
     </section>
@@ -1002,6 +1019,7 @@
       crossingMode: document.getElementById("crossingMode"),
       demeanMode: document.getElementById("demeanMode"),
       analysisSpectrumMethod: document.getElementById("analysisSpectrumMethod"),
+      spectrumMethodDescription: document.getElementById("spectrumMethodDescription"),
       analysisSummary: document.getElementById("analysisSummary"),
       analysisNote: document.getElementById("analysisNote"),
       fitDashboard: document.getElementById("fitDashboard"),
@@ -1520,16 +1538,18 @@
         </tr>`;
       }).join("");
 
-      controls.fitModelTableWrap.innerHTML = `<table class="fit-model-table">
-        <thead>
-          <tr>
-            <th>波譜型式</th>
-            <th>特徵說明</th>
-            <th>擬合表現</th>
-          </tr>
-        </thead>
-        <tbody>${modelRows}</tbody>
-      </table>`;
+      if (controls.fitModelTableWrap) {
+        controls.fitModelTableWrap.innerHTML = `<table class="fit-model-table">
+          <thead>
+            <tr>
+              <th>波譜型式</th>
+              <th>特徵說明</th>
+              <th>擬合表現</th>
+            </tr>
+          </thead>
+          <tbody>${modelRows}</tbody>
+        </table>`;
+      }
     }
 
     function drawLineChart(chartCanvas, chartCtx, points, xKey, yKey, title, xLabel, yLabel) {
@@ -1678,6 +1698,25 @@
       analysisSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       analysisNonDimSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       analysisCompareSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function resizeAnalysisCanvases() {
+      const ratio = window.devicePixelRatio || 1;
+      [
+        [analysisWaveCanvas, analysisWaveCtx],
+        [analysisSpectrumCanvas, analysisSpectrumCtx],
+        [analysisNonDimSpectrumCanvas, analysisNonDimSpectrumCtx],
+        [analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx]
+      ].forEach(([chartCanvas, chartCtx]) => {
+        const chartRect = chartCanvas.getBoundingClientRect();
+        const width = Math.max(1, Math.round(chartRect.width * ratio));
+        const height = Math.max(1, Math.round(chartRect.height * ratio));
+        if (chartCanvas.width !== width || chartCanvas.height !== height) {
+          chartCanvas.width = width;
+          chartCanvas.height = height;
+        }
+        chartCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      });
     }
 
     function drawIrregularPreview(model) {
@@ -2233,8 +2272,14 @@
       });
 
       parsed.sort((a, b) => a[0] - b[0]);
+      if (parsed.length) {
+        const t0 = parsed[0][0];
+        if (Number.isFinite(t0)) {
+          parsed.forEach((row) => { row[0] -= t0; });
+        }
+      }
 
-      return parsed.map(([t, eta]) => `${t}\t${eta}`).join("\n");
+      return parsed.map(([t, eta]) => `${Number(t.toFixed(10))}\t${eta}`).join("\n");
     }
 
     function handleFileImport(event) {
@@ -2281,6 +2326,12 @@
         if (parts.length >= 2) rows.push({ time_s: parts[0], eta_m: parts[1] });
       });
       rows.sort((a, b) => a.time_s - b.time_s);
+      if (rows.length) {
+        const t0 = rows[0].time_s;
+        if (Number.isFinite(t0)) {
+          rows.forEach((row) => { row.time_s -= t0; });
+        }
+      }
       if (controls.demeanMode.value === "yes" && rows.length) {
         const mean = rows.reduce((sum, row) => sum + row.eta_m, 0) / rows.length;
         rows.forEach((row) => { row.eta_m -= mean; });
@@ -2791,7 +2842,10 @@
     function drawAnalysisTimeSeries(rows) {
       if (!rows.length) return;
       const points = rows.map((row) => ({ x: row.time_s, y: row.eta_m }));
-      drawAutoLineChart(analysisWaveCanvas, analysisWaveCtx, points, "x", "y", "Water Surface Signal", "t (s)", "eta (m)");
+      drawAutoLineChart(analysisWaveCanvas, analysisWaveCtx, points, "x", "y", "Water Surface Signal", "t (s)", "eta (m)",{
+  xMin: 0,
+  xMax: Math.min(200, Math.max(...points.map(p => p.x)))
+});
       const rect = analysisWaveCanvas.getBoundingClientRect();
       drawChartLegend(analysisWaveCtx, [
         { type: "line", color: "#087388", label: "Water surface" }
@@ -3073,6 +3127,11 @@
         .sort((a, b) => a.score.rmse - b.score.rmse);
       const fitByType = Object.fromEntries(fits.map((fit) => [fit.type, fit]));
       const bestFit = fits[0];
+      if (controls.fitDashboard) {
+        controls.fitDashboard.classList.add("active");
+        resizeAnalysisCanvases();
+      }
+
       const series = [
         { label: "Measured", color: "#087388", width: 2.8, points: measured },
         { label: bestFit?.type === "pm" ? "PM fit ★" : "PM fit", color: "#9b4a1f", dash: [8, 5], points: toPoints(fitByType.pm?.curve || []) },
@@ -3094,7 +3153,23 @@
         : "無法完成擬合";
     }
 
+    function getSpectrumMethodDescription(method) {
+      const descriptions = {
+        raw: "Raw periodogram：直接對完整水位序列做頻譜估計，解析度高，但較容易受 leakage 影響。適合資料長度足夠且想保留原始尖峰時使用。",
+        hann: "Hann periodogram：先套用 Hann window 再估計頻譜，可降低頻譜洩漏，但尖峰會較平滑、能量需做窗函數修正。",
+        welch: "Welch spectrum：將資料分段、加窗後平均，可降低隨機震盪，頻譜較穩定；代價是頻率解析度會下降。",
+        smooth: "Smoothed Welch：在 Welch 頻譜上再做平滑，適合判讀主要能量帶與擬合趨勢；不適合追求非常尖銳的單一峰值。"
+      };
+      return descriptions[method] || descriptions.raw;
+    }
+
+    function updateSpectrumMethodDescription() {
+      if (!controls.spectrumMethodDescription || !controls.analysisSpectrumMethod) return;
+      controls.spectrumMethodDescription.textContent = getSpectrumMethodDescription(controls.analysisSpectrumMethod.value);
+    }
+
     function runWaveAnalysis() {
+      updateSpectrumMethodDescription();
       const rows = parseAnalysisInput();
       if (rows.length < 4) {
         controls.analysisNote.textContent = "請貼上至少 4 筆兩欄資料：time, eta。";
@@ -3422,6 +3497,7 @@
       controls.fileType.value = "csv";
       controls.outputKind.value = "eta";
       controls.analysisInput.value = "";
+      updateSpectrumMethodDescription();
       startTime = performance.now();
       if (activeWaveMode === "analysis") {
         runWaveAnalysis();
@@ -3443,6 +3519,7 @@
       }
     });
 
+    updateSpectrumMethodDescription();
     resizeCanvas();
     update();
     cancelAnimationFrame(animationId);
