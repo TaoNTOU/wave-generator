@@ -2657,7 +2657,7 @@
       // 水位時間序列圖的 t 軸顯示範圍
       // 只改這兩個值即可調整左上水位圖的時間範圍；設為 null 代表自動顯示完整資料。
       const waterPlotXMin = 0;
-      const waterPlotXMax = Math.min(60, Math.max(...points.map((p) => p.x)));
+      const waterPlotXMax =  Math.max(...points.map((p) => p.x));
 
       drawAutoLineChart(
         analysisWaveCanvas,
