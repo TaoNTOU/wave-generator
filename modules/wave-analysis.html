@@ -1,15 +1,16 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="波浪產生器 Wave Generator，可計算規則波與不規則波的波長、波數、相速、群速、波陡、波譜，並可進行零上切／零下切波浪統計分析，並輸出 CSV、JSON、TXT 或 SVG 資料。">
-  <meta name="robots" content="index, follow">
-  <meta property="og:title" content="波浪產生器｜Wave Generator">
-  <meta property="og:description" content="調整波高、週期與水深，快速產生波浪資料與波譜圖。">
-  <meta property="og:type" content="website">
-  <title>零上/下切與頻譜分析 | Zero Crossing & Spectral Analysis</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="波浪時序列分析工具，可匯入水位資料，執行零上切／零下切統計、頻譜分析與理論波譜擬合。" name="description"/>
+<meta content="index, follow" name="robots"/>
+<meta content="波浪時序列分析｜Zero Crossing &amp; Spectral Analysis" property="og:title"/>
+<meta content="匯入時間與水位資料，執行零切統計、頻譜分析與波譜擬合。" property="og:description"/>
+<meta content="website" property="og:type"/>
+<title>波浪時序列分析 | Zero Crossing &amp; Spectral Analysis</title>
+<style>
     :root {
       color-scheme: light;
       --ink: #17212b;
@@ -678,321 +679,161 @@
       align-content: start;
     }
 
-  </style>
+  
 
-  <style id="module-split-style">
-    /* =====================================================
-       模組拆分用樣式
-       目的：每一個 module HTML 仍保留原始計算核心，
-       但隱藏跨模組切換按鈕，讓主控 index.html 負責調用。
-       ===================================================== */
-    .tabs { display: none !important; }
-    header { margin-bottom: 14px; }
-    body.module-regular #irregularPanel,
-    body.module-regular #analysisPanel { display: none !important; }
-    body.module-irregular #regularPanel,
-    body.module-irregular #analysisPanel { display: none !important; }
-    body.module-analysis #regularPanel,
-    body.module-analysis #irregularPanel { display: none !important; }
-  </style>
+    /* Analysis-cleaned version */
+    .legacy-core { display: none !important; }
+    .controls-clean { padding: 18px; display: grid; gap: 18px; }
+    .layout.analysis-layout { grid-template-columns: minmax(300px, 380px) 1fr; }
+    .stage.analysis-stage { align-content: start; }
+    .download-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+</style>
+
 </head>
 <body>
-  <main>
-    <header>
-      <div>
-        <h1>零上/下切與頻譜分析<br><span lang="en">Zero Crossing & Spectral Analysis</span></h1>
-        <p class="subtitle">匯入水位時序列，執行零上/零下切時域統計與頻譜統計。H1/3 可與 Hs / Hm0 對照；Tz 為零切平均週期，不等同於 Tp。</p>
-      </div>
-    </header>
+<main>
+<header>
+<div>
+<h1>波浪時序列分析<br/><span lang="en">Zero Crossing &amp; Spectral Analysis</span></h1>
+<p class="subtitle">匯入水位時序列，執行零上／零下切時域統計、頻譜統計與理論波譜擬合。H1/3 可與 Hm0 對照；Tz 不等同於 Tp。</p>
+</div>
+</header>
+<section class="layout analysis-layout">
+<aside class="panel">
+<div class="controls-clean"><div class="tab-panel active" id="analysisPanel">
+<p class="hint">貼上兩欄資料：時間 t(s) 與水位 η(m)，可用逗號、Tab 或空白分隔。分析結果會同時提供時域零切統計與頻域頻譜統計。</p>
+<div class="control">
+<label for="fileInput">讀取資料檔 File import</label>
+<input accept=".txt,.csv,.dat,.tsv,text/plain,text/csv" id="fileInput" type="file"/>
+<p class="hint" id="fileStatus">支援 TXT / CSV / DAT / TSV。資料格式為兩欄：時間 t(s)、水位 η(m)，可用逗號、Tab 或空白分隔。</p>
+</div>
+<div class="split">
+<div class="control">
+<label for="skipHeader">標題列 Header</label>
+<select id="skipHeader">
+<option value="auto">自動判斷 auto</option>
+<option value="yes">略過第一列</option>
+<option value="no">不略過</option>
+</select>
+</div>
+<div class="control">
+<label for="columnMode">欄位 Columns</label>
+<select id="columnMode">
+<option value="first2">前兩欄 t, η</option>
+<option value="last2">最後兩欄 t, η</option>
+</select>
+</div>
+</div>
+<div class="control">
+<label for="analysisInput">時間序列資料 Time series</label>
+<textarea id="analysisInput" placeholder="0,0.00
+0.05,0.03
+0.10,0.07"></textarea>
+</div>
+<div class="split">
+<div class="control">
+<label for="crossingMode">切割方法 Crossing method</label>
+<select id="crossingMode">
+<option value="up">零上切 Zero-upcrossing</option>
+<option value="down">零下切 Zero-downcrossing</option>
+</select>
+</div>
+<div class="control">
+<label for="demeanMode">平均水位 Mean removal</label>
+<select id="demeanMode">
+<option value="yes">扣除平均值 remove mean</option>
+<option value="no">不扣除 keep raw</option>
+</select>
+</div>
+</div>
+<div class="control">
+<label for="analysisSpectrumMethod">頻譜方法 Spectrum method</label>
+<select id="analysisSpectrumMethod">
+<option value="raw">Raw periodogram 原始週期圖</option>
+<option value="hann">Hann periodogram Hann 窗週期圖</option>
+<option value="welch">Welch spectrum Welch 平均頻譜</option>
+<option value="smooth">Smoothed Welch 平滑 Welch 頻譜</option>
+</select>
+</div>
+<div class="button-row">
+<button id="runAnalysis" type="button">執行分析 Analyze</button>
+<button class="secondary" id="loadSample" type="button">載入範例 Sample</button>
+</div>
+</div><div class="download-row"><button id="download" type="button">下載零切統計 CSV</button><button class="secondary" id="reset" type="button">清除資料</button></div>
+<div aria-hidden="true" class="legacy-core">
+<div class="tabs">
+<button class="tab-button" id="regularTab" type="button">規則波</button>
+<button class="tab-button" id="irregularTab" type="button">不規則波</button>
+<button class="tab-button active" id="analysisTab" type="button">波浪分析</button>
+</div>
+<input id="height" max="12" min="0.1" step="0.1" type="range" value="2"/><input id="heightNumber" min="0.1" step="0.1" type="number" value="2"/><span id="heightValue"></span>
+<input id="period" max="25" min="1" step="0.1" type="range" value="8"/><input id="periodNumber" min="0.5" step="0.1" type="number" value="8"/><span id="periodValue"></span>
+<input id="depth" max="80" min="0.5" step="0.5" type="range" value="15"/><input id="depthNumber" min="0.1" step="0.1" type="number" value="15"/><span id="depthValue"></span>
+<div class="tab-panel" id="regularPanel"></div>
+<div class="tab-panel" id="irregularPanel"></div>
+<select id="spectrumType"><option value="pm">Pierson-Moskowitz</option><option value="jonswap">JONSWAP</option><option value="bretschneider">Bretschneider / ISSC</option><option value="tma">TMA</option></select>
+<input id="gamma" min="1" step="0.1" type="number" value="3.3"/>
+<input id="components" max="2048" min="16" step="1" type="number" value="128"/>
+<input id="seed" step="1" type="number" value="12345"/>
+<input id="dt" min="0.001" step="0.001" type="number" value="0.05"/>
+<input id="totalTime" min="0.001" step="0.1" type="number" value="8"/>
+<select id="fileType"><option value="csv">CSV</option><option value="json">JSON</option><option value="txt">TXT</option><option value="svg">SVG</option></select>
+<select id="outputKind"><option value="eta">eta(t)</option><option value="spectrum">spectrum S(f)</option></select>
+<div class="results">
+<strong id="wavelength"></strong><strong id="wavenumber"></strong><strong id="omega"></strong><strong id="celerity"></strong><strong id="group"></strong><strong id="validity"></strong><strong id="depthRegime"></strong><strong id="steepnessMetric"></strong><strong id="relativeDepthMetric"></strong><strong id="ursellMetric"></strong>
+</div>
+<span id="time"></span><span id="equation"></span><div id="lowerTitle"></div><div id="theoryWrap"><canvas height="525" id="theoryCanvas" width="1200"></canvas></div><div id="spectrumInfo"><canvas height="320" id="spectrumDimCanvas" width="600"></canvas><canvas height="320" id="spectrumNonDimCanvas" width="600"></canvas></div>
+<div class="canvas-wrap"><canvas height="675" id="waveCanvas" width="1200"></canvas></div>
+</div>
+</div>
 
-    <section class="layout">
-      <aside class="panel">
-        <div class="controls">
-          <div class="tabs">
-            <button class="tab-button" id="regularTab" type="button">規則波</button>
-            <button class="tab-button" id="irregularTab" type="button">不規則波</button>
-            <button class="tab-button active" id="analysisTab" type="button">波浪分析<br><span lang="en">Analysis</span></button>
-          </div>
-
-          <div class="control">
-            <div class="label-row">
-              <label for="height">參考波高 H / Hs</label>
-              <span class="value" id="heightValue">2.00 m</span>
-            </div>
-            <input id="height" type="range" min="0.1" max="12" step="0.1" value="2">
-            <input id="heightNumber" type="number" min="0.1" step="0.1" value="2">
-          </div>
-
-          <div class="control">
-            <div class="label-row">
-              <label for="period">參考週期 T / Tp</label>
-              <span class="value" id="periodValue">8.00 s</span>
-            </div>
-            <input id="period" type="range" min="1" max="25" step="0.1" value="8">
-            <input id="periodNumber" type="number" min="0.5" step="0.1" value="8">
-          </div>
-
-          <div class="control">
-            <div class="label-row">
-              <label for="depth">水深 h</label>
-              <span class="value" id="depthValue">15.00 m</span>
-            </div>
-            <input id="depth" type="range" min="0.5" max="80" step="0.5" value="15">
-            <input id="depthNumber" type="number" min="0.1" step="0.1" value="15">
-          </div>
-
-          <div class="tab-panel" id="regularPanel">
-            <p class="hint">規則波以 H 與 T 表示單一波高與週期；不規則波與頻譜比對則以 Hs 與 Tp 表示頻譜尺度。</p>
-          </div>
-
-          <div class="tab-panel" id="irregularPanel">
-            <div class="control">
-              <label for="spectrumType">波譜方法</label>
-              <select id="spectrumType">
-                <option value="pm">Pierson-Moskowitz</option>
-                <option value="jonswap">JONSWAP</option>
-                <option value="bretschneider">Bretschneider / ISSC</option>
-                <option value="tma">TMA</option>
-              </select>
-            </div>
-
-            <div class="split">
-              <div class="control">
-                <label for="gamma">JONSWAP gamma</label>
-                <input id="gamma" type="number" min="1" step="0.1" value="3.3">
-              </div>
-              <div class="control">
-                <label for="components">components</label>
-                <input id="components" type="number" min="16" max="2048" step="1" value="128">
-              </div>
-            </div>
-
-            <div class="control">
-              <label for="seed">random seed</label>
-              <input id="seed" type="number" step="1" value="12345">
-            </div>
-          </div>
-
-
-
-          <div class="tab-panel active" id="analysisPanel">
-            <p class="hint">貼上兩欄資料：時間 t(s) 與水位 η(m)，可用逗號、Tab 或空白分隔。分析結果會同時提供時域零切統計與頻域頻譜統計。</p>
-            <div class="control">
-              <label for="fileInput">讀取資料檔 File import</label>
-              <input id="fileInput" type="file" accept=".txt,.csv,.dat,.tsv,text/plain,text/csv">
-              <p class="hint" id="fileStatus">支援 TXT / CSV / DAT / TSV。資料格式為兩欄：時間 t(s)、水位 η(m)，可用逗號、Tab 或空白分隔。</p>
-            </div>
-
-            <div class="split">
-              <div class="control">
-                <label for="skipHeader">標題列 Header</label>
-                <select id="skipHeader">
-                  <option value="auto">自動判斷 auto</option>
-                  <option value="yes">略過第一列</option>
-                  <option value="no">不略過</option>
-                </select>
-              </div>
-              <div class="control">
-                <label for="columnMode">欄位 Columns</label>
-                <select id="columnMode">
-                  <option value="first2">前兩欄 t, η</option>
-                  <option value="last2">最後兩欄 t, η</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="control">
-              <label for="analysisInput">時間序列資料 Time series</label>
-              <textarea id="analysisInput" placeholder="0,0.00&#10;0.05,0.03&#10;0.10,0.07"></textarea>
-            </div>
-            <div class="split">
-              <div class="control">
-                <label for="crossingMode">切割方法 Crossing method</label>
-                <select id="crossingMode">
-                  <option value="up">零上切 Zero-upcrossing</option>
-                  <option value="down">零下切 Zero-downcrossing</option>
-                </select>
-              </div>
-              <div class="control">
-                <label for="demeanMode">平均水位 Mean removal</label>
-                <select id="demeanMode">
-                  <option value="yes">扣除平均值 remove mean</option>
-                  <option value="no">不扣除 keep raw</option>
-                </select>
-              </div>
-            </div>
-            <div class="control">
-              <label for="analysisSpectrumMethod">頻譜方法 Spectrum method</label>
-              <select id="analysisSpectrumMethod">
-                <option value="raw">Raw periodogram 原始週期圖</option>
-                <option value="hann">Hann periodogram Hann 窗週期圖</option>
-                <option value="welch">Welch spectrum Welch 平均頻譜</option>
-                <option value="smooth">Smoothed Welch 平滑 Welch 頻譜</option>
-              </select>
-              <p class="hint method-description" id="spectrumMethodDescription">Raw periodogram：直接對完整水位序列做頻譜估計，解析度高，但較容易受 leakage 影響。</p>
-            </div>
-            <div class="button-row">
-              <button id="runAnalysis" type="button">執行分析 Analyze</button>
-              <button class="secondary" id="loadSample" type="button">載入範例 Sample</button>
-            </div>
-          </div>
-
-          <div class="split">
-            <div class="control">
-              <label for="dt">dt (s)</label>
-              <input id="dt" type="number" min="0.001" step="0.001" value="0.05">
-            </div>
-            <div class="control">
-              <label for="totalTime">total time (s)</label>
-              <input id="totalTime" type="number" min="0.001" step="0.1" value="8">
-            </div>
-          </div>
-
-          <div class="split">
-            <div class="control">
-              <label for="fileType">檔案類型</label>
-              <select id="fileType">
-                <option value="csv">CSV</option>
-                <option value="json">JSON</option>
-                <option value="txt">TXT</option>
-                <option value="svg">SVG</option>
-              </select>
-            </div>
-            <div class="control">
-              <label for="outputKind">輸出方式</label>
-              <select id="outputKind">
-                <option value="eta">eta(t)</option>
-                <option value="spectrum">spectrum S(f)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="button-row">
-            <button id="download">下載輸出</button>
-            <button class="secondary" id="reset">重設</button>
-          </div>
-        </div>
-
-        <div class="results">
-          <div class="metric"><span>波長 L</span><strong id="wavelength">-</strong></div>
-          <div class="metric"><span>波數 k</span><strong id="wavenumber">-</strong></div>
-          <div class="metric"><span>角頻率 ω</span><strong id="omega">-</strong></div>
-          <div class="metric"><span>相速 c</span><strong id="celerity">-</strong></div>
-          <div class="metric"><span>群速 Cg</span><strong id="group">-</strong></div>
-          <div class="metric"><span>建議理論</span><strong id="validity">-</strong></div>
-          <div class="metric"><span>水深分類</span><strong id="depthRegime">-</strong></div>
-          <div class="metric"><span>波陡 H/L</span><strong id="steepnessMetric">-</strong></div>
-          <div class="metric"><span>相對水深 h/L</span><strong id="relativeDepthMetric">-</strong></div>
-          <div class="metric"><span>Ursell number</span><strong id="ursellMetric">-</strong></div>
-        </div>
-      </aside>
-
-      <section class="panel stage">
-        <div class="canvas-wrap">
-          <canvas id="waveCanvas" width="1200" height="675" aria-label="波浪動畫圖" role="img"></canvas>
-        </div>
-        <div class="status-row">
-          <span id="equation">η generated by selected wave-theory shape</span>
-          <span id="time">t = 0.00 s</span>
-        </div>
-        <div class="chart-title" id="lowerTitle">波浪理論分類圖</div>
-        <div class="theory-wrap" id="theoryWrap">
-          <canvas id="theoryCanvas" width="1200" height="525" aria-label="波浪理論分類圖" role="img"></canvas>
-        </div>
-        <div class="spectrum-info" id="spectrumInfo">
-          <div class="spectrum-charts">
-            <div class="spectrum-chart">
-              <canvas id="spectrumDimCanvas" width="600" height="320" aria-label="有因次波譜圖" role="img"></canvas>
-            </div>
-            <div class="spectrum-chart">
-              <canvas id="spectrumNonDimCanvas" width="600" height="320" aria-label="無因次波譜圖" role="img"></canvas>
-            </div>
-          </div>
-          <div class="spectrum-item">
-            <strong>Pierson-Moskowitz (PM)</strong>
-            <span>Fully developed sea spectrum, often used when wind has blown long enough over sufficient fetch.</span>
-          </div>
-          <div class="spectrum-item">
-            <strong>JONSWAP</strong>
-            <span>Fetch-limited sea spectrum with a sharper peak controlled by gamma; common for growing wind seas.</span>
-          </div>
-          <div class="spectrum-item">
-            <strong>Bretschneider / ISSC</strong>
-            <span>Two-parameter spectrum commonly described by Hs and Tp; useful for general engineering sea states.</span>
-          </div>
-          <div class="spectrum-item">
-            <strong>TMA</strong>
-            <span>Finite-depth spectrum based on JONSWAP with shallow-water transformation, used for coastal water depths.</span>
-          </div>
-        </div>
-        <div class="analysis-info" id="analysisInfo">
-
-          <div class="analysis-summary" id="analysisSummary">
-            <div class="metric"><span>資料筆數 Samples</span><strong>-</strong></div>
-            <div class="metric"><span>波數 Waves</span><strong>-</strong></div>
-            <div class="metric"><span>H1/3 ≈ Hs</span><strong>-</strong></div>
-            <div class="metric"><span>Tz 零切平均週期</span><strong>-</strong></div>
-          </div>
-          <div class="spectrum-charts">
-            <div class="analysis-chart"><canvas id="analysisWaveCanvas" width="600" height="360" aria-label="波浪時間序列與零切點" role="img"></canvas></div>
-            <div class="analysis-chart"><canvas id="analysisSpectrumCanvas" width="600" height="360" aria-label="波譜分析圖" role="img"></canvas></div>
-          </div>
-          <div class="spectrum-charts">
-            <div class="analysis-chart"><canvas id="analysisNonDimSpectrumCanvas" width="600" height="360" aria-label="無因次頻譜圖" role="img"></canvas></div>
-            <div class="fit-dashboard" id="fitDashboard">
-              <h3 class="fit-title">頻譜比對（擬合結果）</h3>
-              <div class="fit-chart"><canvas id="analysisCompareSpectrumCanvas" width="900" height="420" aria-label="實測頻譜與理論頻譜比對圖" role="img"></canvas></div>
-              <div class="fit-detail-grid">
-                <div class="fit-card">
-                  <p class="fit-best" id="fitBestLabel">最佳擬合：-</p>
-                  <div id="fitTableWrap"></div>
-                </div>
-                <div class="fit-card">
-                  <p class="fit-note-title">說明與主要參數</p>
-                  <ul class="fit-note" id="fitNoteList">
-                    <li>右下角圖表顯示實測頻譜與四種理論頻譜擬合結果；擬合參數中的 Hs 為 significant wave height，Tp 為 peak period。</li>
-                  </ul>
-                  <div id="fitParamTableWrap"></div>
-                  <div id="fitModelTableWrap"></div>
-                </div>
-                </div>
-              </div>
-              <div class="fit-hint">NRMSE 越小表示擬合越好；綠色星號 ★ 為最佳擬合結果。判讀時請注意：Hs/Hm0/H1/3 是波高對照組，Tp 與 Tz 則不是同一種週期。</div>
-            </div>
-          </div>
-          <p class="hint" id="analysisNote">零切分析依零上切或零下切分割個別波；零切點以線性內插定位，波峰與波谷以鄰近三點拋物線微調。時域 H1/3 可與頻域 Hm0 對照；Tz 是零切平均週期，通常不等於頻譜尖峰週期 Tp。</p>
-          
-        <div class="definition-card" id="moduleGuideCard">
-          <h3>模組功能說明 Modules</h3>
-          <ul>
-            <li><strong>波浪分析 Analysis</strong>：匯入量測或模擬水位時間序列，執行零上切／零下切分析、頻譜分析與理論波譜擬合。</li>
-            <li><strong>Zero-upcrossing</strong>：以水位由負轉正的過零點作為單一波浪切割基準，常用於海象統計分析。</li>
-            <li><strong>Zero-downcrossing</strong>：以水位由正轉負的過零點作為波浪切割基準，可與零上切結果互相比較。</li>
-            <li><strong>Raw periodogram</strong>：直接對完整訊號做 FFT 頻譜估計，解析度高，但較容易受到 spectral leakage 影響。</li>
-            <li><strong>Hann periodogram</strong>：加入 Hann window 降低 leakage，使頻譜較平滑，但尖峰解析度會略下降。</li>
-            <li><strong>Welch spectrum</strong>：將資料分段後平均頻譜，可降低隨機波動，提高穩定性。</li>
-            <li><strong>Smoothed Welch</strong>：在 Welch 基礎上進一步平滑，適合工程展示與理論擬合比較。</li>
-            <li><strong>H1/3 與 Hm0</strong>：H1/3 為時域顯著波高；Hm0 為頻域顯著波高，兩者通常接近但不一定完全相同。</li>
-            <li><strong>Tz 與 Tp</strong>：Tz 為零切平均週期；Tp 為頻譜尖峰週期，兩者物理意義不同。</li>
-          </ul>
-        </div>
-
-\1
-            <h3>名詞定義與比對原則 Terminology</h3>
-            <ul>
-              <li><strong>H1/3</strong>：零切法取得所有個別波高後，取最高三分之一波高之平均；常作為時域 significant wave height。</li>
-              <li><strong>Hm0 = 4√m0</strong>：由頻譜零階矩 m0 計算之顯著波高；理論上常與 Hs、H1/3 接近。</li>
-              <li><strong>Tz</strong>：零上切或零下切平均週期，為時域平均週期。</li>
-              <li><strong>Tp</strong>：頻譜尖峰週期，Tp = 1 / fp；不規則波中通常不可直接拿 Tz 與 Tp 比。</li>
-              <li><strong>Tm01、Tm02</strong>：由頻譜矩計算的平均週期；Tz 通常較適合與 Tm02 對照。</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-    </section>
-  </main>
-
-  <script>
+</aside>
+<section class="panel stage analysis-stage"><div class="analysis-info active" id="analysisInfo">
+<div class="definition-card" id="analysisTermCard">
+<h3>名詞定義與比對原則 Terminology</h3>
+<ul>
+<li><strong>H1/3</strong>：零切法取得所有個別波高後，取最高三分之一波高之平均；常作為時域 significant wave height。</li>
+<li><strong>Hm0 = 4√m0</strong>：由頻譜零階矩 m0 計算之顯著波高；理論上常與 Hs、H1/3 接近。</li>
+<li><strong>Tz</strong>：零上切或零下切平均週期，為時域平均週期。</li>
+<li><strong>Tp</strong>：頻譜尖峰週期，Tp = 1 / fp；不規則波中通常不可直接拿 Tz 與 Tp 比。</li>
+<li><strong>Tm01、Tm02</strong>：由頻譜矩計算的平均週期；Tz 通常較適合與 Tm02 對照。</li>
+</ul>
+</div>
+<div class="analysis-summary" id="analysisSummary">
+<div class="metric"><span>資料筆數 Samples</span><strong>-</strong></div>
+<div class="metric"><span>波數 Waves</span><strong>-</strong></div>
+<div class="metric"><span>H1/3 ≈ Hs</span><strong>-</strong></div>
+<div class="metric"><span>Tz 零切平均週期</span><strong>-</strong></div>
+</div>
+<div class="spectrum-charts">
+<div class="analysis-chart"><canvas aria-label="波浪時間序列與零切點" height="360" id="analysisWaveCanvas" role="img" width="600"></canvas></div>
+<div class="analysis-chart"><canvas aria-label="波譜分析圖" height="360" id="analysisSpectrumCanvas" role="img" width="600"></canvas></div>
+</div>
+<div class="spectrum-charts">
+<div class="analysis-chart"><canvas aria-label="無因次頻譜圖" height="360" id="analysisNonDimSpectrumCanvas" role="img" width="600"></canvas></div>
+<div class="fit-dashboard" id="fitDashboard">
+<h3 class="fit-title">頻譜比對（擬合結果）</h3>
+<div class="fit-chart"><canvas aria-label="實測頻譜與理論頻譜比對圖" height="420" id="analysisCompareSpectrumCanvas" role="img" width="900"></canvas></div>
+<div class="fit-detail-grid">
+<div class="fit-card">
+<p class="fit-best" id="fitBestLabel">最佳擬合：-</p>
+<div id="fitTableWrap"></div>
+</div>
+<div class="fit-card">
+<p class="fit-note-title">說明與主要參數</p>
+<ul class="fit-note" id="fitNoteList">
+<li>右下角圖表顯示實測頻譜與四種理論頻譜擬合結果；擬合參數中的 Hs 為 significant wave height，Tp 為 peak period。</li>
+</ul>
+<div id="fitParamTableWrap"></div><div id="fitModelTableWrap"></div>
+</div>
+</div>
+</div>
+<div class="fit-hint">NRMSE 越小表示擬合越好；綠色星號 ★ 為最佳擬合結果。判讀時請注意：Hs/Hm0/H1/3 是波高對照組，Tp 與 Tz 則不是同一種週期。</div>
+</div>
+</div></section>
+</section>
+</main>
+<script>
     const g = 9.81;
     const controls = {
       height: document.getElementById("height"),
@@ -1019,7 +860,6 @@
       crossingMode: document.getElementById("crossingMode"),
       demeanMode: document.getElementById("demeanMode"),
       analysisSpectrumMethod: document.getElementById("analysisSpectrumMethod"),
-      spectrumMethodDescription: document.getElementById("spectrumMethodDescription"),
       analysisSummary: document.getElementById("analysisSummary"),
       analysisNote: document.getElementById("analysisNote"),
       fitDashboard: document.getElementById("fitDashboard"),
@@ -1538,18 +1378,16 @@
         </tr>`;
       }).join("");
 
-      if (controls.fitModelTableWrap) {
-        controls.fitModelTableWrap.innerHTML = `<table class="fit-model-table">
-          <thead>
-            <tr>
-              <th>波譜型式</th>
-              <th>特徵說明</th>
-              <th>擬合表現</th>
-            </tr>
-          </thead>
-          <tbody>${modelRows}</tbody>
-        </table>`;
-      }
+      controls.fitModelTableWrap.innerHTML = `<table class="fit-model-table">
+        <thead>
+          <tr>
+            <th>波譜型式</th>
+            <th>特徵說明</th>
+            <th>擬合表現</th>
+          </tr>
+        </thead>
+        <tbody>${modelRows}</tbody>
+      </table>`;
     }
 
     function drawLineChart(chartCanvas, chartCtx, points, xKey, yKey, title, xLabel, yLabel) {
@@ -1698,25 +1536,6 @@
       analysisSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       analysisNonDimSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       analysisCompareSpectrumCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    }
-
-    function resizeAnalysisCanvases() {
-      const ratio = window.devicePixelRatio || 1;
-      [
-        [analysisWaveCanvas, analysisWaveCtx],
-        [analysisSpectrumCanvas, analysisSpectrumCtx],
-        [analysisNonDimSpectrumCanvas, analysisNonDimSpectrumCtx],
-        [analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx]
-      ].forEach(([chartCanvas, chartCtx]) => {
-        const chartRect = chartCanvas.getBoundingClientRect();
-        const width = Math.max(1, Math.round(chartRect.width * ratio));
-        const height = Math.max(1, Math.round(chartRect.height * ratio));
-        if (chartCanvas.width !== width || chartCanvas.height !== height) {
-          chartCanvas.width = width;
-          chartCanvas.height = height;
-        }
-        chartCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      });
     }
 
     function drawIrregularPreview(model) {
@@ -2272,14 +2091,8 @@
       });
 
       parsed.sort((a, b) => a[0] - b[0]);
-      if (parsed.length) {
-        const t0 = parsed[0][0];
-        if (Number.isFinite(t0)) {
-          parsed.forEach((row) => { row[0] -= t0; });
-        }
-      }
 
-      return parsed.map(([t, eta]) => `${Number(t.toFixed(10))}\t${eta}`).join("\n");
+      return parsed.map(([t, eta]) => `${t}\t${eta}`).join("\n");
     }
 
     function handleFileImport(event) {
@@ -2326,12 +2139,6 @@
         if (parts.length >= 2) rows.push({ time_s: parts[0], eta_m: parts[1] });
       });
       rows.sort((a, b) => a.time_s - b.time_s);
-      if (rows.length) {
-        const t0 = rows[0].time_s;
-        if (Number.isFinite(t0)) {
-          rows.forEach((row) => { row.time_s -= t0; });
-        }
-      }
       if (controls.demeanMode.value === "yes" && rows.length) {
         const mean = rows.reduce((sum, row) => sum + row.eta_m, 0) / rows.length;
         rows.forEach((row) => { row.eta_m -= mean; });
@@ -2751,6 +2558,10 @@
       chartCtx.strokeStyle = "#17212b";
       chartCtx.lineWidth = 1.4;
       chartCtx.strokeRect(left, top, plotW, plotH);
+      chartCtx.save();
+      chartCtx.beginPath();
+      chartCtx.rect(left, top, plotW, plotH);
+      chartCtx.clip();
       chartCtx.strokeStyle = options.lineColor || "#087388";
       chartCtx.lineWidth = 2.4;
       chartCtx.beginPath();
@@ -2761,6 +2572,7 @@
         else chartCtx.lineTo(x, y);
       });
       chartCtx.stroke();
+      chartCtx.restore();
 
       if (options.crossings) {
         const crossingColor = controls.crossingMode.value === "up" ? "#2e9d44" : "#d63b3b";
@@ -2842,10 +2654,25 @@
     function drawAnalysisTimeSeries(rows) {
       if (!rows.length) return;
       const points = rows.map((row) => ({ x: row.time_s, y: row.eta_m }));
-      drawAutoLineChart(analysisWaveCanvas, analysisWaveCtx, points, "x", "y", "Water Surface Signal", "t (s)", "eta (m)",{
-  xMin: 0,
-  xMax: Math.min(200, Math.max(...points.map(p => p.x)))
-});
+      // 水位時間序列圖的 t 軸顯示範圍
+      // 只改這兩個值即可調整左上水位圖的時間範圍；設為 null 代表自動顯示完整資料。
+      const waterPlotXMin = 0;
+      const waterPlotXMax = Math.min(60, Math.max(...points.map((p) => p.x)));
+
+      drawAutoLineChart(
+        analysisWaveCanvas,
+        analysisWaveCtx,
+        points,
+        "x",
+        "y",
+        "Water Surface Signal",
+        "t (s)",
+        "eta (m)",
+        {
+          xMin: waterPlotXMin,
+          xMax: waterPlotXMax
+        }
+      );
       const rect = analysisWaveCanvas.getBoundingClientRect();
       drawChartLegend(analysisWaveCtx, [
         { type: "line", color: "#087388", label: "Water surface" }
@@ -3127,11 +2954,6 @@
         .sort((a, b) => a.score.rmse - b.score.rmse);
       const fitByType = Object.fromEntries(fits.map((fit) => [fit.type, fit]));
       const bestFit = fits[0];
-      if (controls.fitDashboard) {
-        controls.fitDashboard.classList.add("active");
-        resizeAnalysisCanvases();
-      }
-
       const series = [
         { label: "Measured", color: "#087388", width: 2.8, points: measured },
         { label: bestFit?.type === "pm" ? "PM fit ★" : "PM fit", color: "#9b4a1f", dash: [8, 5], points: toPoints(fitByType.pm?.curve || []) },
@@ -3139,6 +2961,13 @@
         { label: bestFit?.type === "bretschneider" ? "Bretschneider fit ★" : "Bretschneider fit", color: "#6f42c1", dash: [10, 4], points: toPoints(fitByType.bretschneider?.curve || []) },
         { label: bestFit?.type === "tma" ? "TMA fit ★" : "TMA fit", color: "#d63b3b", dash: [3, 4], points: toPoints(fitByType.tma?.curve || []) }
       ];
+      // The fit panel starts hidden, so its canvas is initially resized to 0 x 0.
+      controls.fitDashboard.classList.add("active");
+      const compareRect = analysisCompareSpectrumCanvas.getBoundingClientRect();
+      const compareRatio = window.devicePixelRatio || 1;
+      analysisCompareSpectrumCanvas.width = Math.round(compareRect.width * compareRatio);
+      analysisCompareSpectrumCanvas.height = Math.round(compareRect.height * compareRatio);
+      analysisCompareSpectrumCtx.setTransform(compareRatio, 0, 0, compareRatio, 0, 0);
       drawMultiLineChart(analysisCompareSpectrumCanvas, analysisCompareSpectrumCtx, series, "Fitted spectrum comparison", "f (Hz)", "S(f) (m²/Hz)", { xMin: 0, xMax: fMax, yMin: 0 });
 
       drawAnalysisSpectrumComparison.lastFits = fits;
@@ -3153,23 +2982,7 @@
         : "無法完成擬合";
     }
 
-    function getSpectrumMethodDescription(method) {
-      const descriptions = {
-        raw: "Raw periodogram：直接對完整水位序列做頻譜估計，解析度高，但較容易受 leakage 影響。適合資料長度足夠且想保留原始尖峰時使用。",
-        hann: "Hann periodogram：先套用 Hann window 再估計頻譜，可降低頻譜洩漏，但尖峰會較平滑、能量需做窗函數修正。",
-        welch: "Welch spectrum：將資料分段、加窗後平均，可降低隨機震盪，頻譜較穩定；代價是頻率解析度會下降。",
-        smooth: "Smoothed Welch：在 Welch 頻譜上再做平滑，適合判讀主要能量帶與擬合趨勢；不適合追求非常尖銳的單一峰值。"
-      };
-      return descriptions[method] || descriptions.raw;
-    }
-
-    function updateSpectrumMethodDescription() {
-      if (!controls.spectrumMethodDescription || !controls.analysisSpectrumMethod) return;
-      controls.spectrumMethodDescription.textContent = getSpectrumMethodDescription(controls.analysisSpectrumMethod.value);
-    }
-
     function runWaveAnalysis() {
-      updateSpectrumMethodDescription();
       const rows = parseAnalysisInput();
       if (rows.length < 4) {
         controls.analysisNote.textContent = "請貼上至少 4 筆兩欄資料：time, eta。";
@@ -3497,7 +3310,6 @@
       controls.fileType.value = "csv";
       controls.outputKind.value = "eta";
       controls.analysisInput.value = "";
-      updateSpectrumMethodDescription();
       startTime = performance.now();
       if (activeWaveMode === "analysis") {
         runWaveAnalysis();
@@ -3519,7 +3331,6 @@
       }
     });
 
-    updateSpectrumMethodDescription();
     resizeCanvas();
     update();
     cancelAnimationFrame(animationId);
@@ -3536,8 +3347,7 @@
     if (controls.irregularPanel) controls.irregularPanel.classList.remove("active");
 
   </script>
-
-  <script id="module-split-init">
+<script id="module-split-init">
     // =====================================================
     // 模組初始化
     // 目的：由主控頁載入本 HTML 時，自動切到指定功能模組。
