@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TWD97 / WGS84 座標批次轉換工具</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #17212b;
+    --muted: #637083;
+    --line: #d8e0ea;
+    --panel: #ffffff;
+    --bg: #f5f7fa;
+    --accent: #0e7a8a;
+    --accent-dark: #095c68;
+    --warn: #9b4a1f;
+    --good: #0d7c3b;
+    font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  main {
+    width: min(1280px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 40px;
+  }
+  header {
+    margin-bottom: 18px;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    line-height: 1.05;
+  }
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 410px) 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(28, 41, 56, 0.08);
+  }
+  .controls {
+    padding: 18px;
+    display: grid;
+    gap: 16px;
+  }
+  .control {
+    display: grid;
+    gap: 8px;
+  }
+  label {
+    font-weight: 800;
+  }
+  .hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  input[type="file"],
+  select,
+  textarea,
+  input[type="number"] {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 9px 10px;
+    font: inherit;
+    background: #fff;
+    color: var(--ink);
+  }
+  textarea {
+    min-height: 260px;
+    resize: vertical;
+    font: 0.9rem Consolas, "Courier New", monospace;
+  }
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .button-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .button-row.three {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  button {
+    min-height: 42px;
+    border: 0;
+    border-radius: 7px;
+    padding: 10px 12px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+  }
+  button.secondary {
+    background: #e7edf3;
+    color: var(--ink);
+  }
+  button.warn {
+    background: #ead7c9;
+    color: #793a18;
+  }
+  button:hover { filter: brightness(0.96); }
+  .stage {
+    padding: 16px;
+    display: grid;
+    gap: 14px;
+  }
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .metric {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px;
+    background: #fbfcfd;
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+  .metric span {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .metric strong {
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+  .status {
+    border: 1px solid #bfdff0;
+    border-radius: 8px;
+    background: #f4fbff;
+    color: #075985;
+    padding: 10px 12px;
+    line-height: 1.55;
+    font-size: 0.92rem;
+  }
+  .status.warn {
+    border-color: #e6c9b7;
+    background: #fff8f2;
+    color: var(--warn);
+  }
+  .table-wrap {
+    overflow: auto;
+    max-height: 520px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+  table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    min-width: 520px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 5px 7px;
+    text-align: left;
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f7f9fb;
+    color: var(--muted);
+    font-weight: 900;
+  }
+  tr.invalid td {
+    background: #fff8f2;
+  }
+  tr.valid td.status-cell {
+    color: var(--good);
+    font-weight: 800;
+  }
+  tr.invalid td.status-cell {
+    font-weight: 800;
+  }
+  .definition-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 12px;
+  }
+  .definition-card h3 {
+    margin: 0 0 8px;
+    color: var(--accent-dark);
+    font-size: 1rem;
+  }
+  .definition-card ul {
+    margin: 0;
+    padding-left: 1.2em;
+    line-height: 1.65;
+    font-size: 0.92rem;
+  }
+  .output-box {
+    min-height: 180px;
+    max-height: 260px;
+  }
+  @media (max-width: 920px) {
+    .layout,
+    .summary {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 560px) {
+    main {
+      width: min(100% - 20px, 1280px);
+      padding-top: 18px;
+    }
+    .split,
+    .button-row,
+    .button-row.three {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>TWD97 / WGS84 座標批次轉換工具</h1>
+  <p class="subtitle">
+    前兩欄固定視為座標欄位，第 3 欄以後原樣保留。輸出欄位會依輸入座標型態自動決定：WGS84 轉出 TWD97 X/Y，TWD97 轉出 Lon/Lat。
+  </p>
+</header>
+
+<section class="layout">
+  <aside class="panel">
+    <div class="controls">
+      <div class="control">
+        <label for="fileInput">讀取資料檔 File import</label>
+        <input id="fileInput" type="file" accept=".txt,.csv,.dat,.tsv,text/plain,text/csv"/>
+        <p class="hint" id="fileStatus">支援 TXT / CSV / DAT / TSV。前兩欄需為座標，後面欄位會保留。</p>
+      </div>
+
+      <div class="split">
+        <div class="control">
+          <label for="headerMode">標題列 Header</label>
+          <select id="headerMode">
+            <option value="auto">自動判斷 auto</option>
+            <option value="yes">略過第一列</option>
+            <option value="no">不略過</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="delimiterMode">分隔符 Delimiter</label>
+          <select id="delimiterMode">
+            <option value="auto">自動判斷 auto</option>
+            <option value="comma">逗號 ,</option>
+            <option value="tab">Tab</option>
+            <option value="space">空白</option>
+            <option value="semicolon">分號 ;</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="control">
+          <label for="zoneMode">TWD97 分區</label>
+          <select id="zoneMode">
+            <option value="121">台灣本島 TM2 121</option>
+            <option value="119">澎湖/金門/馬祖 TM2 119</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="directionMode">轉換方向</label>
+          <select id="directionMode">
+            <option value="auto">自動判斷</option>
+            <option value="wgs_to_twd">WGS84 → TWD97</option>
+            <option value="twd_to_wgs">TWD97 → WGS84</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="control">
+          <label for="precisionLonLat">經緯度小數位</label>
+          <input id="precisionLonLat" type="number" min="0" max="12" step="1" value="8"/>
+        </div>
+        <div class="control">
+          <label for="precisionXY">平面座標小數位</label>
+          <input id="precisionXY" type="number" min="0" max="6" step="1" value="3"/>
+        </div>
+      </div>
+
+      <div class="split">
+        <label class="hint"><input id="keepOriginalXY" type="checkbox"/> 輸出保留原始 XY</label>
+        <label class="hint"><input id="keepMetaColumns" type="checkbox" checked/> 輸出保留第 4 欄以後</label>
+      </div>
+
+      <div class="control">
+        <label for="inputText">資料輸入 Data input</label>
+        <textarea id="inputText" placeholder="121.565418,25.033964,10.5,台北101
+250000,2760000,12.0,測點A
+119.5667,23.5655,-3.2,澎湖測點"></textarea>
+        <p class="hint">第 1、2 欄為座標，第 3 欄視為 Z 值不轉換；自動判斷座標時，經緯度會判斷為 WGS84，大數值平面座標會判斷為 TWD97 / TM2。</p>
+      </div>
+
+      <div class="control">
+        <label for="sampleMode">範例資料 Sample</label>
+        <select id="sampleMode">
+          <option value="main_wgs">本島 WGS84 經緯度範例</option>
+          <option value="main_twd">本島 TWD97 / TM2 121 範例</option>
+          <option value="penghu_wgs">澎湖 WGS84 經緯度範例</option>
+          <option value="penghu_twd">澎湖 TWD97 / TM2 119 範例</option>
+        </select>
+      </div>
+
+      <div class="button-row">
+        <button id="runBtn" type="button">執行轉換</button>
+        <button class="secondary" id="sampleBtn" type="button">載入範例</button>
+      </div>
+
+      <div class="button-row three">
+        <button id="downloadCsvBtn" type="button">下載 CSV</button>
+        <button class="secondary" id="downloadTxtBtn" type="button">下載 TXT</button>
+        <button class="warn" id="clearBtn" type="button">清除</button>
+      </div>
+    </div>
+  </aside>
+
+  <section class="panel stage">
+    <div class="summary" id="summary">
+      <div class="metric"><span>總列數 Rows</span><strong>-</strong></div>
+      <div class="metric"><span>成功轉換 Valid</span><strong>-</strong></div>
+      <div class="metric"><span>無法判斷 Invalid</span><strong>-</strong></div>
+      <div class="metric"><span>主要來源座標系統</span><strong>-</strong></div>
+    </div>
+
+    <div class="status" id="statusBox">請貼上資料或讀取檔案後執行轉換。</div>
+    <div class="status" id="conversionBanner">尚未判斷轉換方向</div>
+
+    
+
+    <div class="table-wrap">
+      <table id="previewTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>Z</th>
+            <th>附加資料</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4">尚無資料</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="control">
+      <label for="outputText">輸出文字 Output preview（乾淨 XYZ 格式）</label>
+      <textarea class="output-box" id="outputText" readonly></textarea>
+    </div>
+
+    <div class="definition-card">
+      <h3>判斷規則</h3>
+      <ul>
+        <li><strong>WGS84</strong>：第 1 欄約為經度 118–123.5，第 2 欄約為緯度 21–27。</li>
+        <li><strong>TWD97 / TM2</strong>：第 1 欄約為 X/Easting 0–400000，第 2 欄約為 Y/Northing 2300000–2950000。</li>
+        <li>第 3 欄以後不參與座標計算，會原樣保留到輸出結果。輸出不再同時塞入所有座標欄，而是依原始輸入欄位決定新增的轉換欄位。</li>
+      </ul>
+    </div>
+  </section>
+</section>
+</main>
+
+<script>
+const A = 6378137.0;
+const INV_F = 298.257222101;
+const F = 1 / INV_F;
+const B = A * (1 - F);
+const E2 = 1 - (B * B) / (A * A);
+const EP2 = E2 / (1 - E2);
+const K0 = 0.9999;
+const FALSE_EASTING = 250000.0;
+const FALSE_NORTHING = 0.0;
+
+const els = {
+  fileInput: document.getElementById("fileInput"),
+  fileStatus: document.getElementById("fileStatus"),
+  headerMode: document.getElementById("headerMode"),
+  delimiterMode: document.getElementById("delimiterMode"),
+  zoneMode: document.getElementById("zoneMode"),
+  directionMode: document.getElementById("directionMode"),
+  sampleMode: document.getElementById("sampleMode"),
+  precisionLonLat: document.getElementById("precisionLonLat"),
+  precisionXY: document.getElementById("precisionXY"),
+  keepOriginalXY: document.getElementById("keepOriginalXY"),
+  keepMetaColumns: document.getElementById("keepMetaColumns"),
+  inputText: document.getElementById("inputText"),
+  runBtn: document.getElementById("runBtn"),
+  sampleBtn: document.getElementById("sampleBtn"),
+  clearBtn: document.getElementById("clearBtn"),
+  downloadCsvBtn: document.getElementById("downloadCsvBtn"),
+  downloadTxtBtn: document.getElementById("downloadTxtBtn"),
+  statusBox: document.getElementById("statusBox"),
+  summary: document.getElementById("summary"),
+  previewTable: document.getElementById("previewTable"),
+  outputText: document.getElementById("outputText")
+};
+
+let lastResults = [];
+let lastHeader = [];
+
+function toRad(deg) { return deg * Math.PI / 180; }
+function toDeg(rad) { return rad * 180 / Math.PI; }
+
+function meridionalArc(phi) {
+  const e4 = E2 * E2;
+  const e6 = e4 * E2;
+  return A * (
+    (1 - E2 / 4 - 3 * e4 / 64 - 5 * e6 / 256) * phi
+    - (3 * E2 / 8 + 3 * e4 / 32 + 45 * e6 / 1024) * Math.sin(2 * phi)
+    + (15 * e4 / 256 + 45 * e6 / 1024) * Math.sin(4 * phi)
+    - (35 * e6 / 3072) * Math.sin(6 * phi)
+  );
+}
+
+function wgs84ToTwd97(lon, lat, zone) {
+  const lon0 = toRad(Number(zone));
+  const phi = toRad(lat);
+  const lambda = toRad(lon);
+  const sinPhi = Math.sin(phi);
+  const cosPhi = Math.cos(phi);
+  const tanPhi = Math.tan(phi);
+
+  const N = A / Math.sqrt(1 - E2 * sinPhi * sinPhi);
+  const T = tanPhi * tanPhi;
+  const C = EP2 * cosPhi * cosPhi;
+  const Acoef = (lambda - lon0) * cosPhi;
+  const M = meridionalArc(phi);
+
+  const x = FALSE_EASTING + K0 * N * (
+    Acoef
+    + (1 - T + C) * Math.pow(Acoef, 3) / 6
+    + (5 - 18 * T + T * T + 72 * C - 58 * EP2) * Math.pow(Acoef, 5) / 120
+  );
+
+  const y = FALSE_NORTHING + K0 * (
+    M + N * tanPhi * (
+      Math.pow(Acoef, 2) / 2
+      + (5 - T + 9 * C + 4 * C * C) * Math.pow(Acoef, 4) / 24
+      + (61 - 58 * T + T * T + 600 * C - 330 * EP2) * Math.pow(Acoef, 6) / 720
+    )
+  );
+
+  return { x, y };
+}
+
+function twd97ToWgs84(x, y, zone) {
+  const lon0 = toRad(Number(zone));
+  const e1 = (1 - Math.sqrt(1 - E2)) / (1 + Math.sqrt(1 - E2));
+  const M = (y - FALSE_NORTHING) / K0;
+  const mu = M / (A * (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * Math.pow(E2, 3) / 256));
+
+  const phi1 = mu
+    + (3 * e1 / 2 - 27 * Math.pow(e1, 3) / 32) * Math.sin(2 * mu)
+    + (21 * e1 * e1 / 16 - 55 * Math.pow(e1, 4) / 32) * Math.sin(4 * mu)
+    + (151 * Math.pow(e1, 3) / 96) * Math.sin(6 * mu)
+    + (1097 * Math.pow(e1, 4) / 512) * Math.sin(8 * mu);
+
+  const sinPhi1 = Math.sin(phi1);
+  const cosPhi1 = Math.cos(phi1);
+  const tanPhi1 = Math.tan(phi1);
+
+  const C1 = EP2 * cosPhi1 * cosPhi1;
+  const T1 = tanPhi1 * tanPhi1;
+  const N1 = A / Math.sqrt(1 - E2 * sinPhi1 * sinPhi1);
+  const R1 = A * (1 - E2) / Math.pow(1 - E2 * sinPhi1 * sinPhi1, 1.5);
+  const D = (x - FALSE_EASTING) / (N1 * K0);
+
+  const lat = phi1 - (N1 * tanPhi1 / R1) * (
+    D * D / 2
+    - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * EP2) * Math.pow(D, 4) / 24
+    + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * EP2 - 3 * C1 * C1) * Math.pow(D, 6) / 720
+  );
+
+  const lon = lon0 + (
+    D
+    - (1 + 2 * T1 + C1) * Math.pow(D, 3) / 6
+    + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * EP2 + 24 * T1 * T1) * Math.pow(D, 5) / 120
+  ) / cosPhi1;
+
+  return { lon: toDeg(lon), lat: toDeg(lat) };
+}
+
+function detectDelimiter(line) {
+  const mode = els.delimiterMode.value;
+  if (mode === "comma") return ",";
+  if (mode === "tab") return "\t";
+  if (mode === "semicolon") return ";";
+  if (mode === "space") return "space";
+
+  const counts = [
+    { d: ",", n: (line.match(/,/g) || []).length },
+    { d: "\t", n: (line.match(/\t/g) || []).length },
+    { d: ";", n: (line.match(/;/g) || []).length }
+  ].sort((a, b) => b.n - a.n);
+
+  if (counts[0].n > 0) return counts[0].d;
+  return "space";
+}
+
+function splitLine(line, delimiter) {
+  if (delimiter === "space") return line.trim().split(/\s+/);
+  return line.split(delimiter).map(v => v.trim());
+}
+
+function parseNumber(value) {
+  if (typeof value !== "string") return NaN;
+  const cleaned = value.trim().replace(/[，]/g, ".").replace(/,/g, "");
+  return Number(cleaned);
+}
+
+function looksLikeHeader(cols) {
+  if (cols.length < 2) return true;
+  return !Number.isFinite(parseNumber(cols[0])) || !Number.isFinite(parseNumber(cols[1]));
+}
+
+function parseInput(text) {
+  const rawLines = text
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith("#"));
+
+  if (!rawLines.length) return { rows: [], header: [], delimiter: "," };
+
+  const delimiter = detectDelimiter(rawLines[0]);
+  let start = 0;
+  let header = [];
+  const firstCols = splitLine(rawLines[0], delimiter);
+
+  if (els.headerMode.value === "yes" || (els.headerMode.value === "auto" && looksLikeHeader(firstCols))) {
+    header = firstCols;
+    start = 1;
+  }
+
+  const rows = [];
+  for (let i = start; i < rawLines.length; i += 1) {
+    const cols = splitLine(rawLines[i], delimiter);
+    if (cols.length < 2) {
+      rows.push({ lineNo: i + 1, cols, error: "欄位數不足" });
+      continue;
+    }
+    rows.push({ lineNo: i + 1, cols, error: "" });
+  }
+
+  return { rows, header, delimiter };
+}
+
+function detectCrs(x, y) {
+  const mode = els.directionMode.value;
+  if (mode === "wgs_to_twd") return "WGS84";
+  if (mode === "twd_to_wgs") return "TWD97";
+
+  if (x >= 118 && x <= 123.5 && y >= 21 && y <= 27) return "WGS84";
+  if (x >= 0 && x <= 400000 && y >= 2300000 && y <= 2950000) return "TWD97";
+  return "UNKNOWN";
+}
+
+function fmt(value, digits) {
+  return Number.isFinite(value) ? Number(value).toFixed(digits) : "";
+}
+
+function convertRows() {
+  const parsed = parseInput(els.inputText.value);
+  const zone = els.zoneMode.value;
+  const lonLatDigits = Math.max(0, Math.min(12, Number(els.precisionLonLat.value) || 8));
+  const xyDigits = Math.max(0, Math.min(6, Number(els.precisionXY.value) || 3));
+
+  lastResults = parsed.rows.map((row, index) => {
+    const raw1 = row.cols[0] ?? "";
+    const raw2 = row.cols[1] ?? "";
+    const x1 = parseNumber(raw1);
+    const y1 = parseNumber(raw2);
+    const z = row.cols[2] ?? "";
+    const extra = row.cols.slice(3);
+    let source = "UNKNOWN";
+    let target = "-";
+    let lon = NaN, lat = NaN, twdX = NaN, twdY = NaN;
+    let status = row.error || "OK";
+
+    if (!row.error && Number.isFinite(x1) && Number.isFinite(y1)) {
+      source = detectCrs(x1, y1);
+
+      try {
+        if (source === "WGS84") {
+          lon = x1;
+          lat = y1;
+          const twd = wgs84ToTwd97(lon, lat, zone);
+          twdX = twd.x;
+          twdY = twd.y;
+          target = `TWD97 / TM2 ${zone}`;
+        } else if (source === "TWD97") {
+          twdX = x1;
+          twdY = y1;
+          const wgs = twd97ToWgs84(twdX, twdY, zone);
+          lon = wgs.lon;
+          lat = wgs.lat;
+          target = "WGS84";
+        } else {
+          status = "無法判斷座標系統";
+        }
+      } catch (err) {
+        status = "轉換失敗";
+      }
+    } else if (!row.error) {
+      status = "前兩欄不是有效數字";
+    }
+
+    const valid = status === "OK" && Number.isFinite(lon) && Number.isFinite(lat) && Number.isFinite(twdX) && Number.isFinite(twdY);
+
+    return {
+      index: index + 1,
+      lineNo: row.lineNo,
+      raw1,
+      raw2,
+      z,
+      source,
+      target,
+      lon,
+      lat,
+      twdX,
+      twdY,
+      zone,
+      status: valid ? "OK" : status,
+      valid,
+      extra,
+      lonLatDigits,
+      xyDigits
+    };
+  });
+
+  lastHeader = parsed.header;
+  renderResults();
+}
+
+function renderSummary() {
+  const total = lastResults.length;
+  const valid = lastResults.filter(r => r.valid).length;
+  const invalid = total - valid;
+  const counts = lastResults.reduce((acc, r) => {
+    acc[r.source] = (acc[r.source] || 0) + 1;
+    return acc;
+  }, {});
+  const mainSource = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
+
+  els.summary.innerHTML = `
+    <div class="metric"><span>總列數 Rows</span><strong>${total}</strong></div>
+    <div class="metric"><span>成功轉換 Valid</span><strong>${valid}</strong></div>
+    <div class="metric"><span>無法判斷 Invalid</span><strong>${invalid}</strong></div>
+    <div class="metric"><span>主要來源座標系統</span><strong>${mainSource}</strong></div>
+  `;
+
+  els.statusBox.className = invalid ? "status warn" : "status";
+  if (!total) {
+    els.statusBox.textContent = "請貼上資料或讀取檔案後執行轉換。";
+  } else if (invalid) {
+    els.statusBox.textContent = `已完成轉換，但有 ${invalid} 列資料無法辨識座標系統。`;
+  } else {
+    els.statusBox.textContent = `已完成 ${valid} 列座標轉換。第 3 欄以後已原樣保留於輸出資料。`;
+  }
+}
+
+function targetKind() {
+  const validRows = lastResults.filter(r => r.valid);
+  const hasWgsInput = validRows.some(r => r.source === "WGS84");
+  const hasTwdInput = validRows.some(r => r.source === "TWD97");
+  if (hasWgsInput && !hasTwdInput) return "twd";
+  if (hasTwdInput && !hasWgsInput) return "wgs";
+  return "mixed";
+}
+
+function renderTable() {
+  const table = els.previewTable;
+  const thead = table.querySelector("thead");
+  const tbody = table.querySelector("tbody");
+  const banner = document.getElementById("conversionBanner");
+  const kind = targetKind();
+  const zone = els.zoneMode.value;
+
+  let conversionText = "尚未判斷轉換方向";
+
+  if (kind === "twd") {
+    conversionText = zone === "121"
+      ? "WGS84 → TWD97 TM2 121（台灣本島）"
+      : "WGS84 → TWD97 TM2 119（澎湖／金門／馬祖）";
+
+    thead.innerHTML = `<tr><th>X</th><th>Y</th><th>Z</th><th>附加資料</th></tr>`;
+  } else if (kind === "wgs") {
+    conversionText = zone === "121"
+      ? "TWD97 TM2 121 → WGS84（台灣本島）"
+      : "TWD97 TM2 119 → WGS84（澎湖／金門／馬祖）";
+
+    thead.innerHTML = `<tr><th>Lon</th><th>Lat</th><th>Z</th><th>附加資料</th></tr>`;
+  } else {
+    conversionText = "混合座標資料";
+    thead.innerHTML = `<tr><th>X / Lon</th><th>Y / Lat</th><th>Z</th><th>附加資料</th></tr>`;
+  }
+
+  if (banner) {
+    banner.textContent = conversionText;
+  }
+
+  if (!lastResults.length) {
+    tbody.innerHTML = `<tr><td colspan="4">尚無資料</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lastResults.slice(0, 500).map(r => {
+    let out1 = "";
+    let out2 = "";
+    if (r.source === "WGS84") {
+      out1 = fmt(r.twdX, r.xyDigits);
+      out2 = fmt(r.twdY, r.xyDigits);
+    } else if (r.source === "TWD97") {
+      out1 = fmt(r.lon, r.lonLatDigits);
+      out2 = fmt(r.lat, r.lonLatDigits);
+    }
+
+    return `
+      <tr class="${r.valid ? "valid" : "invalid"}">
+        <td>${escapeHtml(out1)}</td>
+        <td>${escapeHtml(out2)}</td>
+        <td>${escapeHtml(r.z)}</td>
+        <td>${escapeHtml(r.extra.join(" | "))}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function buildOutput(delimiter) {
+  const sep = delimiter === "tab" ? "\t" : ",";
+  const keepOriginal = Boolean(els.keepOriginalXY?.checked);
+  const keepMeta = Boolean(els.keepMetaColumns?.checked);
+  const originalExtraCount = keepMeta ? Math.max(0, ...lastResults.map(r => r.extra.length)) : 0;
+  const extraHeaders = Array.from({ length: originalExtraCount }, (_, i) => {
+    const header = lastHeader[i + 3];
+    return header || `extra_${i + 1}`;
+  });
+
+  const kind = targetKind();
+  let coordHeaders;
+  if (kind === "twd") {
+    coordHeaders = ["x", "y"];
+  } else if (kind === "wgs") {
+    coordHeaders = ["lon", "lat"];
+  } else {
+    coordHeaders = ["converted_x_or_lon", "converted_y_or_lat"];
+  }
+
+  const zHeader = lastHeader[2] || "z";
+  const originalHeaders = keepOriginal ? [lastHeader[0] || "original_col1", lastHeader[1] || "original_col2"] : [];
+  const headers = [...coordHeaders, zHeader, ...extraHeaders, ...originalHeaders];
+
+  const lines = [headers.map(v => csvCell(v, sep)).join(sep)];
+
+  for (const r of lastResults) {
+    if (!r.valid) continue;
+
+    let out1 = "";
+    let out2 = "";
+    if (r.source === "WGS84") {
+      out1 = fmt(r.twdX, r.xyDigits);
+      out2 = fmt(r.twdY, r.xyDigits);
+    } else if (r.source === "TWD97") {
+      out1 = fmt(r.lon, r.lonLatDigits);
+      out2 = fmt(r.lat, r.lonLatDigits);
+    }
+
+    const paddedExtra = keepMeta ? Array.from({ length: originalExtraCount }, (_, i) => r.extra[i] ?? "") : [];
+    const originalValues = keepOriginal ? [r.raw1, r.raw2] : [];
+    const row = [out1, out2, r.z, ...paddedExtra, ...originalValues];
+    lines.push(row.map(v => csvCell(v, sep)).join(sep));
+  }
+
+  return lines.join("\n");
+}
+function csvCell(value, sep) {
+  const text = String(value ?? "");
+  const needsQuote = text.includes('"') || text.includes("\n") || text.includes("\r") || text.includes(sep);
+  const escaped = text.replace(/"/g, '""');
+  return needsQuote ? `"${escaped}"` : escaped;
+}
+
+function renderOutput() {
+  els.outputText.value = buildOutput("comma");
+}
+
+function renderResults() {
+  renderSummary();
+  renderTable();
+  renderOutput();
+}
+
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime + ";charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(text) {
+  return String(text ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+els.fileInput.addEventListener("change", () => {
+  const file = els.fileInput.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    els.inputText.value = String(reader.result || "");
+    els.fileStatus.textContent = `已讀取：${file.name}，大小 ${(file.size / 1024).toFixed(1)} KB`;
+  };
+  reader.onerror = () => {
+    els.fileStatus.textContent = "讀取檔案失敗。";
+  };
+  reader.readAsText(file, "utf-8");
+});
+
+els.runBtn.addEventListener("click", convertRows);
+
+els.sampleBtn.addEventListener("click", () => {
+  const mode = els.sampleMode.value;
+
+  const samples = {
+    main_wgs: {
+      zone: "121",
+      text: `lon,lat,z,name
+121.565418,25.033964,10.5,台北101
+121.517061,25.047675,8.2,台北車站
+120.301435,22.627278,6.8,高雄車站`
+    },
+    main_twd: {
+      zone: "121",
+      text: `x,y,z,name
+306953.105,2770342.947,10.5,台北101
+302167.709,2771859.395,8.2,台北車站
+180279.593,2506665.862,6.8,高雄車站`
+    },
+    penghu_wgs: {
+      zone: "119",
+      text: `lon,lat,z,name
+119.566700,23.565500,4.0,馬公市
+119.615100,23.565900,7.5,澎湖機場
+119.671900,23.621300,3.2,白沙鄉`
+    },
+    penghu_twd: {
+      zone: "119",
+      text: `x,y,z,name
+307795.771,2607413.693,4.0,馬公市
+312749.219,2607486.246,7.5,澎湖機場
+318238.207,2613638.778,3.2,白沙鄉`
+    }
+  };
+
+  const sample = samples[mode] || samples.main_wgs;
+  els.zoneMode.value = sample.zone;
+  els.inputText.value = sample.text;
+  els.headerMode.value = "auto";
+  els.delimiterMode.value = "auto";
+  els.directionMode.value = "auto";
+  convertRows();
+});
+els.clearBtn.addEventListener("click", () => {
+  els.inputText.value = "";
+  els.outputText.value = "";
+  lastResults = [];
+  lastHeader = [];
+  els.fileStatus.textContent = "支援 TXT / CSV / DAT / TSV。前兩欄需為座標，後面欄位會保留。";
+  els.fileInput.value = "";
+  renderResults();
+});
+
+els.downloadCsvBtn.addEventListener("click", () => {
+  if (!lastResults.length) convertRows();
+  if (!lastResults.length) return;
+  downloadFile("coordinate-converted.csv", buildOutput("comma"), "text/csv");
+});
+
+els.downloadTxtBtn.addEventListener("click", () => {
+  if (!lastResults.length) convertRows();
+  if (!lastResults.length) return;
+  downloadFile("coordinate-converted.txt", buildOutput("tab"), "text/plain");
+});
+
+["headerMode", "delimiterMode", "zoneMode", "directionMode", "precisionLonLat", "precisionXY", "keepOriginalXY", "keepMetaColumns"].forEach(id => {
+  els[id].addEventListener("change", () => {
+    if (els.inputText.value.trim()) convertRows();
+  });
+});
+</script>
+</body>
+</html>
