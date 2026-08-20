@@ -12,12 +12,12 @@
       --ink: #17212b;
       --muted: #637083;
       --line: #d8e0ea;
-      --panel: #fff;
+      --panel: #ffffff;
       --bg: #f5f7fa;
       --accent: #0e7a8a;
       --accent-dark: #095c68;
 
-      font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+      font-family: "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
     }
 
     * {
@@ -38,15 +38,11 @@
     }
 
     header {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: end;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     h1 {
-      margin: 0 0 5px;
+      margin: 0 0 6px;
       font-size: clamp(1.8rem, 3vw, 2.8rem);
       line-height: 1.05;
     }
@@ -66,7 +62,7 @@
     .panel {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 12px;
       box-shadow: 0 12px 28px rgba(28, 41, 56, 0.08);
     }
 
@@ -77,7 +73,7 @@
     }
 
     .nav-title {
-      padding: 6px 4px 2px;
+      padding: 5px 4px 2px;
       color: var(--muted);
       font-size: 0.78rem;
       font-weight: 800;
@@ -99,25 +95,36 @@
       background: #eef3f7;
       color: var(--ink);
       padding: 13px 14px;
-      cursor: pointer;
       font: inherit;
       font-weight: 800;
       line-height: 1.35;
       text-decoration: none;
       display: block;
+      transition: 0.18s ease;
+    }
+
+    .module-btn {
+      cursor: pointer;
     }
 
     .module-btn span,
     .module-link span {
       display: block;
+      margin-top: 2px;
       font-weight: 500;
       color: var(--muted);
       font-size: 0.88rem;
     }
 
+    .module-btn:hover,
+    .module-link:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
     .module-btn.active {
       background: var(--accent);
-      color: #fff;
+      color: #ffffff;
       border-color: var(--accent);
     }
 
@@ -125,17 +132,18 @@
       color: #e8fbff;
     }
 
-    .module-btn:hover,
+    .module-link {
+      background: #eaf6f7;
+      border-color: #b8dfe3;
+    }
+
     .module-link:hover {
+      background: #dff1f3;
       border-color: var(--accent);
     }
 
-    .module-link:hover {
-      background: #e7f4f6;
-    }
-
     .viewer {
-      height: calc(100vh - 120px);
+      height: calc(100vh - 125px);
       min-height: 760px;
       overflow: hidden;
     }
@@ -145,8 +153,8 @@
       height: 100%;
       border: 0;
       display: block;
-      background: #fff;
-      border-radius: 10px;
+      background: #ffffff;
+      border-radius: 12px;
     }
 
     @media (max-width: 900px) {
@@ -157,10 +165,6 @@
       .viewer {
         height: 900px;
       }
-
-      header {
-        display: block;
-      }
     }
   </style>
 </head>
@@ -170,27 +174,20 @@
   <main>
 
     <header>
-      <div>
-        <h1>
-          海洋工程工具箱
-          <span lang="en">Ocean Engineering Toolbox</span>
-        </h1>
-
-        <p class="subtitle">
-          波浪分析、座標轉換、OpenDrift / OpenOil 數值模式與案例整理。
-        </p>
-      </div>
+      <h1>海洋工程工具箱 <span lang="en">Ocean Engineering Toolbox</span></h1>
+      <p class="subtitle">
+        波浪計算、資料分析、座標轉換與數值模式教學整理。
+      </p>
     </header>
 
     <section class="layout">
 
-      <!-- 左側功能選單 -->
       <aside class="panel">
 
         <nav aria-label="modules">
 
           <div class="nav-title">
-            波浪與工程工具
+            工具箱
           </div>
 
           <button
@@ -210,7 +207,7 @@
           <button
             class="module-btn"
             data-src="modules/wave-analysis.html">
-            零上/下切與頻譜分析
+            零上／下切與頻譜分析
             <span>Zero crossing / spectral analysis</span>
           </button>
 
@@ -221,9 +218,8 @@
             <span>WGS84 / TWD97 coordinate converter</span>
           </button>
 
-
           <div class="nav-title model">
-            數值模式教學
+            數值模式
           </div>
 
           <a
@@ -237,14 +233,12 @@
 
       </aside>
 
-
-      <!-- 右側模組顯示區 -->
       <section class="panel viewer">
 
         <iframe
           id="moduleFrame"
           src="modules/wave-generator.html"
-          title="Engineering module">
+          title="Engineering toolbox module">
         </iframe>
 
       </section>
@@ -253,27 +247,24 @@
 
   </main>
 
-
   <script>
     const frame = document.getElementById("moduleFrame");
 
-    document
-      .querySelectorAll(".module-btn")
-      .forEach(btn => {
+    document.querySelectorAll(".module-btn").forEach(btn => {
 
-        btn.addEventListener("click", () => {
+      btn.addEventListener("click", () => {
 
-          document
-            .querySelectorAll(".module-btn")
-            .forEach(b => b.classList.remove("active"));
-
-          btn.classList.add("active");
-
-          frame.src = btn.dataset.src;
-
+        document.querySelectorAll(".module-btn").forEach(b => {
+          b.classList.remove("active");
         });
 
+        btn.classList.add("active");
+
+        frame.src = btn.dataset.src;
+
       });
+
+    });
   </script>
 
 </body>
