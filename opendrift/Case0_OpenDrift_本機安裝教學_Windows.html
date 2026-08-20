@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenDrift 本機安裝教學（Windows）</title>
+<style>
+:root{
+  --bg:#f5f7fa; --panel:#fff; --text:#172033; --muted:#637083;
+  --primary:#0b6e8a; --primary2:#084d63; --border:#dbe4ee;
+  --code:#101827; --codeText:#eef4fb; --ps:#e8f2ff; --psb:#b9d3f3;
+  --ok:#eaf8ef; --warn:#fff5d9;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.75}
+header{background:linear-gradient(135deg,var(--primary2),var(--primary));color:#fff;padding:52px 20px 42px}
+header .inner{max-width:1050px;margin:auto}
+h1{margin:0 0 10px;font-size:clamp(2rem,4vw,3rem)}
+header p{margin:0;max-width:820px;opacity:.93}
+.wrap{max-width:1050px;margin:22px auto 60px;padding:0 18px}
+section{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:26px;margin:18px 0;box-shadow:0 3px 12px rgba(20,45,70,.04)}
+h2{margin-top:0;color:var(--primary2)}
+h3{color:#174d5d;margin-top:25px}
+pre{position:relative;background:var(--code);color:var(--codeText);padding:18px;border-radius:10px;overflow:auto;font-size:.92rem;line-height:1.55}
+code{font-family:Consolas,"Courier New",monospace}
+:not(pre)>code{background:#eef3f7;padding:2px 5px;border-radius:5px;color:#8a2d2d}
+.copy{position:absolute;right:8px;top:8px;background:#26354a;color:#fff;border:1px solid #4b5d73;border-radius:6px;padding:4px 9px;cursor:pointer}
+.tag{display:inline-block;font-weight:700;font-size:.9rem;border-radius:999px;padding:4px 10px;margin:5px 0;background:var(--ps);border:1px solid var(--psb);color:#15528b}
+.note,.warning,.success{padding:13px 15px;border-radius:10px;margin:14px 0}
+.note{background:#e9f6fa;border-left:4px solid var(--primary)}
+.warning{background:var(--warn);border-left:4px solid #d59b14}
+.success{background:var(--ok);border-left:4px solid #36834e}
+table{width:100%;border-collapse:collapse;margin:14px 0}
+th,td{border:1px solid var(--border);padding:10px;text-align:left;vertical-align:top}
+th{background:#eef6f8}
+.step{border-left:4px solid var(--primary);padding-left:16px;margin:24px 0}
+.small{color:var(--muted);font-size:.93rem}
+footer{color:var(--muted);font-size:.9rem;margin-top:30px}
+</style>
+</head>
+<body>
+<header>
+<div class="inner">
+<h1>OpenDrift 本機安裝教學</h1>
+<p>Windows 11／Miniforge Prompt 版。從 Git 下載、切換資料夾、建立 OpenDrift 環境到安裝與測試，全程只使用 Miniforge Prompt。</p>
+</div>
+</header>
+
+<div class="wrap">
+
+<section>
+<h2>0. 這份教學採用哪一種安裝？</h2>
+<p>採用官方建議的 <strong>Miniforge + Git + 可編輯安裝</strong>。這種方式適合之後直接查看官方案例、修改程式，或使用 <code>git pull</code> 更新 OpenDrift。</p>
+<div class="note">
+<strong>本教學假設你想把 OpenDrift 放在：</strong><br>
+<code>F:\opendrift\program</code><br><br>
+如果你想放在別的硬碟，只要把後面的路徑換掉即可，例如 <code>C:\OpenDrift</code> 或 <code>E:\Model\OpenDrift</code>。
+</div>
+</section>
+
+<section>
+<h2>1. 安裝 Miniforge</h2>
+<p>先安裝 Miniforge。安裝完成後，Windows 開始功能表會出現 <strong>Miniforge Prompt</strong>。</p>
+
+<div class="note">
+<strong>本教學後續全部使用 Miniforge Prompt。</strong><br>
+Miniforge Prompt 是 CMD 介面，因此：
+<table>
+<tr><th>用途</th><th>指令</th></tr>
+<tr><td>列出資料夾內容</td><td><code>dir</code></td></tr>
+<tr><td>跨磁碟機切換資料夾</td><td><code>cd /d F:\資料夾</code></td></tr>
+<tr><td>確認 mamba</td><td><code>mamba --version</code></td></tr>
+</table>
+</div>
+
+<p>安裝完成後，開啟 <strong>Miniforge Prompt</strong>，先檢查：</p>
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+<pre><button class="copy">複製</button><code>mamba --version</code></pre>
+
+<p>如果出現版本號，例如：</p>
+<pre><code>2.5.0</code></pre>
+
+<p>代表 Miniforge 與 mamba 已經可以正常使用。</p>
+
+<div class="success">OpenDrift 官方文件目前仍將 Miniforge／Mambaforge 搭配 Git 的方式列為推薦安裝法。</div>
+</section>
+
+<section>
+<h2>2. 安裝 Git for Windows</h2>
+<p>Git 用來把 OpenDrift 官方原始碼從 GitHub 下載到你的電腦。若 Miniforge Prompt 出現：</p>
+
+<pre><code>git : 無法辨識 'git' 詞彙是否為 Cmdlet、函數、指令檔或可執行程式的名稱。</code></pre>
+
+<p>就代表目前電腦尚未安裝 Git，或 Git 尚未加入 Windows 的 PATH。</p>
+
+<div class="step">
+<h3>步驟 2-1：下載 Git for Windows</h3>
+<p>開啟官方下載頁：</p>
+<p><a href="https://git-scm.com/download/win" target="_blank" rel="noopener noreferrer">https://git-scm.com/download/win</a></p>
+<p>下載一般的 <strong>64-bit Git for Windows Setup</strong>。</p>
+</div>
+
+<div class="step">
+<h3>步驟 2-2：執行安裝程式</h3>
+<p>安裝過程大多維持預設值即可。最重要的是 Git 必須能從 Miniforge Prompt 或 Command Prompt 使用。</p>
+
+<table>
+<tr><th>安裝畫面</th><th>建議</th></tr>
+<tr><td>Destination Location</td><td>維持預設，例如 <code>C:\Program Files\Git</code></td></tr>
+<tr><td>Select Components</td><td>維持預設</td></tr>
+<tr><td>Choosing the default editor</td><td>可維持預設，或選自己習慣的編輯器</td></tr>
+<tr><td>Adjusting the name of the initial branch</td><td>維持預設即可</td></tr>
+<tr><td>Adjusting your PATH environment</td><td><strong>請保留可從 command line / Miniforge Prompt 使用 Git 的選項</strong></td></tr>
+<tr><td>其餘選項</td><td>一般維持預設即可</td></tr>
+</table>
+</div>
+
+<div class="warning">
+<strong>安裝完成後不要直接沿用原本已開啟的 Miniforge Prompt。</strong><br>
+請把原本的 Miniforge Prompt 關掉，再重新開一個新的 Miniforge Prompt，讓 PATH 設定重新載入。
+</div>
+
+<div class="step">
+<h3>步驟 2-3：確認 Git 是否安裝成功</h3>
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+
+<pre><button class="copy">複製</button><code>git --version</code></pre>
+
+<p>成功時會看到類似：</p>
+
+<pre><code>git version 2.xx.x.windows.x</code></pre>
+
+<p>只要有顯示 Git 版本，就代表 Git 已經可以使用。</p>
+</div>
+
+<div class="step">
+<h3>步驟 2-4：如果還是顯示找不到 git</h3>
+<p>先完全關閉 Miniforge Prompt，再重新開啟一次。如果仍然無法辨識，可檢查 Git 是否真的安裝在：</p>
+
+<pre><code>C:\Program Files\Git\cmd\git.exe</code></pre>
+
+<p>若檔案存在，通常代表安裝成功，但 PATH 尚未正確載入；重新登入 Windows 或重新開機後再執行：</p>
+
+<pre><button class="copy">複製</button><code>git --version</code></pre>
+</div>
+
+<div class="note">
+<strong>注意 GitHub 網址格式：</strong><br>
+正確寫法是：
+<pre><code>https://github.com/OpenDrift/opendrift.git</code></pre>
+不要寫成：
+<pre><code>https\://github.com/OpenDrift/opendrift.git</code></pre>
+網址中的 <code>https://</code> 前面不需要反斜線。
+</div>
+</section>
+
+<section>
+<h2>3. 移動到要放 OpenDrift 的資料夾</h2>
+
+<p>本教學後續全部使用 <strong>Miniforge Prompt</strong>。假設你要把 OpenDrift 放在：</p>
+
+<pre><code>F:\opendrift\program</code></pre>
+
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+
+<pre><button class="copy">複製</button><code>cd /d F:\opendrift\program</code></pre>
+
+<p>成功後，提示字元會變成：</p>
+
+<pre><code>(base) F:\opendrift\program&gt;</code></pre>
+
+<p>查看目前資料夾內容請用：</p>
+
+<pre><button class="copy">複製</button><code>dir</code></pre>
+
+<div class="warning">
+Miniforge Prompt 是 CMD 介面，所以不要使用 <code>dir</code>。<br>
+另外，從 C 槽切到 F 槽這種跨磁碟機操作，請使用 <code>cd /d</code>。
+</div>
+</section>
+
+<section>
+<h2>4. 從 GitHub 下載 OpenDrift</h2>
+
+<p>先確認 Git 可以使用：</p>
+
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+
+<pre><button class="copy">複製</button><code>git --version</code></pre>
+
+<p>如果有顯示版本號，接著確認目前位置是：</p>
+
+<pre><code>(base) F:\opendrift\program&gt;</code></pre>
+
+<p>然後執行：</p>
+
+<pre><button class="copy">複製</button><code>git clone https://github.com/OpenDrift/opendrift.git</code></pre>
+
+<p>下載完成後，OpenDrift 會在：</p>
+
+<pre><code>F:\opendrift\program\opendrift</code></pre>
+
+<p>接著移動進去：</p>
+
+<pre><button class="copy">複製</button><code>cd /d F:\opendrift\program\opendrift</code></pre>
+
+<p>再輸入：</p>
+
+<pre><button class="copy">複製</button><code>dir</code></pre>
+
+<p>確認有看到：</p>
+
+<pre><code>environment.yml
+examples
+opendrift
+tests
+pyproject.toml</code></pre>
+</section>
+
+<section>
+<h2>5. 建立 OpenDrift Python 環境</h2>
+
+<p>現在提示字元應該是：</p>
+
+<pre><code>(base) F:\opendrift\program\opendrift&gt;</code></pre>
+
+<p>先確認 mamba 可以使用：</p>
+
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+
+<pre><button class="copy">複製</button><code>mamba --version</code></pre>
+
+<p>例如顯示：</p>
+
+<pre><code>2.5.0</code></pre>
+
+<p>再確認 <code>environment.yml</code> 確實存在：</p>
+
+<pre><button class="copy">複製</button><code>dir environment.yml</code></pre>
+
+<p>確認無誤後建立環境：</p>
+
+<pre><button class="copy">複製</button><code>mamba env create -f environment.yml</code></pre>
+
+<p class="small">這一步會下載並安裝 OpenDrift 所需的 Python 與科學運算套件，因此可能需要一些時間。</p>
+</section>
+
+<section>
+<h2>6. 啟用 OpenDrift 環境</h2>
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+<pre><button class="copy">複製</button><code>conda activate opendrift</code></pre>
+
+<p>成功後，提示字元前面會多出：</p>
+<pre><code>(opendrift) PS F:\opendrift\program\opendrift&gt;</code></pre>
+
+<div class="note">
+之後每次重新開啟 Miniforge Prompt，要使用 OpenDrift 前，都要先執行：
+<pre><button class="copy">複製</button><code>conda activate opendrift</code></pre>
+</div>
+</section>
+
+<section>
+<h2>7. 安裝 OpenDrift 本體</h2>
+<p>確認你目前同時符合兩件事情：</p>
+<table>
+<tr><th>項目</th><th>應該看到</th></tr>
+<tr><td>Python 環境</td><td><code>(opendrift)</code></td></tr>
+<tr><td>目前資料夾</td><td><code>F:\opendrift\program\opendrift</code></td></tr>
+</table>
+
+<p>再執行：</p>
+<p><span class="tag">輸入位置：已啟用 opendrift 的 Miniforge Prompt</span></p>
+<pre><button class="copy">複製</button><code>pip install --no-deps -e .</code></pre>
+
+<p><code>-e .</code> 代表將目前這個 OpenDrift 原始碼資料夾以「可編輯模式」安裝。</p>
+</section>
+
+<section>
+<h2>8. 測試安裝是否成功</h2>
+<p><span class="tag">輸入位置：已啟用 opendrift 的 Miniforge Prompt</span></p>
+<pre><button class="copy">複製</button><code>python -c "import opendrift; print(opendrift.__version__); print(opendrift.__file__)"</code></pre>
+
+<p>如果成功，會印出版本與套件位置，例如：</p>
+<pre><code>1.14.x
+F:\opendrift\program\opendrift\opendrift\__init__.py</code></pre>
+</section>
+
+<section>
+<h2>9. 查看官方案例資料夾</h2>
+<p>因為我們採用 Git 版本，所以官方案例已經一起下載。</p>
+
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+<pre><button class="copy">複製</button><code>cd /d F:\opendrift\program\opendrift\examples</code></pre>
+
+<p>列出案例：</p>
+<pre><button class="copy">複製</button><code>dir</code></pre>
+
+<p>如果要找 OpenOil：</p>
+<pre><button class="copy">複製</button><code>dir *openoil*</code></pre>
+</section>
+
+<section>
+<h2>10. 建立自己的研究工作資料夾</h2>
+<p><strong>官方原始碼</strong>和<strong>自己的研究案例</strong>建議分開。</p>
+
+<p>回到上一層：</p>
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+<pre><button class="copy">複製</button><code>cd /d F:\opendrift\program</code></pre>
+
+<p>建立自己的專案：</p>
+<pre><button class="copy">複製</button><code>mkdir My_OpenOil_Project
+cd My_OpenOil_Project
+mkdir scripts
+mkdir input
+mkdir output
+mkdir figures</code></pre>
+
+<p>最後的結構會是：</p>
+<pre><code>F:\opendrift\program\
+├─ opendrift\               ← 官方 OpenDrift 原始碼
+│  ├─ examples\
+│  ├─ opendrift\
+│  └─ environment.yml
+│
+└─ My_OpenOil_Project\      ← 你自己的研究
+   ├─ scripts\
+   ├─ input\
+   ├─ output\
+   └─ figures\</code></pre>
+
+<div class="success">
+之後我們真正做 Delft3D 流場、OpenOil 原點追蹤與油污案例時，建議全部放在 <code>My_OpenOil_Project</code>，不要直接修改官方 <code>examples</code>。
+</div>
+</section>
+
+
+<section>
+<h2>11. 從 Total Commander／一般 CMD 啟用 Miniforge</h2>
+
+<p>不一定要從 Windows 開始功能表開啟 Miniforge Prompt。你也可以先在目前工作資料夾開一般 CMD，再手動啟用 Miniforge。</p>
+
+<div class="note">
+<strong>適合 Total Commander 使用：</strong><br>
+先在 Total Commander 進入你的案例資料夾，再從該位置開 CMD。這樣 CMD 一開始就會停在目前案例路徑。
+</div>
+
+<div class="step">
+<h3>步驟 11-1：先開一般 CMD</h3>
+
+<p>例如你目前案例在：</p>
+
+<pre><code>F:\opendrift\program\pratice\test-constantcurr</code></pre>
+
+<p>CMD 開啟後可能會看到：</p>
+
+<pre><code>F:\opendrift\program\pratice\test-constantcurr&gt;</code></pre>
+</div>
+
+<div class="step">
+<h3>步驟 11-2：啟用 Miniforge base 環境</h3>
+
+<p>如果 Miniforge 安裝在：</p>
+
+<pre><code>C:\Users\user\miniforge3</code></pre>
+
+<p>在 CMD 輸入：</p>
+
+<p><span class="tag">輸入位置：一般 CMD</span></p>
+
+<pre><button class="copy">複製</button><code>call C:\Users\user\miniforge3\Scripts\activate.bat</code></pre>
+
+<p>成功後，前面會出現：</p>
+
+<pre><code>(base) F:\opendrift\program\pratice\test-constantcurr&gt;</code></pre>
+</div>
+
+<div class="step">
+<h3>步驟 11-3：切換到 OpenDrift 環境</h3>
+
+<p>接著輸入：</p>
+
+<pre><button class="copy">複製</button><code>conda activate opendrift</code></pre>
+
+<p>成功後會變成：</p>
+
+<pre><code>(opendrift) F:\opendrift\program\pratice\test-constantcurr&gt;</code></pre>
+</div>
+
+<div class="step">
+<h3>步驟 11-4：直接執行案例</h3>
+
+<pre><button class="copy">複製</button><code>python example_constant_current.py</code></pre>
+
+<p>因此整個流程可以簡化成：</p>
+
+<pre><code>Total Commander
+        ↓
+進入案例資料夾
+        ↓
+開 CMD
+        ↓
+call ...\miniforge3\Scripts\activate.bat
+        ↓
+conda activate opendrift
+        ↓
+python xxx.py</code></pre>
+</div>
+
+<div class="success">
+這種方式的優點是：你不需要另外開 Miniforge Prompt，也不用重新切換資料夾；可以直接從 Total Commander 當前位置開始工作。
+</div>
+
+<div class="warning">
+如果你的 Windows 使用者名稱不是 <code>user</code>，或 Miniforge 安裝在其他位置，請把：
+<pre><code>C:\Users\user\miniforge3</code></pre>
+改成你自己的實際安裝路徑。
+</div>
+</section>
+
+<section>
+<h2>12. 每次重新開機後怎麼開始？</h2>
+
+<p>之後不用重新安裝。你可以直接開啟 <strong>Miniforge Prompt</strong>，或依上一節從一般 CMD 啟用 Miniforge。</p>
+
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+
+<pre><button class="copy">複製</button><code>conda activate opendrift
+cd /d F:\opendrift\program\My_OpenOil_Project</code></pre>
+
+<p>然後執行自己的 Python 程式，例如：</p>
+
+<pre><button class="copy">複製</button><code>python scripts\test.py</code></pre>
+</section>
+
+<section>
+<h2>13. 完整安裝流程總覽</h2>
+
+<p>安裝 Miniforge 與 Git 完成後，後續全部都在 <strong>Miniforge Prompt</strong> 執行：</p>
+
+<p><span class="tag">輸入位置：Miniforge Prompt</span></p>
+
+<pre><button class="copy">複製</button><code>mamba --version
+git --version
+
+cd /d F:\opendrift\program
+
+git clone https://github.com/OpenDrift/opendrift.git
+
+cd /d F:\opendrift\program\opendrift
+dir
+
+mamba env create -f environment.yml
+
+conda activate opendrift
+
+pip install --no-deps -e .
+
+python -c "import opendrift; print(opendrift.__version__)"</code></pre>
+
+<div class="warning">
+第一次操作建議一行一行執行。每一步成功後再進行下一步，出錯時比較容易知道問題出在哪裡。
+</div>
+</section>
+
+
+<section>
+<h2>快速啟動 OpenDrift 案例</h2>
+
+<p>如果你已經在案例資料夾開啟一般 CMD，之後每次只要依序輸入：</p>
+
+<pre><button class="copy">複製</button><code>call C:\Users\user\miniforge3\Scripts\activate.bat
+
+conda activate opendrift
+
+python XXX.py</code></pre>
+
+<p>其中：</p>
+
+<table>
+<tr><th>指令</th><th>用途</th></tr>
+<tr><td><code>call C:\Users\user\miniforge3\Scripts\activate.bat</code></td><td>啟用 Miniforge。</td></tr>
+<tr><td><code>conda activate opendrift</code></td><td>切換到 OpenDrift 專用環境。</td></tr>
+<tr><td><code>python XXX.py</code></td><td>執行你的 OpenDrift Python 程式；把 <code>XXX.py</code> 換成實際檔名。</td></tr>
+</table>
+
+<p>例如：</p>
+
+<pre><button class="copy">複製</button><code>call C:\Users\user\miniforge3\Scripts\activate.bat
+conda activate opendrift
+python example_constant_current.py</code></pre>
+</section>
+
+<footer>
+依 OpenDrift 官方安裝文件整理。版本與相依套件可能隨官方更新而變動。
+</footer>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const code=btn.parentElement.querySelector('code').innerText;
+    await navigator.clipboard.writeText(code);
+    const original=btn.innerText;
+    btn.innerText='已複製';
+    setTimeout(()=>btn.innerText=original,1200);
+  });
+});
+</script>
+</body>
+</html>
