@@ -1,8 +1,10 @@
 <!doctype html>
 <html lang="zh-Hant">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>OpenDrift / OpenOil Tutorial</title>
 
   <style>
@@ -12,16 +14,12 @@
       --text:#1f2937;
       --muted:#64748b;
       --line:#dbe3ee;
-      --accent:#0f6f8f;
-      --accent-dark:#0a4f69;
+      --accent:#147a97;
+      --accent-dark:#0b526b;
     }
 
     * {
       box-sizing:border-box;
-    }
-
-    html {
-      scroll-behavior:smooth;
     }
 
     body {
@@ -31,262 +29,238 @@
       font-family:"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;
     }
 
-    .sidebar {
-      position:fixed;
-      top:0;
-      left:0;
-      width:280px;
-      height:100vh;
-      background:#ffffff;
-      border-right:1px solid var(--line);
-      padding:24px 16px;
-      overflow-y:auto;
-      z-index:100;
+    .layout {
+      display:grid;
+      grid-template-columns:280px 1fr;
+      min-height:100vh;
     }
 
-    .sidebar-title {
-      margin:0 0 6px;
+    /* 左側選單 */
+
+    .sidebar {
+      height:100vh;
+      position:sticky;
+      top:0;
+      background:#ffffff;
+      border-right:1px solid var(--line);
+      padding:20px 14px;
+      overflow-y:auto;
+    }
+
+    .sidebar h2 {
+      margin:0;
       color:var(--accent-dark);
       font-size:1.35rem;
-      font-weight:800;
     }
 
     .sidebar-subtitle {
-      margin:0 0 22px;
+      margin:4px 0 20px;
       color:var(--muted);
-      font-size:.85rem;
-      line-height:1.5;
+      font-size:.82rem;
     }
 
-    .nav-link {
-      display:block;
-      padding:11px 12px;
-      margin-bottom:7px;
+    .case-btn {
+      width:100%;
+      border:0;
+      background:transparent;
+      text-align:left;
+      padding:12px 10px;
+      margin-bottom:4px;
       border-radius:9px;
+      cursor:pointer;
+      font:inherit;
       color:var(--text);
-      text-decoration:none;
       font-weight:700;
       line-height:1.35;
-      transition:.15s ease;
     }
 
-    .nav-link span {
+    .case-btn span {
       display:block;
-      margin-top:2px;
-      color:var(--muted);
-      font-size:.78rem;
+      margin-top:3px;
+      font-size:.76rem;
       font-weight:500;
+      color:var(--muted);
     }
 
-    .nav-link:hover {
-      background:#eaf4f8;
-      color:var(--accent-dark);
+    .case-btn:hover {
+      background:#edf5f8;
     }
 
-    .nav-link.home {
+    .case-btn.active {
       background:var(--accent);
-      color:#fff;
-      margin-bottom:18px;
+      color:#ffffff;
     }
 
-    .nav-link.home span {
+    .case-btn.active span {
       color:#e8f8fc;
     }
 
-    .nav-divider {
+    .divider {
       border-top:1px solid var(--line);
       margin:14px 0;
     }
 
-    .back-link {
+    .toolbox-link {
       display:block;
-      margin-top:18px;
-      padding-top:16px;
-      border-top:1px solid var(--line);
       color:var(--muted);
       text-decoration:none;
-      font-size:.86rem;
+      font-size:.85rem;
       font-weight:700;
+      padding:8px 2px;
     }
 
-    .back-link:hover {
+    .toolbox-link:hover {
       color:var(--accent);
     }
 
-    main {
-      margin-left:280px;
-      min-height:100vh;
+    /* 右側 */
+
+    .viewer {
+      height:100vh;
+      overflow:hidden;
+      background:var(--bg);
     }
 
-    .content {
-      max-width:1120px;
-      margin:0 auto;
-      padding:26px 28px 60px;
-    }
-
-    h1 {
-      margin:0 0 10px;
-      color:var(--accent-dark);
-      font-size:2.35rem;
-    }
-
-    .lead {
-      margin:0 0 20px;
-      color:var(--muted);
-      font-size:1.05rem;
-    }
-
-    .case-card {
+    .viewer iframe {
+      width:100%;
+      height:100%;
+      border:0;
       display:block;
       background:#ffffff;
-      border:1px solid #edf0f4;
-      border-radius:14px;
-      padding:22px 24px;
-      margin:16px 0;
-      box-shadow:0 5px 15px rgba(15,23,42,.08);
-      text-decoration:none;
-      color:var(--accent);
-      font-size:1.14rem;
-      font-weight:800;
-      transition:.15s ease;
-    }
-
-    .case-card:hover {
-      transform:translateY(-2px);
-      border-color:#b8d8e3;
-      box-shadow:0 8px 22px rgba(15,23,42,.11);
-    }
-
-    .case-card small {
-      display:block;
-      margin-top:5px;
-      color:var(--muted);
-      font-size:.85rem;
-      font-weight:500;
     }
 
     @media(max-width:850px) {
+
+      .layout {
+        grid-template-columns:1fr;
+      }
+
       .sidebar {
-        position:relative;
-        width:100%;
         height:auto;
+        position:relative;
         border-right:0;
         border-bottom:1px solid var(--line);
       }
 
-      main {
-        margin-left:0;
+      .viewer {
+        height:900px;
       }
 
-      .content {
-        padding:22px 16px 45px;
-      }
     }
   </style>
 </head>
 
 <body>
 
-  <aside class="sidebar">
+  <div class="layout">
 
-    <h2 class="sidebar-title">
-      OpenDrift / OpenOil
-    </h2>
+    <!-- 左側固定選單 -->
 
-    <p class="sidebar-subtitle">
-      Tutorial & Case Studies
-    </p>
+    <aside class="sidebar">
 
-    <a class="nav-link home" href="index.html">
-      Overview
-      <span>案例總覽</span>
-    </a>
+      <h2>OpenDrift / OpenOil</h2>
 
-    <a class="nav-link" href="Case0_OpenDrift_本機安裝教學_Windows.html">
-      Case 0｜本機安裝
-      <span>Windows / Miniforge / Git</span>
-    </a>
+      <div class="sidebar-subtitle">
+        Tutorial & Case Studies
+      </div>
 
-    <a class="nav-link" href="Case1_OpenDrift_Constant_Current_整理.html">
-      Case 1｜Constant Current
-      <span>固定流場與理論驗證</span>
-    </a>
+      <button
+        class="case-btn active"
+        data-src="overview.html">
+        Overview
+        <span>案例總覽</span>
+      </button>
 
-    <a class="nav-link" href="Case2_OpenOil_moving to coast.html">
-      Case 2｜Moving to Coast
-      <span>OpenOil 漂移與 Weathering</span>
-    </a>
+      <button
+        class="case-btn"
+        data-src="Case0_OpenDrift_本機安裝教學_Windows.html">
+        Case 0｜本機安裝
+        <span>Windows / Miniforge / Git</span>
+      </button>
 
-    <a class="nav-link" href="Case3_OpenDrift_backandforth.html">
-      Case 3｜Forward / Backward
-      <span>正算與反算</span>
-    </a>
-
-    <a class="nav-link" href="Case4_OpenDrift_Kaohsiung_case_selfmade.html">
-      Case 4｜Kaohsiung + Delft3D
-      <span>自製 Landmask 與實際流場</span>
-    </a>
-
-    <a class="nav-link" href="Case5_OpenDrift_OpenOil_Analysis with K.html">
-      Case 5｜Horizontal Diffusion
-      <span>K / Timestep / OpenOil</span>
-    </a>
-
-    <a class="back-link" href="../">
-      ← 返回海洋工程工具箱
-    </a>
-
-  </aside>
-
-  <main>
-
-    <div class="content">
-
-      <h1>OpenDrift / OpenOil Tutorial</h1>
-
-      <p class="lead">
-        OpenDrift 與 OpenOil 模型測試、教學與實際案例整理。
-      </p>
-
-      <a class="case-card"
-         href="Case0_OpenDrift_本機安裝教學_Windows.html">
-        Case 0｜OpenDrift Windows 本機安裝
-        <small>Miniforge、Git、環境建立與 OpenDrift 安裝</small>
-      </a>
-
-      <a class="case-card"
-         href="Case1_OpenDrift_Constant_Current_整理.html">
+      <button
+        class="case-btn"
+        data-src="Case1_OpenDrift_Constant_Current_整理.html">
         Case 1｜Constant Current
-        <small>固定海流、粒子平流與理論距離驗證</small>
-      </a>
+        <span>固定流場與理論驗證</span>
+      </button>
 
-      <a class="case-card"
-         href="Case2_OpenOil_moving to coast.html">
-        Case 2｜OpenOil Moving to Coast
-        <small>風、海流與油污漂移</small>
-      </a>
+      <button
+        class="case-btn"
+        data-src="Case2_OpenOil_moving to coast.html">
+        Case 2｜Moving to Coast
+        <span>OpenOil 漂移與 Weathering</span>
+      </button>
 
-      <a class="case-card"
-         href="Case3_OpenDrift_backandforth.html">
+      <button
+        class="case-btn"
+        data-src="Case3_OpenDrift_backandforth.html">
         Case 3｜Forward / Backward
-        <small>Forward simulation 與 Backward tracking</small>
-      </a>
+        <span>Forward / Backward tracking</span>
+      </button>
 
-      <a class="case-card"
-         href="Case4_OpenDrift_Kaohsiung_case_selfmade.html">
+      <button
+        class="case-btn"
+        data-src="Case4_OpenDrift_Kaohsiung_case_selfmade.html">
         Case 4｜Kaohsiung + Delft3D
-        <small>Delft3D 流場、自製 Landmask 與高雄港案例</small>
+        <span>Landmask / Delft3D</span>
+      </button>
+
+      <button
+        class="case-btn"
+        data-src="Case5_OpenDrift_OpenOil_Analysis with K.html">
+        Case 5｜Horizontal Diffusion
+        <span>K / Timestep / OpenOil</span>
+      </button>
+
+      <div class="divider"></div>
+
+      <a class="toolbox-link" href="../">
+        ← 返回海洋工程工具箱
       </a>
 
-      <a class="case-card"
-         href="Case5_OpenDrift_OpenOil_Analysis with K.html">
-        Case 5｜Horizontal Diffusion / OpenOil
-        <small>Horizontal diffusivity、K、timestep 與模型差異</small>
-      </a>
+    </aside>
 
-    </div>
 
-  </main>
+    <!-- 右側內容 -->
+
+    <main class="viewer">
+
+      <iframe
+        id="caseFrame"
+        src="overview.html"
+        title="OpenDrift Tutorial">
+      </iframe>
+
+    </main>
+
+  </div>
+
+
+  <script>
+
+    const frame = document.getElementById("caseFrame");
+
+    const buttons = document.querySelectorAll(".case-btn");
+
+    buttons.forEach(btn => {
+
+      btn.addEventListener("click", () => {
+
+        buttons.forEach(b => {
+          b.classList.remove("active");
+        });
+
+        btn.classList.add("active");
+
+        frame.src = btn.dataset.src;
+
+      });
+
+    });
+
+  </script>
 
 </body>
+
 </html>
