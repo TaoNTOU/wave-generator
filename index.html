@@ -1,52 +1,281 @@
 <!doctype html>
 <html lang="zh-Hant">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>波浪工具箱 | Wave Toolbox</title>
+
+  <title>海洋工程工具箱 | Ocean Engineering Toolbox</title>
+
   <style>
-    :root{--ink:#17212b;--muted:#637083;--line:#d8e0ea;--panel:#fff;--bg:#f5f7fa;--accent:#0e7a8a;--accent-dark:#095c68;font-family:"Segoe UI","Noto Sans TC",system-ui,sans-serif}
-    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink)}
-    main{width:min(1320px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}
-    header{display:flex;justify-content:space-between;gap:16px;align-items:end;margin-bottom:16px}
-    h1{margin:0 0 5px;font-size:clamp(1.8rem,3vw,2.8rem);line-height:1.05}.subtitle{margin:0;color:var(--muted)}
-    .layout{display:grid;grid-template-columns:290px 1fr;gap:16px;align-items:start}.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(28,41,56,.08)}
-    nav{padding:14px;display:grid;gap:10px}.module-btn{width:100%;text-align:left;border:1px solid var(--line);border-radius:10px;background:#eef3f7;color:var(--ink);padding:13px 14px;cursor:pointer;font:inherit;font-weight:800;line-height:1.35}.module-btn span{display:block;font-weight:500;color:var(--muted);font-size:.88rem}.module-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}.module-btn.active span{color:#e8fbff}
-    .viewer{height:calc(100vh - 120px);min-height:760px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0;display:block;background:#fff;border-radius:10px}
-    .note{padding:12px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;line-height:1.55}
-    @media(max-width:900px){.layout{grid-template-columns:1fr}.viewer{height:900px}header{display:block}}
+    :root {
+      --ink: #17212b;
+      --muted: #637083;
+      --line: #d8e0ea;
+      --panel: #fff;
+      --bg: #f5f7fa;
+      --accent: #0e7a8a;
+      --accent-dark: #095c68;
+
+      font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1320px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 12px 28px rgba(28, 41, 56, 0.08);
+    }
+
+    nav {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .nav-title {
+      padding: 6px 4px 2px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .nav-title.model {
+      margin-top: 8px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .module-btn,
+    .module-link {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #eef3f7;
+      color: var(--ink);
+      padding: 13px 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      line-height: 1.35;
+      text-decoration: none;
+      display: block;
+    }
+
+    .module-btn span,
+    .module-link span {
+      display: block;
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .module-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .module-btn.active span {
+      color: #e8fbff;
+    }
+
+    .module-btn:hover,
+    .module-link:hover {
+      border-color: var(--accent);
+    }
+
+    .module-link:hover {
+      background: #e7f4f6;
+    }
+
+    .viewer {
+      height: calc(100vh - 120px);
+      min-height: 760px;
+      overflow: hidden;
+    }
+
+    .viewer iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .viewer {
+        height: 900px;
+      }
+
+      header {
+        display: block;
+      }
+    }
   </style>
 </head>
+
 <body>
+
   <main>
+
     <header>
       <div>
-        <h1>波浪工具箱 <span lang="en">Wave Toolbox</span></h1>
-        <p class="subtitle">主控頁負責切換模組；各模組維持獨立 HTML，方便 GitHub Pages 維護。</p>
+        <h1>
+          海洋工程工具箱
+          <span lang="en">Ocean Engineering Toolbox</span>
+        </h1>
+
+        <p class="subtitle">
+          波浪分析、座標轉換、OpenDrift / OpenOil 數值模式與案例整理。
+        </p>
       </div>
     </header>
+
     <section class="layout">
+
+      <!-- 左側功能選單 -->
       <aside class="panel">
+
         <nav aria-label="modules">
-          <button class="module-btn active" data-src="modules/wave-generator.html">規則波產生器<span>Regular wave generator</span></button>
-          <button class="module-btn" data-src="modules/spectrum-generator.html">不規則波與波譜產生<span>Irregular wave / spectrum generator</span></button>
-          <button class="module-btn" data-src="modules/wave-analysis.html">零上/下切與頻譜分析<span>Zero crossing / spectral analysis</span></button>
-          <button class="module-btn" data-src="modules/coordinate-converter.html">XYZ 座標轉換<span>WGS84 / TWD97 coordinate converter</span></button>
+
+          <div class="nav-title">
+            波浪與工程工具
+          </div>
+
+          <button
+            class="module-btn active"
+            data-src="modules/wave-generator.html">
+            規則波產生器
+            <span>Regular wave generator</span>
+          </button>
+
+          <button
+            class="module-btn"
+            data-src="modules/spectrum-generator.html">
+            不規則波與波譜產生
+            <span>Irregular wave / spectrum generator</span>
+          </button>
+
+          <button
+            class="module-btn"
+            data-src="modules/wave-analysis.html">
+            零上/下切與頻譜分析
+            <span>Zero crossing / spectral analysis</span>
+          </button>
+
+          <button
+            class="module-btn"
+            data-src="modules/coordinate-converter.html">
+            XYZ 座標轉換
+            <span>WGS84 / TWD97 coordinate converter</span>
+          </button>
+
+
+          <div class="nav-title model">
+            數值模式教學
+          </div>
+
+          <a
+            class="module-link"
+            href="opendrift/">
+            OpenDrift / OpenOil
+            <span>Particle tracking / oil spill modeling</span>
+          </a>
+
+        </nav>
+
       </aside>
+
+
+      <!-- 右側模組顯示區 -->
       <section class="panel viewer">
-        <iframe id="moduleFrame" src="modules/wave-generator.html" title="Wave module"></iframe>
+
+        <iframe
+          id="moduleFrame"
+          src="modules/wave-generator.html"
+          title="Engineering module">
+        </iframe>
+
       </section>
+
     </section>
+
   </main>
+
+
   <script>
-    const frame = document.getElementById('moduleFrame');
-    document.querySelectorAll('.module-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        frame.src = btn.dataset.src;
+    const frame = document.getElementById("moduleFrame");
+
+    document
+      .querySelectorAll(".module-btn")
+      .forEach(btn => {
+
+        btn.addEventListener("click", () => {
+
+          document
+            .querySelectorAll(".module-btn")
+            .forEach(b => b.classList.remove("active"));
+
+          btn.classList.add("active");
+
+          frame.src = btn.dataset.src;
+
+        });
+
       });
-    });
   </script>
+
 </body>
+
 </html>
