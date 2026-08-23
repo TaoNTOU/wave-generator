@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tidal Analysis Toolkit v2.9.2 SI Meter Units</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#f4f7fb; --card:#fff; --line:#d9dee8; --text:#182230;
+  --muted:#667085; --accent:#175cd3; --ok:#067647; --warn:#b54708; --bad:#b42318;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,"Microsoft JhengHei","Noto Sans TC",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1280px;margin:28px auto;padding:0 18px 60px}
+h1{margin:0 0 6px} h2{font-size:18px;margin:0 0 14px}
+.lead{margin:0 0 20px;color:var(--muted);line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.span-12{grid-column:span 12}.span-6{grid-column:span 6}.span-4{grid-column:span 4}.span-8{grid-column:span 8}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-weight:700;font-size:14px;margin:0 0 6px}
+input,select{width:100%;min-height:42px;border:1px solid var(--line);border-radius:9px;background:#fff;padding:9px 10px;font-size:15px}
+button{border:0;border-radius:9px;min-height:42px;padding:9px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+button.secondary{background:#344054} button.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+button.danger{background:var(--bad)} button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.note{font-size:13px;color:var(--muted);line-height:1.55}.ok{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}.bad{color:var(--bad);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px}.stat .k{font-size:12px;color:var(--muted)}.stat .v{font-size:17px;font-weight:700;margin-top:4px}
+.progress{height:9px;border-radius:99px;background:#eaecf0;overflow:hidden}.progress>div{width:0;height:100%;background:var(--accent);transition:width .2s}
+.table-wrap{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+thead th{position:sticky;top:0;background:#f9fafb}
+.chart-wrap{height:440px;position:relative}.chart-wrap canvas{width:100%!important;height:440px!important}
+pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space:pre-wrap;max-height:220px;overflow:auto}
+.hidden{display:none}
+.method-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.method-choice{border:1px solid var(--line);border-radius:10px;padding:10px}
+.method-choice label{margin:0;font-weight:600;display:flex;gap:7px;align-items:center}
+.method-choice input{width:auto;min-height:auto}
+.gap-chart-wrap{height:300px;position:relative}
+.gap-compare-card{border:1px solid var(--line);border-radius:10px;padding:10px}
+.gap-compare-card h4{margin:0 0 8px}
+.trend-chart-wrap{height:420px;position:relative}
+.trend-chart-wrap canvas{width:100%!important;height:420px!important}
+.trend-table-wrap{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.trend-subgrid{display:grid;grid-template-columns:1fr;gap:14px}
+.trend-panel{border:1px solid var(--line);border-radius:12px;padding:12px}
+.trend-small-chart{height:350px;position:relative}
+.trend-small-chart canvas{width:100%!important;height:350px!important}
+.ref-list{font-size:13px;line-height:1.65}
+
+
+
+
+.gap-overview-wrap{height:210px;position:relative}
+
+.gap-overview-wrap canvas{width:100%!important;height:210px!important}
+.gap-detail-table{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.gap-detail-table table{margin:0}
+.gap-jump{cursor:pointer;text-decoration:underline;font-weight:600}
+
+.gap-chart-wrap canvas{width:100%!important;height:330px!important}
+.callout{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f9fafb}
+.module-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.module-card{border:1px solid var(--line);border-radius:10px;padding:11px;min-width:0}
+.module-card strong{display:block;margin-bottom:4px}
+.badge{display:inline-block;padding:3px 7px;border-radius:999px;font-size:12px;font-weight:700;background:#eef4ff;color:#3538cd}
+.badge.ready{background:#ecfdf3;color:#067647}
+.badge.next{background:#fff7ed;color:#b54708}
+@media(max-width:950px){.module-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.module-grid{grid-template-columns:1fr}}
+
+
+@media(max-width:900px){.span-4,.span-6,.span-8{grid-column:span 12}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.row,.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Tidal Analysis Toolkit</h1>
+<p class="lead">v2.9.2：趨勢模組全面以 m 為基準單位；水位 m、變化率 m/yr、加速度 m/yr²。</p>
+
+<div class="grid">
+
+<section class="card span-12">
+  <h2>分析模組</h2>
+  <div class="module-grid">
+    <div class="module-card">
+      <strong>Missing Data</strong>
+      <span class="badge ready">已完成</span>
+      <div class="note">Linear / Spline / PCHIP、最大連續缺口限制。</div>
+    </div>
+    <div class="module-card">
+      <strong>Harmonic Analysis</strong>
+      <span class="badge ready">已完成</span>
+      <div class="note">UTide、潮型、SNR、信賴區間與分潮重建。</div>
+    </div>
+    <div class="module-card">
+      <strong>FFT / Welch PSD</strong>
+      <span class="badge next">下一階段</span>
+      <div class="note">頻譜與能量密度分析，將共用補遺後序列。</div>
+    </div>
+    <div class="module-card">
+      <strong>Wavelet</strong>
+      <span class="badge next">下一階段</span>
+      <div class="note">Morlet CWT、時間－週期能量分布。</div>
+    </div>
+    <div class="module-card">
+      <strong>Moving Window / SLR</strong>
+      <span class="badge next">下一階段</span>
+      <div class="note">時變分潮與海水位趨勢。</div>
+    </div>
+  </div>
+</section>
+
+<section class="card span-6">
+  <h2>1. 資料輸入</h2>
+  <label>潮位檔案</label>
+  <input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+  <p class="note">支援 YYYYMMDDHH、Excel 日期時間。建議第一欄時間、第二欄潮位。</p>
+  <div class="row">
+    <div><label>時間欄</label><select id="timeCol" disabled></select></div>
+    <div><label>潮位欄</label><select id="valueCol" disabled></select></div>
+  </div>
+  <p id="fileStatus" class="note">尚未載入。</p>
+</section>
+
+<section class="card span-6">
+  <h2>2. 分析範圍與容量限制</h2>
+  <div class="row">
+    <div><label>開始日期</label><input id="rangeStart" type="date" disabled></div>
+    <div><label>結束日期</label><input id="rangeEnd" type="date" disabled></div>
+  </div>
+  <p id="rangeStatus" class="note">每次最多 5 年、60,000 筆有效資料。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">有效筆數</div><div id="selN" class="v">-</div></div>
+    <div class="stat"><div class="k">期間</div><div id="selYears" class="v">-</div></div>
+    <div class="stat"><div class="k">缺值率</div><div id="selMissing" class="v">-</div></div>
+    <div class="stat"><div class="k">計算負荷</div><div id="loadLevel" class="v">-</div></div>
+  </div>
+</section>
+
+
+<section class="card span-12">
+  <div class="callout note" style="margin-bottom:14px">
+    <b>分析流程：</b>
+    ① 載入資料 → ② 設定分析範圍 → ③ 執行缺值檢查／補遺 → ④ Harmonic Analysis。
+    <br>Harmonic Analysis 在完成第 ③ 步前會保持鎖定。
+  </div>
+  <h2>3. Missing Data Processing｜缺值補遺</h2>
+  <p class="note">
+    先依資料的主要取樣間隔建立完整等時間距序列，再辨識缺漏時間點。
+    僅補「資料內部」缺口，不對資料前端或尾端外插；若連續缺口超過設定上限，該區段維持缺值。
+    補遺只影響使用者明確選擇「補遺後資料」的分析；原始觀測資料本身不會被覆寫。
+  </p>
+
+  <div class="method-grid">
+    <div class="method-choice">
+      <label><input type="radio" name="fillMethod" value="none"> 不補值</label>
+      <div class="note">保留缺值，適合 UTide / Harmonic。</div>
+    </div>
+    <div class="method-choice">
+      <label><input type="radio" name="fillMethod" value="linear" checked> Linear</label>
+      <div class="note">兩端有效值之間線性插值。<b>預設方法</b>。</div>
+    </div>
+    <div class="method-choice">
+      <label><input type="radio" name="fillMethod" value="spline"> Cubic Spline</label>
+      <div class="note">自然三次樣條，曲線較平滑。</div>
+    </div>
+    <div class="method-choice">
+      <label><input type="radio" name="fillMethod" value="pchip"> PCHIP</label>
+      <div class="note">保形分段三次插值，較不易產生過衝。</div>
+    </div>
+  </div>
+
+  <br>
+  <div class="row">
+    <div>
+      <label for="maxGapPreset">最大允許連續缺口</label>
+      <select id="maxGapPreset">
+        <option value="6">6 hr</option>
+        <option value="12">12 hr</option>
+        <option value="24" selected>24 hr</option>
+        <option value="48">48 hr</option>
+        <option value="72">72 hr</option>
+        <option value="custom">自訂</option>
+      </select>
+    </div>
+    <div>
+      <label for="maxGapCustom">自訂最大缺口（hr）</label>
+      <input id="maxGapCustom" type="number" min="1" step="1" value="24" disabled>
+    </div>
+  </div>
+
+  <br>
+  <div class="actions">
+    <button id="runGapFill" type="button" disabled>執行缺值處理</button>
+    <button id="clearGapFill" type="button" class="ghost" disabled>清除補遺結果</button>
+  </div>
+
+  <p id="gapStatus" class="note">請先載入資料並設定分析範圍。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">完整序列筆數</div><div id="gapFullN" class="v">-</div></div>
+    <div class="stat"><div class="k">原始缺值</div><div id="gapMissingN" class="v">-</div></div>
+    <div class="stat"><div class="k">已補遺</div><div id="gapFilledN" class="v">-</div></div>
+    <div class="stat"><div class="k">剩餘缺值</div><div id="gapRemainN" class="v">-</div></div>
+    <div class="stat"><div class="k">最長連續缺口</div><div id="gapLongest" class="v">-</div></div>
+    <div class="stat"><div class="k">補遺比例</div><div id="gapFillPct" class="v">-</div></div>
+    <div class="stat"><div class="k">取樣間隔</div><div id="gapDt" class="v">-</div></div>
+    <div class="stat"><div class="k">目前方法</div><div id="gapMethodName" class="v" style="font-size:14px">-</div></div>
+  </div>
+
+  <br>
+  <div class="callout note">
+    <b>分析資料來源：</b>
+    補遺完成後，Harmonic Analysis 可選擇「原始觀測資料」或「補遺後資料」。
+    FFT / PSD / Wavelet 後續會直接共用這個前處理結果。
+  </div>
+
+  <br>
+  <h3>缺口明細</h3>
+  <div class="gap-detail-table">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>開始時間</th>
+          <th>結束時間</th>
+          <th>缺口長度</th>
+          <th>狀態</th>
+          <th>查看</th>
+        </tr>
+      </thead>
+      <tbody id="gapDetailBody">
+        <tr><td colspan="6" class="note">尚未執行缺值處理。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <br>
+  <h3>局部放大｜原始資料 vs 補遺後資料</h3>
+  <p class="note">
+    單張圖同時顯示原始資料與補遺後資料：
+    原始資料在缺值處保持斷線；補遺後資料顯示補遺完成後的連續時序，
+    並另外標記本次實際補上的資料點。
+  </p>
+  <div class="row">
+    <div>
+      <label for="gapPlotStart">開始時間</label>
+      <input id="gapPlotStart" type="datetime-local" step="3600" disabled>
+    </div>
+    <div>
+      <label for="gapPlotEnd">結束時間</label>
+      <input id="gapPlotEnd" type="datetime-local" step="3600" disabled>
+    </div>
+  </div>
+  <br>
+  <button id="refreshGapChart" type="button" class="secondary" disabled>更新比對圖</button>
+
+  <div class="gap-compare-card">
+    <h4>原始資料與補遺後資料疊圖</h4>
+    <div class="gap-chart-wrap"><canvas id="gapCompareChart"></canvas></div>
+  </div>
+</section>
+
+<section class="card span-4">
+  <h2>4. Harmonic Analysis｜設定</h2>
+  <p class="note"><b>此步驟需先完成 Missing Data Processing。</b></p>
+  <p class="note">
+    <b>時間基準：</b>UTide 直接使用原始資料的站時／檔案時刻（timezone-free civil time），
+    前端不再透過 <code>toISOString()</code> 轉成 UTC，避免重建曲線產生時相偏移。
+  </p>
+  <label>測站緯度 (°N)</label>
+  <input id="latitude" type="number" value="25.167" step="0.001">
+  <br><br>
+  <label>分潮模式</label>
+  <select id="constMode">
+    <option value="main">主要分潮（建議）</option>
+    <option value="auto">UTide Auto</option>
+  </select>
+  <div class="callout note" style="margin-top:8px">
+    <b>模式說明：</b>兩個選項皆使用 <b>UTide Harmonic Analysis</b>，並不是兩套不同的調和分析模型；
+    差別只在於「要交給 UTide 解哪些分潮」。
+    <br>
+    <b>主要分潮：</b>由本工具固定指定常用分潮，適合一般潮汐分析與結果比較。
+    <br>
+    <b>UTide Auto：</b>由 UTide 依資料長度、可解析性與內部條件自動選擇可解分潮，分潮數量可能較多。
+  </div>
+  <p class="note"><b>主要分潮清單：</b>M2、S2、N2、K2、K1、O1、P1、Q1、M4、MS4、MN4、M6、M8、SA、SSA、MM、MF。</p>
+  <label for="harmonicDataSource">Harmonic 資料來源</label>
+  <select id="harmonicDataSource">
+    <option value="raw">原始觀測資料</option>
+    <option value="filled" disabled>補遺後資料（請先執行缺值處理）</option>
+  </select>
+  <p id="harmonicSourceStatus" class="note">目前使用原始觀測資料。</p>
+  <p class="note">
+    UTide 本身可處理不規則／有缺口的時間序列，因此調和分析預設建議使用原始觀測資料；
+    補遺後資料主要供後續 FFT、PSD、Wavelet 等需要等時間距序列的模組使用。
+  </p>
+
+  <div class="actions">
+    <button id="runHarmonic" disabled>執行 Harmonic</button>
+    <button id="stopPython" class="danger" disabled>停止 / 釋放</button>
+  </div>
+</section>
+
+<section class="card span-8">
+  <h2>計算狀態</h2>
+  <div id="calcStatus" class="note">尚未執行。</div><br>
+  <div class="progress"><div id="progressBar"></div></div>
+  <pre id="log">等待操作...</pre>
+</section>
+
+<section id="summaryCard" class="card span-12 hidden">
+  <h2>5. Harmonic Analysis｜摘要</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">Form Factor</div><div id="formFactor" class="v">-</div></div>
+    <div class="stat"><div class="k">潮型</div><div id="tideType" class="v" style="font-size:14px">-</div></div>
+    <div class="stat"><div class="k">Variance explained</div><div id="varExplained" class="v">-</div></div>
+    <div class="stat"><div class="k">RMSE</div><div id="rmse" class="v">-</div></div>
+    <div class="stat"><div class="k">Max error</div><div id="maxError" class="v">-</div></div>
+    <div class="stat"><div class="k">分潮數</div><div id="nConstit" class="v">-</div></div>
+    <div class="stat"><div class="k">SNR ≥ 2</div><div id="nSignificant" class="v">-</div></div>
+  </div>
+</section>
+
+<section id="chartCard" class="card span-12 hidden">
+  <h2>6. Harmonic Analysis｜逐時分潮視覺化</h2>
+  <p class="note">
+    這一版不再把 5 年逐時重建結果全部傳回瀏覽器。每次只針對目前選定的圖面期間要求 Python 重建。
+  </p>
+  <div class="row">
+    <div>
+      <label>顯示開始時間</label>
+      <input id="plotStart" type="datetime-local" step="3600">
+    </div>
+    <div>
+      <label>顯示結束時間</label>
+      <input id="plotEnd" type="datetime-local" step="3600">
+    </div>
+  </div>
+  <p class="note">
+    圖面時間可自由設定，最小單位為 1 小時；必須位於本次 Harmonic Analysis 的分析期間內。
+    <b>All constituents</b> 為本次 UTide 求得之所有有效分潮疊加重建；
+    個別曲線只顯示四大分潮 <b>M2、S2、K1、O1</b>，避免圖例過度擁擠。
+    長時間範圍可能增加瀏覽器繪圖負荷，但不設定硬性天數限制。
+  </p>
+  <div class="actions">
+    <button class="ghost quickDays" data-days="7">7 天</button>
+    <button class="ghost quickDays" data-days="15">15 天</button>
+    <button class="ghost quickDays" data-days="30">30 天</button>
+    <button class="ghost quickDays" data-days="60">60 天</button>
+    <button id="refreshChart" class="secondary">重新計算圖面</button>
+  </div>
+  <p id="plotStatus" class="note">尚未重建圖面。</p>
+  <div class="chart-wrap"><canvas id="tideChart"></canvas></div>
+</section>
+
+<section id="tableCard" class="card span-12 hidden">
+  <h2>7. Harmonic Analysis｜分潮結果與說明</h2>
+  <p class="note">
+    <b>SNR（Signal-to-Noise Ratio，訊號雜訊比）</b>用來判斷各分潮相對於估計不確定性的可辨識程度。
+    本工具直接使用 <b>UTide 輸出的 coef.SNR</b>，不再自行以其他公式換算。
+    UTide 的重建與診斷亦以 <b>SNR ≥ 2</b> 作為常用門檻之一。
+    為方便閱讀，本頁將 SNR &lt; 2 顯示為「低可信」、2–10 顯示為「可辨識」、&gt; 10 顯示為「高可信」；
+    其中三級文字僅為介面判讀，正式數值仍以 UTide 的 SNR 為準。
+    <br><br>
+    M2、S2、K1、O1 為潮型判別使用的四大分潮；
+    M4、MS4、MN4、M6、M8 等屬淺水／非線性分潮，可用來觀察潮波變形。
+    Phase 為 UTide 的 Greenwich-referenced phase，與 S_TIDE 的中心時刻相位定義不可直接逐值比較。
+  </p>
+  <div class="note" style="margin:10px 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f9fafb">
+    <b>欄位說明：</b>
+    Frequency = 分潮頻率（cycles per hour, cph）；
+    Amplitude = 分潮振幅；
+    Phase = 分潮相位；
+    A 95% CI = 振幅的 95% 信賴區間；
+    Phase 95% CI = 相位的 95% 信賴區間；
+    SNR = 分潮振幅相對於估計誤差的訊號雜訊比。
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+<th>分潮</th>
+<th>類型</th>
+<th>週期</th>
+<th>Frequency (cph)</th>
+<th>Amplitude (m)</th>
+<th>Phase (deg)</th>
+<th>A 95% CI</th>
+<th>Phase 95% CI</th>
+<th>SNR</th>
+<th>判讀</th>
+<th>說明</th>
+</tr></thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card span-12">
+  <h2>8. Mean Sea-Level Trend｜一般潮位趨勢</h2>
+  <p class="note">
+    本模組使用<b>原始觀測資料</b>，不使用補遺值。先依資料完整率計算月平均，再進行：
+    <b>① 全期間線性趨勢、② Moving Window 局部上升率、③ 二次式加速度分析</b>。
+  </p>
+
+  <div class="row">
+    <div>
+      <label for="monthlyCompleteness">月資料完整率門檻（%）</label>
+      <input id="monthlyCompleteness" type="number" min="0" max="100" step="5" value="80">
+    </div>
+    <div>
+      <label for="annualMinMonths">年平均最少有效月份</label>
+      <input id="annualMinMonths" type="number" min="1" max="12" step="1" value="10">
+    </div>
+  </div>
+
+  <br>
+  <div class="row">
+    <div>
+      <label for="movingWindowYears">Moving Window 長度（year）</label>
+      <select id="movingWindowYears">
+        <option value="2">2 年</option>
+        <option value="3" selected>3 年</option>
+        <option value="5">5 年</option>
+        <option value="custom">自訂</option>
+      </select>
+    </div>
+    <div>
+      <label for="movingWindowCustom">自訂視窗長度（year）</label>
+      <input id="movingWindowCustom" type="number" min="1" step="1" value="3" disabled>
+    </div>
+  </div>
+  <br>
+  <div class="row">
+    <div>
+      <label for="movingStepMonths">Step｜更新步長</label>
+      <select id="movingStepMonths">
+        <option value="1">1 個月</option>
+        <option value="3">3 個月</option>
+        <option value="6">6 個月</option>
+        <option value="12" selected>12 個月</option>
+        <option value="custom">自訂</option>
+      </select>
+    </div>
+    <div>
+      <label for="movingStepCustom">自訂 Step（month）</label>
+      <input id="movingStepCustom" type="number" min="1" step="1" value="12" disabled>
+    </div>
+  </div>
+
+  <p class="note">
+    Moving Window 由「視窗長度」與「Step」共同決定。每個視窗各自估計一次線性海水位變化率（m/yr）。
+    例如 3-year window、12-month step：2019–2021、2020–2022、2021–2023……；
+    若 step 改為 3 個月，視窗會以更密集的重疊方式向前更新。
+  </p>
+
+  <div class="actions">
+    <button id="runTrend" type="button">執行趨勢分析</button>
+    <button id="clearTrend" type="button" class="ghost">清除趨勢結果</button>
+  </div>
+  <p id="trendStatus" class="note">使用目前選定分析期間的原始觀測資料。</p>
+
+  <h3>① 全期間線性趨勢</h3>
+  <div class="stats">
+    <div class="stat"><div class="k">有效月份</div><div id="trendValidMonths" class="v">-</div></div>
+    <div class="stat"><div class="k">無效月份</div><div id="trendInvalidMonths" class="v">-</div></div>
+    <div class="stat"><div class="k">Linear SLR</div><div id="trendSlope" class="v">-</div></div>
+    <div class="stat"><div class="k">Slope 95% CI</div><div id="trendSlopeCI" class="v">-</div></div>
+    <div class="stat"><div class="k">R²</div><div id="trendR2" class="v">-</div></div>
+    <div class="stat"><div class="k">擬合期間變化</div><div id="trendDelta" class="v">-</div></div>
+  </div>
+
+  <div class="trend-chart-wrap"><canvas id="trendChart"></canvas></div>
+
+  <br>
+  <div class="trend-subgrid">
+    <div class="trend-panel">
+      <h3>② Moving Window｜局部海水位變化率</h3>
+      <p class="note">
+        顯示各移動視窗內估計的局部海水位變化率。若後期視窗的局部變化率系統性高於前期，可視為「局部變化率增加」的診斷訊號，
+        但不單獨作為正式 acceleration 估計。
+      </p>
+      <div class="stats">
+        <div class="stat"><div class="k">有效視窗</div><div id="mwCount" class="v">-</div></div>
+        <div class="stat"><div class="k">最小局部變化率</div><div id="mwMin" class="v">-</div></div>
+        <div class="stat"><div class="k">最大局部變化率</div><div id="mwMax" class="v">-</div></div>
+        <div class="stat"><div class="k">局部變化率趨勢</div><div id="mwSlopeTrend" class="v">-</div></div>
+      </div>
+      <div class="trend-small-chart"><canvas id="movingTrendChart"></canvas></div>
+    </div>
+
+    <div class="trend-panel">
+      <h3>③ Quadratic Acceleration</h3>
+      <p class="note">
+        使用 <b>η(t)=a+bt+ct²</b> 擬合月平均水位，並以 <b>2c</b> 作為整段期間的平均加速度指標。
+        正值代表上升速率增加，負值代表上升速率減小。
+      </p>
+      <div class="stats">
+        <div class="stat"><div class="k">Acceleration</div><div id="quadAccel" class="v">-</div></div>
+        <div class="stat"><div class="k">95% CI</div><div id="quadAccelCI" class="v">-</div></div>
+        <div class="stat"><div class="k">Quadratic R²</div><div id="quadR2" class="v">-</div></div>
+        <div class="stat"><div class="k">判讀</div><div id="quadInterpret" class="v" style="font-size:14px">-</div></div>
+      </div>
+      <div class="trend-small-chart"><canvas id="quadraticTrendChart"></canvas></div>
+    </div>
+  </div>
+
+  <br>
+  <details>
+    <summary><b>月平均資料品質明細</b></summary>
+    <div class="trend-table-wrap" style="margin-top:10px">
+      <table>
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th>有效筆數</th>
+            <th>理論筆數</th>
+            <th>完整率</th>
+            <th>月平均水位</th>
+            <th>是否納入趨勢</th>
+          </tr>
+        </thead>
+        <tbody id="trendMonthBody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <br>
+  <details open>
+    <summary><b>方法與文獻依據</b></summary>
+    <div class="callout note ref-list" style="margin-top:10px">
+      <p>
+        <b>Linear trend：</b>以線性迴歸估計分析期間的平均海水位變化率（m/yr）。
+      </p>
+      <p>
+        <b>Moving Window：</b>將時間序列切成互相重疊的固定長度視窗，各視窗分別估計線性斜率，
+        用於觀察<b>局部海水位變化率</b>隨時間如何改變。視窗長度與 Step 可分開設定；
+        此處的「局部變化率趨勢」屬診斷指標，不直接等同正式 acceleration。Hogarth (2014) 討論過
+        以不同時間區段的 gradient 比較長期海水位變化。
+      </p>
+      <p>
+        <b>Quadratic acceleration：</b>海平面研究中常以二次迴歸 η(t)=a+bt+ct²，
+        並以 2c 表示平均 acceleration（m/yr²）。但 quadratic acceleration 對分析期間與起始年份高度敏感，
+        因此本工具同時提供 Moving Window SLR 作為診斷，而不只報告單一二次係數。
+      </p>
+      <ol>
+        <li>
+          Visser, H., Dangendorf, S., & Petersen, A. C. (2015).
+          <i>A review of trend models applied to sea level data with reference to the “acceleration-deceleration debate”.</i>
+          Journal of Geophysical Research: Oceans, 120.
+          <a href="https://doi.org/10.1002/2015JC010716" target="_blank" rel="noopener">DOI</a>
+        </li>
+        <li>
+          Hogarth, P. (2014).
+          <i>Preliminary analysis of acceleration of sea level rise through the twentieth century using extended tide gauge data sets.</i>
+          Journal of Geophysical Research: Oceans.
+          <a href="https://doi.org/10.1002/2014JC009976" target="_blank" rel="noopener">DOI</a>
+        </li>
+        <li>
+          Watson, P. J. (2016).
+          <i>A new perspective on global mean sea level (GMSL) acceleration.</i>
+          Geophysical Research Letters.
+          <a href="https://doi.org/10.1002/2016GL069653" target="_blank" rel="noopener">DOI</a>
+        </li>
+        <li>
+          Veng, T. & Andersen, O. B. (2021).
+          <i>Evolution of sea-level trends along the Norwegian coast from 1960 to 2100.</i>
+          Ocean Dynamics, 71.
+          <a href="https://doi.org/10.1007/s10236-021-01492-7" target="_blank" rel="noopener">DOI</a>
+        </li>
+      </ol>
+    </div>
+  </details>
+</section>
+
+</div>
+</div>
+
+<script>
+let workbookRows=[], headers=[], parsedData=[], selectedData=[];
+let regularSeries=[], filledSeries=[], gapRunsInfo=[], gapResultReady=false, gapCompareChart=null, gapMethodUsed=null, gapMaxHoursUsed=null;
+let pyWorker=null, analysisReady=false, analysisResult=null, tideChart=null, trendChart=null, movingTrendChart=null, quadraticTrendChart=null;
+const MAX_YEARS=5, MAX_POINTS=60000;
+const $=id=>document.getElementById(id);
+
+function log(s){if($("log").textContent==="等待操作...")$("log").textContent="";$("log").textContent+=s+"\n";$("log").scrollTop=$("log").scrollHeight}
+function progress(x){$("progressBar").style.width=`${Math.max(0,Math.min(100,x))}%`}
+function p2(n){return String(n).padStart(2,"0")}
+function dateVal(d){return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`}
+function parseDate(s,end=false){if(!s)return null;const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,end?23:0,end?59:0,end?59:0)}
+function datetimeLocalValue(d){
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+}
+function naiveLocalISO(d){
+  // IMPORTANT: tide-station timestamps are treated as timezone-free local
+  // civil time. Do NOT use toISOString(), which converts to UTC.
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+}
+function parseDateTimeLocal(s){
+  if(!s) return null;
+  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if(!m) return null;
+  const d=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],0);
+  return isNaN(d)?null:d;
+}
+
+function excelDate(v){
+  // Excel serial date is a timezone-free civil time. Decode in UTC only to
+  // obtain calendar fields, then rebuild as a local/naive Date so the clock
+  // value is not shifted by the browser timezone.
+  const days=Math.floor(v-25569);
+  const frac=v-Math.floor(v);
+  const d0=new Date((days*86400+Math.round(frac*86400))*1000);
+  return new Date(
+    d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate(),
+    d0.getUTCHours(), d0.getUTCMinutes(), d0.getUTCSeconds()
+  );
+}
+function parseTime(v){
+  if(v instanceof Date&&!isNaN(v))return v;
+  if(v===null||v===undefined||v==="")return null;
+  const s=String(Math.trunc(Number(v)));
+  if(/^\d{10}$/.test(s)){const d=new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10));return isNaN(d)?null:d}
+  if(typeof v==="number"&&v>20000&&v<100000){const d=excelDate(v);return isNaN(d)?null:d}
+  const d=new Date(String(v));return isNaN(d)?null:d;
+}
+function median(a){if(!a.length)return NaN;const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2}
+
+function estimateDtHours(data){
+  const diffs=[];
+  for(let i=1;i<data.length;i++){
+    const h=(data[i].date-data[i-1].date)/3600000;
+    if(h>0 && h<24*31) diffs.push(h);
+  }
+  return median(diffs);
+}
+
+function buildRegularSeries(data){
+  if(!data.length) return {series:[],dtHr:NaN};
+  const dtHr=estimateDtHours(data);
+  if(!Number.isFinite(dtHr)||dtHr<=0) return {series:[],dtHr:NaN};
+
+  const stepMs=dtHr*3600000;
+  const start=data[0].date.getTime();
+  const end=data[data.length-1].date.getTime();
+  const map=new Map(data.map(r=>[r.date.getTime(),r.value]));
+
+  const series=[];
+  for(let t=start;t<=end+stepMs*0.25;t+=stepMs){
+    const nearest=Math.round((t-start)/stepMs)*stepMs+start;
+    const value=map.has(nearest)?map.get(nearest):null;
+    series.push({date:new Date(nearest),raw:value,value:value,filled:false});
+  }
+  return {series,dtHr};
+}
+
+function findGapRuns(series){
+  const runs=[];
+  let i=0;
+  while(i<series.length){
+    if(series[i].raw!=null){i++;continue}
+    const s=i;
+    while(i<series.length && series[i].raw==null)i++;
+    runs.push({start:s,end:i-1,length:i-s});
+  }
+  return runs;
+}
+
+function linearInterpolate(x0,y0,x1,y1,x){
+  if(x1===x0) return y0;
+  return y0+(y1-y0)*(x-x0)/(x1-x0);
+}
+
+// Natural cubic spline second derivatives.
+function splineSecondDerivatives(xs,ys){
+  const n=xs.length;
+  if(n<3) return new Array(n).fill(0);
+  const y2=new Array(n).fill(0);
+  const u=new Array(n-1).fill(0);
+  y2[0]=u[0]=0;
+  for(let i=1;i<n-1;i++){
+    const sig=(xs[i]-xs[i-1])/(xs[i+1]-xs[i-1]);
+    const p=sig*y2[i-1]+2;
+    y2[i]=(sig-1)/p;
+    const d1=(ys[i+1]-ys[i])/(xs[i+1]-xs[i]);
+    const d0=(ys[i]-ys[i-1])/(xs[i]-xs[i-1]);
+    u[i]=(6*(d1-d0)/(xs[i+1]-xs[i-1])-sig*u[i-1])/p;
+  }
+  y2[n-1]=0;
+  for(let k=n-2;k>=0;k--) y2[k]=y2[k]*y2[k+1]+u[k];
+  return y2;
+}
+
+function splineEval(xs,ys,y2,x){
+  let klo=0,khi=xs.length-1;
+  while(khi-klo>1){
+    const k=Math.floor((khi+klo)/2);
+    if(xs[k]>x) khi=k; else klo=k;
+  }
+  const h=xs[khi]-xs[klo];
+  if(h===0) return ys[klo];
+  const a=(xs[khi]-x)/h,b=(x-xs[klo])/h;
+  return a*ys[klo]+b*ys[khi]+((a*a*a-a)*y2[klo]+(b*b*b-b)*y2[khi])*h*h/6;
+}
+
+// Fritsch-Carlson PCHIP slopes.
+function pchipSlopes(xs,ys){
+  const n=xs.length;
+  if(n===2){
+    const d=(ys[1]-ys[0])/(xs[1]-xs[0]);
+    return [d,d];
+  }
+  const h=[],delta=[];
+  for(let i=0;i<n-1;i++){
+    h[i]=xs[i+1]-xs[i];
+    delta[i]=(ys[i+1]-ys[i])/h[i];
+  }
+  const m=new Array(n).fill(0);
+  for(let i=1;i<n-1;i++){
+    if(delta[i-1]===0||delta[i]===0||Math.sign(delta[i-1])!==Math.sign(delta[i])){
+      m[i]=0;
+    }else{
+      const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];
+      m[i]=(w1+w2)/(w1/delta[i-1]+w2/delta[i]);
+    }
+  }
+  const endpoint=(h0,h1,d0,d1)=>{
+    let val=((2*h0+h1)*d0-h0*d1)/(h0+h1);
+    if(Math.sign(val)!==Math.sign(d0)) val=0;
+    else if(Math.sign(d0)!==Math.sign(d1)&&Math.abs(val)>Math.abs(3*d0)) val=3*d0;
+    return val;
+  };
+  m[0]=endpoint(h[0],h[1],delta[0],delta[1]);
+  m[n-1]=endpoint(h[n-2],h[n-3],delta[n-2],delta[n-3]);
+  return m;
+}
+
+function pchipEval(xs,ys,ms,x){
+  let i=0;
+  while(i<xs.length-2 && x>xs[i+1])i++;
+  const h=xs[i+1]-xs[i];
+  const t=(x-xs[i])/h;
+  const h00=2*t*t*t-3*t*t+1;
+  const h10=t*t*t-2*t*t+t;
+  const h01=-2*t*t*t+3*t*t;
+  const h11=t*t*t-t*t;
+  return h00*ys[i]+h10*h*ms[i]+h01*ys[i+1]+h11*h*ms[i+1];
+}
+
+function methodDisplayName(method){
+  return {none:"不補值",linear:"Linear",spline:"Cubic Spline",pchip:"PCHIP"}[method]||method;
+}
+
+
+function parseColumns(){
+  const ti=+$("timeCol").value, vi=+$("valueCol").value;
+  const temp=[];
+  for(const r of workbookRows){
+    const d=parseTime(r[ti]),v=Number(r[vi]);
+    if(d&&Number.isFinite(v)&&v!==-999.9)temp.push({date:d,value:v});
+  }
+  temp.sort((a,b)=>a.date-b.date);
+  const seen=new Set(); parsedData=temp.filter(r=>{const k=r.date.getTime();if(seen.has(k))return false;seen.add(k);return true});
+  if(!parsedData.length){$("fileStatus").innerHTML='<span class="bad">無有效資料。</span>';return}
+  const s=parsedData[0].date,e=parsedData.at(-1).date;
+  $("rangeStart").min=dateVal(s);$("rangeStart").max=dateVal(e);$("rangeEnd").min=dateVal(s);$("rangeEnd").max=dateVal(e);
+  $("rangeStart").value=dateVal(s);
+  const me=new Date(s);me.setFullYear(me.getFullYear()+5);me.setDate(me.getDate()-1);
+  $("rangeEnd").value=dateVal(me<e?me:e);
+  $("rangeStart").disabled=$("rangeEnd").disabled=false;
+  $("fileStatus").innerHTML=`<span class="ok">讀取成功：</span>${parsedData.length.toLocaleString()} 筆`;
+  updateSelection();
+}
+
+function updateSelection(){
+  if(!parsedData.length)return;
+  const s=parseDate($("rangeStart").value),e=parseDate($("rangeEnd").value,true);
+  selectedData=parsedData.filter(r=>r.date>=s&&r.date<=e);
+  const years=(e-s)/(365.25*86400000);
+  const diffs=[];for(let i=1;i<selectedData.length;i++){const h=(selectedData[i].date-selectedData[i-1].date)/3600000;if(h>0&&h<24*31)diffs.push(h)}
+  const dt=median(diffs),full=Number.isFinite(dt)&&selectedData.length?Math.round((selectedData.at(-1).date-selectedData[0].date)/3600000/dt)+1:selectedData.length;
+  const miss=Math.max(0,full-selectedData.length),mp=full?100*miss/full:0;
+  $("selN").textContent=selectedData.length.toLocaleString();$("selYears").textContent=years.toFixed(2);$("selMissing").textContent=`${mp.toFixed(2)} %`;
+  let load="低",cl="ok";if(selectedData.length>30000){load="中";cl="warn"}if(selectedData.length>MAX_POINTS){load="過高";cl="bad"}
+  $("loadLevel").innerHTML=`<span class="${cl}">${load}</span>`;
+  const bad=years>MAX_YEARS+0.01||selectedData.length>MAX_POINTS||selectedData.length<48;
+  $("rangeStatus").innerHTML=bad?'<span class="bad">超過限制或資料太少，請調整範圍。</span>':`<span class="ok">可執行：</span>${selectedData.length.toLocaleString()} 筆、${years.toFixed(2)} 年`;
+  $("runHarmonic").disabled=true;
+  $("runGapFill").disabled=bad;
+  analysisReady=false;
+  gapResultReady=false;
+  gapMethodUsed=null;
+  gapMaxHoursUsed=null;
+  gapRunsInfo=[];
+  regularSeries=[];
+  filledSeries=[];
+  $("harmonicDataSource").value="raw";
+  $("harmonicDataSource").querySelector('option[value="filled"]').disabled=true;
+  $("harmonicSourceStatus").textContent="目前使用原始觀測資料。";
+  $("clearGapFill").disabled=true;
+  $("refreshGapChart").disabled=true;
+  $("gapPlotStart").disabled=true;
+  $("gapStatus").textContent=bad?"請先調整有效的分析範圍。":"下一步：請執行缺值檢查／補遺，完成後才會開放 Harmonic Analysis。";
+  if(trendChart){trendChart.destroy();trendChart=null;}
+  if(movingTrendChart){movingTrendChart.destroy();movingTrendChart=null;}
+  if(quadraticTrendChart){quadraticTrendChart.destroy();quadraticTrendChart=null;}
+  $("trendStatus").textContent=bad?"請先調整有效的分析範圍。":"使用目前選定分析期間的原始觀測資料。";
+  for(const id of [
+    "trendValidMonths","trendInvalidMonths","trendSlope","trendSlopeCI","trendR2","trendDelta",
+    "mwCount","mwMin","mwMax","mwSlopeTrend",
+    "quadAccel","quadAccelCI","quadR2","quadInterpret"
+  ]){
+    $(id).textContent="-";
+  }
+  $("trendMonthBody").innerHTML="";
+}
+
+$("fileInput").addEventListener("change",async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:"array",cellDates:true}),ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+    const hdr=(rows[0]||[]).some(v=>typeof v==="string"&&/[A-Za-z\u4e00-\u9fff]/.test(v));
+    headers=(hdr?rows[0]:rows[0].map((_,i)=>`欄位 ${i+1}`));workbookRows=hdr?rows.slice(1):rows;
+    $("timeCol").innerHTML=$("valueCol").innerHTML="";
+    headers.forEach((h,i)=>{for(const id of ["timeCol","valueCol"]){const o=document.createElement("option");o.value=i;o.textContent=h||`欄位 ${i+1}`;$(id).appendChild(o)}});
+    $("timeCol").selectedIndex=0;$("valueCol").selectedIndex=Math.min(1,headers.length-1);
+    $("timeCol").disabled=$("valueCol").disabled=false;
+    parseColumns();log(`載入 ${f.name}`);
+  }catch(err){$("fileStatus").innerHTML=`<span class="bad">${String(err)}</span>`}
+});
+$("timeCol").addEventListener("change",parseColumns);$("valueCol").addEventListener("change",parseColumns);
+$("rangeStart").addEventListener("change",updateSelection);$("rangeEnd").addEventListener("change",updateSelection);
+
+
+
+function invalidateGapProcessing(reason="補遺設定已變更"){
+  if(!gapResultReady) return;
+  gapResultReady=false;
+  gapMethodUsed=null;
+  gapMaxHoursUsed=null;
+  $("runHarmonic").disabled=true;
+  $("harmonicDataSource").value="raw";
+  $("harmonicDataSource").querySelector('option[value="filled"]').disabled=true;
+  $("harmonicSourceStatus").textContent="補遺設定已變更，請重新執行缺值處理。";
+  $("gapStatus").innerHTML=`<span class="warn">${reason}，請重新按「執行缺值處理」。</span>`;
+  $("gapFilledN").textContent="-";
+  $("gapRemainN").textContent="-";
+  $("gapFillPct").textContent="-";
+  $("gapMethodName").textContent="-";
+  if(gapCompareChart){gapCompareChart.destroy();gapCompareChart=null;}
+}
+
+$("maxGapPreset").addEventListener("change",()=>{
+  const custom=$("maxGapPreset").value==="custom";
+  $("maxGapCustom").disabled=!custom;
+  if(!custom) $("maxGapCustom").value=$("maxGapPreset").value;
+  invalidateGapProcessing("最大允許缺口已變更");
+});
+
+$("maxGapCustom").addEventListener("change",()=>{
+  if($("maxGapPreset").value==="custom"){
+    invalidateGapProcessing("自訂最大缺口已變更");
+  }
+});
+
+document.querySelectorAll('input[name="fillMethod"]').forEach(el=>{
+  el.addEventListener("change",()=>{
+    invalidateGapProcessing(`補遺方法已切換為 ${methodDisplayName(el.value)}`);
+  });
+});
+
+$("harmonicDataSource").addEventListener("change",()=>{
+  $("harmonicSourceStatus").textContent=
+    $("harmonicDataSource").value==="filled"
+    ?"Harmonic Analysis 將使用補遺後的有效資料。"
+    :"目前使用原始觀測資料。";
+});
+
+function getMaxGapHours(){
+  const preset=$("maxGapPreset").value;
+  const v=preset==="custom"?Number($("maxGapCustom").value):Number(preset);
+  return Number.isFinite(v)&&v>0?v:24;
+}
+
+function runGapProcessing(){
+  if(!selectedData.length) return;
+
+  const method=document.querySelector('input[name="fillMethod"]:checked')?.value||"none";
+  const maxGapHr=getMaxGapHours();
+  const built=buildRegularSeries(selectedData);
+  regularSeries=built.series;
+
+  if(!regularSeries.length||!Number.isFinite(built.dtHr)){
+    $("gapStatus").innerHTML='<span class="bad">無法建立完整等時間距序列。</span>';
+    return;
+  }
+
+  const dtHr=built.dtHr;
+  const maxGapPoints=Math.max(1,Math.floor(maxGapHr/dtHr+1e-9));
+  const gaps=findGapRuns(regularSeries);
+  const originalMissing=gaps.reduce((s,g)=>s+g.length,0);
+  const longestPts=gaps.length?Math.max(...gaps.map(g=>g.length)):0;
+
+  filledSeries=regularSeries.map(r=>({...r}));
+
+  if(method!=="none"){
+    const validIdx=[];
+    for(let i=0;i<filledSeries.length;i++) if(filledSeries[i].raw!=null) validIdx.push(i);
+
+    const xs=validIdx.map(i=>i);
+    const ys=validIdx.map(i=>filledSeries[i].raw);
+
+    let splineY2=null,pchipM=null;
+    if(method==="spline" && xs.length>=2) splineY2=splineSecondDerivatives(xs,ys);
+    if(method==="pchip" && xs.length>=2) pchipM=pchipSlopes(xs,ys);
+
+    for(const gap of gaps){
+      // Never extrapolate at beginning or end.
+      if(gap.start===0 || gap.end===filledSeries.length-1) continue;
+      if(gap.length>maxGapPoints) continue;
+
+      const left=gap.start-1,right=gap.end+1;
+      if(filledSeries[left].raw==null||filledSeries[right].raw==null) continue;
+
+      for(let i=gap.start;i<=gap.end;i++){
+        let val=null;
+        if(method==="linear"){
+          val=linearInterpolate(left,filledSeries[left].raw,right,filledSeries[right].raw,i);
+        }else if(method==="spline"){
+          val=splineEval(xs,ys,splineY2,i);
+        }else if(method==="pchip"){
+          val=pchipEval(xs,ys,pchipM,i);
+        }
+        if(Number.isFinite(val)){
+          filledSeries[i].value=val;
+          filledSeries[i].filled=true;
+        }
+      }
+    }
+  }
+
+
+  gapRunsInfo=gaps.map((g,idx)=>{
+    const startDate=filledSeries[g.start].date;
+    const endDate=filledSeries[g.end].date;
+    const allFilled=filledSeries.slice(g.start,g.end+1).every(r=>r.filled);
+    return {
+      index:idx+1,
+      startIndex:g.start,
+      endIndex:g.end,
+      start:startDate,
+      end:endDate,
+      points:g.length,
+      hours:g.length*dtHr,
+      status:allFilled?"已補遺":"未補"
+    };
+  });
+
+  const filledN=filledSeries.filter(r=>r.filled).length;
+  const remainN=filledSeries.filter(r=>r.value==null).length;
+  const fillPct=originalMissing?100*filledN/originalMissing:0;
+
+  gapResultReady=true;
+  gapMethodUsed=method;
+  gapMaxHoursUsed=maxGapHr;
+  $("gapFullN").textContent=filledSeries.length.toLocaleString();
+  $("gapMissingN").textContent=originalMissing.toLocaleString();
+  $("gapFilledN").textContent=filledN.toLocaleString();
+  $("gapRemainN").textContent=remainN.toLocaleString();
+  $("gapLongest").textContent=`${(longestPts*dtHr).toFixed(1)} hr`;
+  $("gapFillPct").textContent=`${fillPct.toFixed(2)} %`;
+  $("gapDt").textContent=`${dtHr.toFixed(3)} hr`;
+  $("gapMethodName").textContent=methodDisplayName(method);
+
+  $("gapStatus").innerHTML=
+    method==="none"
+    ?`<span class="warn">目前選擇「不補值」：只完成缺值檢查，沒有建立補遺資料。</span>`
+    :`<span class="ok">補遺完成。</span> 方法：<b>${methodDisplayName(method)}</b>；最大允許連續缺口 ${maxGapHr} hr；實際補入 <b>${filledN.toLocaleString()}</b> 點；剩餘缺值 ${remainN.toLocaleString()} 點。`;
+
+  $("clearGapFill").disabled=false;
+  $("refreshGapChart").disabled=false;
+  $("gapPlotStart").disabled=false;
+  $("gapPlotEnd").disabled=false;
+
+  $("gapPlotStart").min=datetimeLocalValue(filledSeries[0].date);
+  $("gapPlotStart").max=datetimeLocalValue(filledSeries.at(-1).date);
+  $("gapPlotEnd").min=datetimeLocalValue(filledSeries[0].date);
+  $("gapPlotEnd").max=datetimeLocalValue(filledSeries.at(-1).date);
+
+  const firstGap=gapRunsInfo[0];
+  if(firstGap){
+    const pad=24*3600000;
+    const ps=new Date(Math.max(filledSeries[0].date.getTime(),firstGap.start.getTime()-pad));
+    const pe=new Date(Math.min(filledSeries.at(-1).date.getTime(),firstGap.end.getTime()+pad));
+    $("gapPlotStart").value=datetimeLocalValue(ps);
+    $("gapPlotEnd").value=datetimeLocalValue(pe);
+  }else{
+    $("gapPlotStart").value=datetimeLocalValue(filledSeries[0].date);
+    $("gapPlotEnd").value=datetimeLocalValue(new Date(Math.min(filledSeries[0].date.getTime()+7*86400000,filledSeries.at(-1).date.getTime())));
+  }
+
+  const filledOpt=$("harmonicDataSource").querySelector('option[value="filled"]');
+  filledOpt.disabled=false;
+
+  // Preprocessing is now complete, so Harmonic may run.
+  $("runHarmonic").disabled=false;
+
+  // If actual interpolation was performed, default to the processed series.
+  // If "none" was selected, keep the raw observations.
+  if(method==="none"){
+    $("harmonicDataSource").value="raw";
+    $("harmonicSourceStatus").textContent="缺值檢查已完成；Harmonic 將使用原始觀測資料。";
+  }else{
+    $("harmonicDataSource").value="filled";
+    $("harmonicSourceStatus").textContent=`補遺已完成；Harmonic 預設使用 ${methodDisplayName(method)} 補遺後資料。`;
+  }
+
+  renderGapDetails();
+  drawGapChart();
+}
+
+function clearGapProcessing(){
+  regularSeries=[];
+  filledSeries=[];
+  gapResultReady=false;
+  $("gapFullN").textContent=$("gapMissingN").textContent=$("gapFilledN").textContent=
+    $("gapRemainN").textContent=$("gapLongest").textContent=$("gapFillPct").textContent=
+    $("gapDt").textContent=$("gapMethodName").textContent="-";
+  $("gapStatus").textContent="補遺結果已清除。";
+  $("harmonicDataSource").value="raw";
+  $("harmonicDataSource").querySelector('option[value="filled"]').disabled=true;
+  $("harmonicSourceStatus").textContent="補遺結果已清除；請重新執行缺值處理後再進行 Harmonic Analysis。";
+  $("runHarmonic").disabled=true;
+  $("clearGapFill").disabled=true;
+  $("refreshGapChart").disabled=true;
+  $("gapPlotStart").disabled=true;
+  $("gapPlotEnd").disabled=true;
+  $("gapDetailBody").innerHTML='<tr><td colspan="6" class="note">尚未執行缺值處理。</td></tr>';
+  if(gapCompareChart){gapCompareChart.destroy();gapCompareChart=null;}
+}
+
+
+
+function renderGapDetails(){
+  const body=$("gapDetailBody");
+  if(!gapRunsInfo.length){
+    body.innerHTML='<tr><td colspan="6"><span class="ok">本分析期間未偵測到缺值。</span></td></tr>';
+    return;
+  }
+  body.innerHTML=gapRunsInfo.map(g=>`
+    <tr>
+      <td>${g.index}</td>
+      <td>${datetimeLocalValue(g.start).replace("T"," ")}</td>
+      <td>${datetimeLocalValue(g.end).replace("T"," ")}</td>
+      <td>${g.hours.toFixed(1)} hr (${g.points} 點)</td>
+      <td><span class="${g.status==="已補遺"?"ok":"bad"}">${g.status}</span></td>
+      <td><span class="gap-jump" data-gap="${g.index}">放大查看</span></td>
+    </tr>`).join("");
+
+  body.querySelectorAll(".gap-jump").forEach(el=>{
+    el.addEventListener("click",()=>{
+      const g=gapRunsInfo.find(x=>x.index===Number(el.dataset.gap));
+      if(!g) return;
+      const pad=Math.max(24,Math.min(72,g.hours*2))*3600000;
+      const ps=new Date(Math.max(filledSeries[0].date.getTime(),g.start.getTime()-pad));
+      const pe=new Date(Math.min(filledSeries.at(-1).date.getTime(),g.end.getTime()+pad));
+      $("gapPlotStart").value=datetimeLocalValue(ps);
+      $("gapPlotEnd").value=datetimeLocalValue(pe);
+      drawGapChart();
+      $("gapCompareChart").scrollIntoView({behavior:"smooth",block:"center"});
+    });
+  });
+}
+
+
+
+
+function drawGapChart(){
+  if(!gapResultReady||!filledSeries.length) return;
+
+  const start=parseDateTimeLocal($("gapPlotStart").value);
+  const end=parseDateTimeLocal($("gapPlotEnd").value);
+  if(!start||!end||end<=start) return;
+
+  const rawSeries=[];
+  const processedSeries=[];
+  const filledPts=[];
+
+  if(gapMethodUsed==="none"){
+    $("gapStatus").innerHTML='<span class="warn">目前結果是「不補值」，因此原始資料與處理後資料相同。請選 Linear / Spline / PCHIP 後重新執行缺值處理。</span>';
+  }
+
+  for(const r of filledSeries){
+    if(r.date<start||r.date>end) continue;
+    const x=r.date.getTime();
+
+    rawSeries.push({x, y:r.raw==null ? null : r.raw});
+    processedSeries.push({x, y:r.value==null ? null : r.value});
+
+    if(r.filled && r.value!=null){
+      filledPts.push({x,y:r.value});
+    }
+  }
+
+  const yvals=[];
+  rawSeries.forEach(p=>{if(p.y!=null&&Number.isFinite(p.y))yvals.push(p.y)});
+  processedSeries.forEach(p=>{if(p.y!=null&&Number.isFinite(p.y))yvals.push(p.y)});
+
+  let yMin,yMax;
+  if(yvals.length){
+    const lo=Math.min(...yvals), hi=Math.max(...yvals);
+    const pad=Math.max((hi-lo)*0.08,0.02);
+    yMin=lo-pad;
+    yMax=hi+pad;
+  }
+
+  if(gapCompareChart) gapCompareChart.destroy();
+  gapCompareChart=new Chart($("gapCompareChart"),{
+    type:"line",
+    data:{
+      datasets:[
+        {
+          label:"原始資料",
+          data:rawSeries,
+          borderWidth:1.2,
+          pointRadius:2,
+          showLine:true,
+          spanGaps:false,
+          order:2
+        },
+        {
+          label:"補遺後資料",
+          data:processedSeries,
+          borderWidth:2.5,
+          borderDash:[7,4],
+          pointRadius:0,
+          showLine:true,
+          spanGaps:false,
+          order:1
+        },
+        {
+          label:"本次補遺值",
+          data:filledPts,
+          borderWidth:0,
+          pointRadius:5,
+          pointHoverRadius:6,
+          showLine:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      parsing:false,
+      normalized:true,
+      interaction:{mode:"nearest",intersect:false},
+      plugins:{
+        legend:{position:"top"},
+        tooltip:{
+          callbacks:{
+            title(items){
+              if(!items.length) return "";
+              const d=new Date(items[0].parsed.x);
+              return `${d.getFullYear()}/${p2(d.getMonth()+1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          type:"linear",
+          min:start.getTime(),
+          max:end.getTime(),
+          ticks:{
+            maxTicksLimit:12,
+            callback(v){
+              const d=new Date(Number(v));
+              return `${d.getFullYear()}/${p2(d.getMonth()+1)}`;
+            }
+          },
+          title:{display:true,text:"Time"}
+        },
+        y:{
+          min:yMin,
+          max:yMax,
+          title:{display:true,text:"Water level (m)"}
+        }
+      }
+    }
+  });
+}
+
+$("runGapFill").addEventListener("click",runGapProcessing);
+$("clearGapFill").addEventListener("click",clearGapProcessing);
+$("refreshGapChart").addEventListener("click",drawGapChart);
+$("gapPlotStart").addEventListener("change",drawGapChart);
+$("gapPlotEnd").addEventListener("change",drawGapChart);
+
+
+function monthKey(d){
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}`;
+}
+
+function daysInMonth(y,m0){
+  return new Date(y,m0+1,0).getDate();
+}
+
+function monthStartDate(y,m0){
+  return new Date(y,m0,1,0,0,0);
+}
+
+function nextMonthDate(y,m0){
+  return new Date(y,m0+1,1,0,0,0);
+}
+
+function tCritical95(df){
+  // Two-sided 95% critical t values; linear interpolation is unnecessary
+  // for this reporting purpose. For large df, approaches 1.96.
+  if(df<=1) return 12.706;
+  if(df==2) return 4.303;
+  if(df==3) return 3.182;
+  if(df==4) return 2.776;
+  if(df==5) return 2.571;
+  if(df==6) return 2.447;
+  if(df==7) return 2.365;
+  if(df==8) return 2.306;
+  if(df==9) return 2.262;
+  if(df==10) return 2.228;
+  if(df<=12) return 2.179;
+  if(df<=15) return 2.131;
+  if(df<=20) return 2.086;
+  if(df<=25) return 2.060;
+  if(df<=30) return 2.042;
+  if(df<=40) return 2.021;
+  if(df<=60) return 2.000;
+  if(df<=120) return 1.980;
+  return 1.960;
+}
+
+function linearRegression(xs,ys){
+  const n=xs.length;
+  if(n<3) return null;
+
+  const mx=xs.reduce((a,b)=>a+b,0)/n;
+  const my=ys.reduce((a,b)=>a+b,0)/n;
+
+  let sxx=0,sxy=0;
+  for(let i=0;i<n;i++){
+    const dx=xs[i]-mx;
+    sxx+=dx*dx;
+    sxy+=dx*(ys[i]-my);
+  }
+  if(sxx<=0) return null;
+
+  const slope=sxy/sxx;
+  const intercept=my-slope*mx;
+
+  let sse=0,sst=0;
+  for(let i=0;i<n;i++){
+    const fit=intercept+slope*xs[i];
+    sse+=(ys[i]-fit)**2;
+    sst+=(ys[i]-my)**2;
+  }
+
+  const r2=sst>0 ? 1-sse/sst : 1;
+  const df=n-2;
+  const mse=df>0?sse/df:NaN;
+  const seSlope=Number.isFinite(mse)?Math.sqrt(mse/sxx):NaN;
+  const tcrit=tCritical95(df);
+  const ci=Number.isFinite(seSlope)?tcrit*seSlope:NaN;
+
+  return {n,slope,intercept,r2,sse,seSlope,ci};
+}
+
+
+function invert3x3(m){
+  const a=m[0][0],b=m[0][1],c=m[0][2];
+  const d=m[1][0],e=m[1][1],f=m[1][2];
+  const g=m[2][0],h=m[2][1],i=m[2][2];
+  const A=e*i-f*h, B=-(d*i-f*g), C=d*h-e*g;
+  const D=-(b*i-c*h), E=a*i-c*g, F=-(a*h-b*g);
+  const G=b*f-c*e, H=-(a*f-c*d), I=a*e-b*d;
+  const det=a*A+b*B+c*C;
+  if(Math.abs(det)<1e-15) return null;
+  return [[A/det,D/det,G/det],[B/det,E/det,H/det],[C/det,F/det,I/det]];
+}
+
+function quadraticRegression(xs,ys){
+  const n=xs.length;
+  if(n<4) return null;
+
+  let sx=0,sx2=0,sx3=0,sx4=0,sy=0,sxy=0,sx2y=0;
+  for(let k=0;k<n;k++){
+    const x=xs[k],y=ys[k],x2=x*x;
+    sx+=x; sx2+=x2; sx3+=x2*x; sx4+=x2*x2;
+    sy+=y; sxy+=x*y; sx2y+=x2*y;
+  }
+
+  const XTX=[[n,sx,sx2],[sx,sx2,sx3],[sx2,sx3,sx4]];
+  const inv=invert3x3(XTX);
+  if(!inv) return null;
+  const XTy=[sy,sxy,sx2y];
+  const beta=inv.map(row=>row[0]*XTy[0]+row[1]*XTy[1]+row[2]*XTy[2]);
+  const [a,b,c]=beta;
+
+  const meanY=sy/n;
+  let sse=0,sst=0;
+  for(let k=0;k<n;k++){
+    const fit=a+b*xs[k]+c*xs[k]*xs[k];
+    sse+=(ys[k]-fit)**2;
+    sst+=(ys[k]-meanY)**2;
+  }
+  const r2=sst>0?1-sse/sst:1;
+  const df=n-3;
+  const mse=df>0?sse/df:NaN;
+  const seC=Number.isFinite(mse)?Math.sqrt(mse*inv[2][2]):NaN;
+  const tcrit=tCritical95(df);
+  const ciC=Number.isFinite(seC)?tcrit*seC:NaN;
+
+  return {a,b,c,r2,sse,seC,ciC};
+}
+
+function movingWindowTrend(validMonths,windowYears,stepMonths){
+  if(!validMonths.length) return [];
+
+  const firstDate=new Date(validMonths[0].year, validMonths[0].month-1, 1);
+  const lastDate=new Date(validMonths.at(-1).year, validMonths.at(-1).month-1, 1);
+  const rows=[];
+
+  let ws=new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+
+  while(true){
+    const we=new Date(ws.getFullYear(), ws.getMonth()+windowYears*12, 1);
+    if(we>new Date(lastDate.getFullYear(), lastDate.getMonth()+1, 1)) break;
+
+    const seg=validMonths.filter(m=>m.date>=ws && m.date<we);
+
+    // Require at least 70% of theoretical months in the window.
+    if(seg.length >= Math.ceil(windowYears*12*0.70)){
+      const t0=seg[0].date;
+      const xs=seg.map(m=>(m.date-t0)/(365.2425*86400000));
+      const ys=seg.map(m=>m.mean);
+      const reg=linearRegression(xs,ys);
+
+      if(reg){
+        const center=new Date((ws.getTime()+we.getTime())/2);
+        rows.push({
+          start:ws,
+          end:new Date(we.getTime()-1),
+          centerDate:center,
+          centerYear:center.getFullYear()+(center.getMonth()+0.5)/12,
+          rateM:reg.slope,
+          ciM:reg.ci,
+          r2:reg.r2,
+          n:seg.length
+        });
+      }
+    }
+
+    ws=new Date(ws.getFullYear(), ws.getMonth()+stepMonths, 1);
+  }
+
+  return rows;
+}
+function buildMonthlyMeans(){
+  if(!selectedData.length) return {months:[],dtHr:NaN};
+
+  const dtHr=estimateDtHours(selectedData);
+  if(!Number.isFinite(dtHr)||dtHr<=0) return {months:[],dtHr:NaN};
+
+  const selectedStart=parseDate($("rangeStart").value);
+  const selectedEnd=parseDate($("rangeEnd").value,true);
+
+  const map=new Map();
+  for(const r of selectedData){
+    const k=monthKey(r.date);
+    if(!map.has(k)) map.set(k,{values:[],date:r.date});
+    map.get(k).values.push(r.value);
+  }
+
+  const months=[];
+  let cursor=new Date(selectedStart.getFullYear(),selectedStart.getMonth(),1);
+  const finalMonth=new Date(selectedEnd.getFullYear(),selectedEnd.getMonth(),1);
+
+  while(cursor<=finalMonth){
+    const y=cursor.getFullYear(),m0=cursor.getMonth();
+    const key=`${y}-${p2(m0+1)}`;
+    const ms=monthStartDate(y,m0);
+    const me=nextMonthDate(y,m0);
+
+    const spanStart=new Date(Math.max(ms.getTime(),selectedStart.getTime()));
+    const spanEnd=new Date(Math.min(me.getTime(),selectedEnd.getTime()+1));
+
+    const expected=Math.max(0,Math.round((spanEnd-spanStart)/(dtHr*3600000)));
+    const vals=(map.get(key)?.values||[]).filter(Number.isFinite);
+    const valid=vals.length;
+    const completeness=expected>0?100*valid/expected:0;
+    const mean=valid?vals.reduce((a,b)=>a+b,0)/valid:null;
+
+    months.push({
+      key,
+      year:y,
+      month:m0+1,
+      date:new Date(y,m0,15,12,0,0),
+      valid,
+      expected,
+      completeness,
+      mean
+    });
+
+    cursor=new Date(y,m0+1,1);
+  }
+
+  return {months,dtHr};
+}
+
+function runTrendAnalysis(){
+  if(!selectedData.length){
+    $("trendStatus").innerHTML='<span class="bad">請先載入並選擇分析資料。</span>';
+    return;
+  }
+
+  const threshold=Math.max(0,Math.min(100,Number($("monthlyCompleteness").value)||80));
+  const annualMin=Math.max(1,Math.min(12,Number($("annualMinMonths").value)||10));
+  const windowYears=$("movingWindowYears").value==="custom"
+    ? Math.max(1,Number($("movingWindowCustom").value)||3)
+    : Number($("movingWindowYears").value);
+  const stepMonths=$("movingStepMonths").value==="custom"
+    ? Math.max(1,Number($("movingStepCustom").value)||12)
+    : Number($("movingStepMonths").value);
+
+  const built=buildMonthlyMeans();
+  if(!built.months.length){
+    $("trendStatus").innerHTML='<span class="bad">無法建立月平均序列。</span>';
+    return;
+  }
+
+  const months=built.months.map(m=>({
+    ...m,
+    accepted:m.mean!=null && m.completeness>=threshold
+  }));
+
+  const validMonths=months.filter(m=>m.accepted);
+  const invalidMonths=months.length-validMonths.length;
+
+  if(validMonths.length<4){
+    $("trendStatus").innerHTML='<span class="bad">符合完整率門檻的月份不足，無法進行趨勢分析。</span>';
+    return;
+  }
+
+  const t0=validMonths[0].date;
+  const xs=validMonths.map(m=>(m.date-t0)/(365.2425*86400000));
+  const ys=validMonths.map(m=>m.mean);
+
+  // 1) Full-period linear trend
+  const reg=linearRegression(xs,ys);
+  if(!reg){
+    $("trendStatus").innerHTML='<span class="bad">線性趨勢估計失敗。</span>';
+    return;
+  }
+
+  const annualMap=new Map();
+  for(const m of validMonths){
+    if(!annualMap.has(m.year)) annualMap.set(m.year,[]);
+    annualMap.get(m.year).push(m.mean);
+  }
+  const annual=[];
+  for(const [year,vals] of [...annualMap.entries()].sort((a,b)=>a[0]-b[0])){
+    if(vals.length>=annualMin){
+      annual.push({
+        x:new Date(year,6,1,12,0,0).getTime(),
+        y:vals.reduce((a,b)=>a+b,0)/vals.length,
+        months:vals.length
+      });
+    }
+  }
+
+  const fitStart=reg.intercept+reg.slope*xs[0];
+  const fitEnd=reg.intercept+reg.slope*xs.at(-1);
+  const slopeM=reg.slope;
+  const ciM=reg.ci;
+  const deltaM=(fitEnd-fitStart);
+
+  $("trendValidMonths").textContent=validMonths.length.toLocaleString();
+  $("trendInvalidMonths").textContent=invalidMonths.toLocaleString();
+  $("trendSlope").textContent=`${slopeM>=0?"+":""}${slopeM.toFixed(4)} m/yr`;
+  $("trendSlopeCI").textContent=`± ${ciM.toFixed(4)} m/yr`;
+  $("trendR2").textContent=reg.r2.toFixed(4);
+  $("trendDelta").textContent=`${deltaM>=0?"+":""}${deltaM.toFixed(4)} m`;
+
+  // 2) Moving-window local SLR
+  const mw=movingWindowTrend(validMonths,windowYears,stepMonths);
+  $("mwCount").textContent=mw.length.toLocaleString();
+
+  if(mw.length){
+    const vals=mw.map(r=>r.rateM);
+    $("mwMin").textContent=`${Math.min(...vals).toFixed(4)} m/yr`;
+    $("mwMax").textContent=`${Math.max(...vals).toFixed(4)} m/yr`;
+
+    let mwTrend=null;
+    if(mw.length>=3){
+      const mx0=mw[0].centerYear;
+      const mx=mw.map(r=>r.centerYear-mx0);
+      const my=mw.map(r=>r.rateM);
+      mwTrend=linearRegression(mx,my);
+    }
+    if(mwTrend){
+      $("mwSlopeTrend").textContent=`${mwTrend.slope>=0?"+":""}${mwTrend.slope.toFixed(5)} m/yr²（診斷）`;
+    }else{
+      $("mwSlopeTrend").textContent="視窗不足";
+    }
+
+    if(movingTrendChart) movingTrendChart.destroy();
+    movingTrendChart=new Chart($("movingTrendChart"),{
+      type:"line",
+      data:{datasets:[
+        {
+          label:`${windowYears}-year local sea-level rate`,
+          data:mw.map(r=>({x:r.centerYear,y:r.rateM})),
+          borderWidth:2,
+          pointRadius:4,
+          showLine:true
+        },
+        ...(mwTrend ? [{
+          label:"局部變化率趨勢",
+          data:mw.map(r=>({
+            x:r.centerYear,
+            y:mwTrend.intercept+mwTrend.slope*(r.centerYear-mw[0].centerYear)
+          })),
+          borderWidth:2,
+          borderDash:[7,4],
+          pointRadius:0,
+          showLine:true
+        }] : [])
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+        plugins:{legend:{position:"top"}},
+        scales:{
+          x:{type:"linear",title:{display:true,text:"Window center year"}},
+          y:{title:{display:true,text:"Local sea-level rate (m/yr)"}}
+        }
+      }
+    });
+  }else{
+    $("mwMin").textContent=$("mwMax").textContent=$("mwSlopeTrend").textContent="-";
+    if(movingTrendChart){movingTrendChart.destroy();movingTrendChart=null;}
+  }
+
+  // 3) Quadratic acceleration
+  const quad=quadraticRegression(xs,ys);
+  if(quad){
+    const accel=2*quad.c;       // m/yr²
+    const accelCI=2*quad.ciC;   // m/yr²
+
+    $("quadAccel").textContent=`${accel>=0?"+":""}${accel.toFixed(6)} m/yr²`;
+    $("quadAccelCI").textContent=`± ${accelCI.toFixed(6)} m/yr²`;
+    $("quadR2").textContent=quad.r2.toFixed(4);
+
+    let interp;
+    if(accel-accelCI>0) interp="正加速度訊號（CI 未跨 0）";
+    else if(accel+accelCI<0) interp="負加速度訊號（CI 未跨 0）";
+    else interp="加速度方向未明確（95% CI 跨 0）";
+    $("quadInterpret").textContent=interp;
+
+    if(quadraticTrendChart) quadraticTrendChart.destroy();
+    quadraticTrendChart=new Chart($("quadraticTrendChart"),{
+      type:"line",
+      data:{datasets:[
+        {
+          label:"月平均水位",
+          data:validMonths.map(m=>({x:m.date.getTime(),y:m.mean})),
+          borderWidth:1,
+          pointRadius:2,
+          showLine:true
+        },
+        {
+          label:`Quadratic fit (${accel>=0?"+":""}${accel.toFixed(6)} m/yr²)`,
+          data:validMonths.map((m,i)=>({
+            x:m.date.getTime(),
+            y:quad.a+quad.b*xs[i]+quad.c*xs[i]*xs[i]
+          })),
+          borderWidth:2.5,
+          pointRadius:0,
+          showLine:true
+        }
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+        plugins:{legend:{position:"top"}},
+        scales:{
+          x:{
+            type:"linear",
+            ticks:{maxTicksLimit:8,callback(v){
+              const d=new Date(Number(v));
+              return `${d.getFullYear()}/${p2(d.getMonth()+1)}`;
+            }},
+            title:{display:true,text:"Time"}
+          },
+          y:{title:{display:true,text:"Water level (m)"}}
+        }
+      }
+    });
+  }else{
+    $("quadAccel").textContent=$("quadAccelCI").textContent=$("quadR2").textContent=$("quadInterpret").textContent="-";
+    if(quadraticTrendChart){quadraticTrendChart.destroy();quadraticTrendChart=null;}
+  }
+
+  $("trendStatus").innerHTML=
+    `<span class="ok">趨勢分析完成。</span> 使用 ${validMonths.length} 個有效月份；
+     月完整率門檻 ${threshold.toFixed(0)}%；Moving Window ${windowYears} 年、step ${stepMonths} 個月。`;
+
+  $("trendMonthBody").innerHTML=months.map(m=>`
+    <tr>
+      <td>${m.key.replace("-","/")}</td>
+      <td>${m.valid.toLocaleString()}</td>
+      <td>${m.expected.toLocaleString()}</td>
+      <td>${m.completeness.toFixed(1)} %</td>
+      <td>${m.mean==null?"-":m.mean.toFixed(4)}</td>
+      <td><span class="${m.accepted?"ok":"bad"}">${m.accepted?"納入":"排除"}</span></td>
+    </tr>
+  `).join("");
+
+  const monthlyPts=validMonths.map(m=>({x:m.date.getTime(),y:m.mean}));
+  const trendPts=validMonths.map((m,i)=>({
+    x:m.date.getTime(),
+    y:reg.intercept+reg.slope*xs[i]
+  }));
+
+  if(trendChart) trendChart.destroy();
+  trendChart=new Chart($("trendChart"),{
+    type:"line",
+    data:{datasets:[
+      {
+        label:"月平均水位",
+        data:monthlyPts,
+        borderWidth:1,
+        pointRadius:2,
+        showLine:true,
+        spanGaps:false
+      },
+      {
+        label:"年平均水位",
+        data:annual,
+        borderWidth:2,
+        pointRadius:4,
+        showLine:true,
+        spanGaps:false
+      },
+      {
+        label:`線性趨勢 (${slopeM>=0?"+":""}${slopeM.toFixed(4)} m/yr)`,
+        data:trendPts,
+        borderWidth:2.5,
+        borderDash:[8,5],
+        pointRadius:0,
+        showLine:true
+      }
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
+      interaction:{mode:"nearest",intersect:false},
+      plugins:{legend:{position:"top"}},
+      scales:{
+        x:{
+          type:"linear",
+          ticks:{maxTicksLimit:12,callback(v){
+            const d=new Date(Number(v));
+            return `${d.getFullYear()}/${p2(d.getMonth()+1)}`;
+          }},
+          title:{display:true,text:"Time (YYYY/MM)"}
+        },
+        y:{title:{display:true,text:"Water level (m)"}}
+      }
+    }
+  });
+}
+
+function clearTrendAnalysis(){
+  if(trendChart){trendChart.destroy();trendChart=null;}
+  if(movingTrendChart){movingTrendChart.destroy();movingTrendChart=null;}
+  if(quadraticTrendChart){quadraticTrendChart.destroy();quadraticTrendChart=null;}
+
+  for(const id of [
+    "trendValidMonths","trendInvalidMonths","trendSlope","trendSlopeCI","trendR2","trendDelta",
+    "mwCount","mwMin","mwMax","mwSlopeTrend",
+    "quadAccel","quadAccelCI","quadR2","quadInterpret"
+  ]){
+    $(id).textContent="-";
+  }
+  $("trendMonthBody").innerHTML="";
+  $("trendStatus").textContent="趨勢結果已清除。";
+}
+
+
+$("movingStepMonths").addEventListener("change",()=>{
+  const custom=$("movingStepMonths").value==="custom";
+  $("movingStepCustom").disabled=!custom;
+  if(!custom) $("movingStepCustom").value=$("movingStepMonths").value;
+});
+
+$("movingWindowYears").addEventListener("change",()=>{
+  const custom=$("movingWindowYears").value==="custom";
+  $("movingWindowCustom").disabled=!custom;
+  if(!custom) $("movingWindowCustom").value=$("movingWindowYears").value;
+});
+
+$("runTrend").addEventListener("click",runTrendAnalysis);
+$("clearTrend").addEventListener("click",clearTrendAnalysis);
+
+
+function createWorker(){
+const code=`
+let pyodide=null, coef=null, analysisTimes=null, analysisEta=null;
+async function init(){
+ if(pyodide)return;
+ postMessage({type:"progress",pct:10,msg:"載入 Pyodide..."});
+ importScripts("https://cdn.jsdelivr.net/pyodide/v0.29.0/full/pyodide.js");
+ pyodide=await loadPyodide();
+ postMessage({type:"progress",pct:25,msg:"載入 NumPy / SciPy..."});
+ await pyodide.loadPackage(["numpy","scipy","micropip"]);
+ postMessage({type:"progress",pct:40,msg:"安裝 UTide..."});
+ await pyodide.runPythonAsync("import micropip; await micropip.install('utide')");
+}
+self.onmessage=async e=>{
+ try{
+  await init();
+  if(e.data.type==="analyze"){
+   pyodide.globals.set("js_times",e.data.times);pyodide.globals.set("js_values",e.data.values);pyodide.globals.set("js_lat",e.data.lat);pyodide.globals.set("js_mode",e.data.mode);
+   postMessage({type:"progress",pct:60,msg:"執行 UTide..."});
+   const r=await pyodide.runPythonAsync(\`
+import numpy as np, json, math, traceback
+from utide import solve, reconstruct
+
+def safe_float(x):
+    try:
+        v=float(x)
+        return v if math.isfinite(v) else None
+    except Exception:
+        return None
+analysisTimes=np.array(js_times,dtype="datetime64[s]")
+analysisEta=np.array(js_values,dtype=float)
+constit="auto" if js_mode=="auto" else ["M2","S2","N2","K2","K1","O1","P1","Q1","M4","MS4","MN4","M6","M8","SA","SSA","MM","MF"]
+coef=solve(analysisTimes,analysisEta,lat=float(js_lat),constit=constit,method="ols",trend=True,conf_int="linear",verbose=False)
+pred=reconstruct(analysisTimes,coef,min_SNR=0,min_PE=0,verbose=False).h
+resid=analysisEta-pred
+varx=float(np.var(analysisEta,ddof=1));varp=float(np.var(pred,ddof=1))
+rows=[]
+for i in range(len(coef.name)):
+ A=safe_float(coef.A[i])
+ aci=safe_float(coef.A_ci[i]) if hasattr(coef,"A_ci") else None
+ g=safe_float(coef.g[i])
+ gci=safe_float(coef.g_ci[i]) if hasattr(coef,"g_ci") else None
+ snr=(A/aci)**2 if A is not None and aci is not None and aci>0 else None
+ rows.append({
+     "name":str(coef.name[i]),
+     "freq":safe_float(coef.aux.frq[i]),
+     "A":A,
+     "g":g,
+     "A_ci":aci,
+     "g_ci":gci,
+     "snr":safe_float(snr)
+ })
+amp={r["name"]:r["A"] for r in rows}; F=None; typ=None
+if all(k in amp for k in ["K1","O1","M2","S2"]):
+ den=amp["M2"]+amp["S2"]
+ if den>0:
+  F=(amp["K1"]+amp["O1"])/den
+  typ="半日潮 Semidiurnal" if F<0.25 else ("混合潮－偏半日潮 Mixed, mainly semidiurnal" if F<1.5 else ("混合潮－偏全日潮 Mixed, mainly diurnal" if F<3 else "全日潮 Diurnal"))
+out={
+ "rows":rows,
+ "F":safe_float(F),
+ "tide_type":typ,
+ "ve":safe_float(100*varp/varx if varx>0 else None),
+ "rmse":safe_float(np.sqrt(np.mean(resid**2))),
+ "maxerr":safe_float(np.max(np.abs(resid)))
+}
+json.dumps(out)
+\`);
+   postMessage({type:"analyzeDone",result:JSON.parse(r.toString())});
+   if(r && typeof r.destroy==="function") if(r && typeof r.destroy==="function") r.destroy();
+  }
+  if(e.data.type==="plot"){
+   pyodide.globals.set("plot_start",e.data.start);pyodide.globals.set("plot_end",e.data.end);
+   postMessage({type:"plotProgress",msg:"重建選定圖面期間..."});
+   const r=await pyodide.runPythonAsync(\`
+import numpy as np, json
+from utide import reconstruct
+p0=np.datetime64(plot_start)
+p1=np.datetime64(plot_end)
+grid=np.arange(p0,p1+np.timedelta64(1,"h"),np.timedelta64(1,"h"))
+allh=reconstruct(grid,coef,min_SNR=0,min_PE=0,verbose=False).h
+major={}
+names=set(str(n) for n in coef.name)
+for c in ["M2","S2","K1","O1"]:
+ major[c]=reconstruct(grid,coef,constit=[c],min_SNR=0,min_PE=0,verbose=False).h if c in names else np.zeros(len(grid))
+out={
+ "time":[str(t.astype("datetime64[s]")) for t in grid],
+ "all":[safe_float(v) for v in allh],
+ "M2":[safe_float(v) for v in major["M2"]],
+ "S2":[safe_float(v) for v in major["S2"]],
+ "K1":[safe_float(v) for v in major["K1"]],
+ "O1":[safe_float(v) for v in major["O1"]]
+}
+json.dumps(out)
+\`);
+   postMessage({type:"plotDone",result:JSON.parse(r.toString())});
+   if(r && typeof r.destroy==="function") if(r && typeof r.destroy==="function") r.destroy();
+  }
+ }catch(err){
+  let msg=String(err);
+  let st=err?.stack||"";
+  postMessage({type:"error",message:msg,stack:st});
+ }
+};`;
+return new Worker(URL.createObjectURL(new Blob([code],{type:"text/javascript"})));
+}
+function stopWorker(){if(pyWorker){pyWorker.terminate();pyWorker=null}analysisReady=false;$("stopPython").disabled=true;progress(0)}
+
+$("stopPython").addEventListener("click",()=>{stopWorker();$("calcStatus").innerHTML='<span class="warn">已停止並釋放 Python。</span>'});
+
+$("runHarmonic").addEventListener("click",()=>{
+ if(!gapResultReady){
+   $("calcStatus").innerHTML='<span class="bad">請先完成缺值檢查／補遺。</span>';
+   return;
+ }
+ if($("runHarmonic").disabled)return;
+ if(pyWorker)stopWorker();pyWorker=createWorker();analysisReady=false;$("runHarmonic").disabled=true;$("stopPython").disabled=false;$("log").textContent="";progress(2);
+ pyWorker.onmessage=e=>{
+  const m=e.data;
+  if(m.type==="progress"){progress(m.pct);$("calcStatus").textContent=m.msg;log(m.msg)}
+  if(m.type==="analyzeDone"){analysisResult=m.result;analysisReady=true;progress(100);$("calcStatus").innerHTML='<span class="ok">Harmonic analysis 完成。</span>';renderAnalysis();$("runHarmonic").disabled=false;requestPlot()}
+  if(m.type==="plotProgress"){$("plotStatus").textContent=m.msg}
+  if(m.type==="plotDone"){drawPlot(m.result)}
+  if(m.type==="error"){log(m.message);if(m.stack)log(m.stack);$("calcStatus").innerHTML='<span class="bad">計算失敗，請看紀錄。</span>';$("plotStatus").innerHTML='<span class="bad">圖面重建失敗，請看執行紀錄。</span>';$("runHarmonic").disabled=false}
+ };
+ pyWorker.onerror=e=>{log(e.message||String(e));$("calcStatus").innerHTML='<span class="bad">Worker 錯誤。</span>';$("runHarmonic").disabled=false};
+ const source=$("harmonicDataSource").value;
+ let harmonicInput=selectedData;
+
+ if(source==="filled"){
+   if(!gapResultReady||!filledSeries.length){
+     $("calcStatus").innerHTML='<span class="bad">尚未建立補遺結果。</span>';
+     $("runHarmonic").disabled=false;
+     return;
+   }
+   harmonicInput=filledSeries
+     .filter(r=>r.value!=null)
+     .map(r=>({date:r.date,value:r.value}));
+ }
+
+ log(`Harmonic 資料來源：${source==="filled"?"補遺後資料":"原始觀測資料"}；${harmonicInput.length.toLocaleString()} 筆。`);
+ log(`時間基準：使用原始站時，不轉 UTC；起始 ${naiveLocalISO(harmonicInput[0].date)}。`);
+
+ pyWorker.postMessage({
+   type:"analyze",
+   times:harmonicInput.map(r=>naiveLocalISO(r.date)),
+   values:harmonicInput.map(r=>r.value),
+   lat:Number($("latitude").value),
+   mode:$("constMode").value
+ });
+});
+
+
+const CONSTIT_INFO = {
+  SA:{type:"長週期",period:"365.24 日",desc:"太陽年週期分潮，常反映季節性海水位變化。"},
+  SSA:{type:"長週期",period:"182.62 日",desc:"太陽半年週期分潮。"},
+  MM:{type:"長週期",period:"27.55 日",desc:"月球近點月相關的長週期分潮。"},
+  MF:{type:"長週期",period:"13.66 日",desc:"月球半月週期分潮。"},
+  M2:{type:"半日潮",period:"12.42 hr",desc:"主太陰半日分潮，通常是臺灣附近最主要的半日潮成分。"},
+  S2:{type:"半日潮",period:"12.00 hr",desc:"主太陽半日分潮，與 M2 疊加形成大潮、小潮週期。"},
+  N2:{type:"半日潮",period:"12.66 hr",desc:"較大太陰橢圓半日分潮，與月球軌道偏心率相關。"},
+  K2:{type:"半日潮",period:"11.97 hr",desc:"日月合成半日分潮。"},
+  K1:{type:"全日潮",period:"23.93 hr",desc:"日月合成全日分潮，是潮型判別的四大分潮之一。"},
+  O1:{type:"全日潮",period:"25.82 hr",desc:"主太陰全日分潮，是潮型判別的四大分潮之一。"},
+  P1:{type:"全日潮",period:"24.07 hr",desc:"主太陽全日分潮。"},
+  Q1:{type:"全日潮",period:"26.87 hr",desc:"較大太陰橢圓全日分潮。"},
+  M4:{type:"淺水分潮",period:"6.21 hr",desc:"M2 的二次 overtide，常用來反映淺水非線性與潮波變形。"},
+  MS4:{type:"淺水分潮",period:"6.10 hr",desc:"M2 與 S2 非線性交互作用形成的複合淺水分潮。"},
+  MN4:{type:"淺水分潮",period:"6.27 hr",desc:"M2 與 N2 非線性交互作用形成的複合淺水分潮。"},
+  M6:{type:"淺水分潮",period:"4.14 hr",desc:"M2 的三次 overtide，與更高階潮波非線性有關。"},
+  M8:{type:"淺水分潮",period:"3.11 hr",desc:"M2 的四次 overtide。"}
+};
+
+
+function snrInterpretation(snr){
+  if(snr==null || !Number.isFinite(Number(snr))) return {label:"-", cls:""};
+  const v=Number(snr);
+  if(v<2) return {label:"低可信", cls:"bad"};
+  if(v<=10) return {label:"可辨識", cls:"warn"};
+  return {label:"高可信", cls:"ok"};
+}
+
+function constituentInfo(name,freq){
+  const info=CONSTIT_INFO[name];
+  if(info) return info;
+  const f=Number(freq);
+  const period=Number.isFinite(f)&&f>0 ? (1/f<48 ? `${(1/f).toFixed(2)} hr` : `${(1/f/24).toFixed(2)} 日`) : "-";
+  let type="其他";
+  if(Number.isFinite(f)){
+    if(f<0.03) type="長週期";
+    else if(f<0.055) type="全日潮";
+    else if(f<0.11) type="半日潮";
+    else type="高頻／淺水分潮";
+  }
+  return {type,period,desc:"UTide 自動選出的其他可解析分潮。"};
+}
+
+function renderAnalysis(){
+ $("summaryCard").classList.remove("hidden");$("chartCard").classList.remove("hidden");$("tableCard").classList.remove("hidden");
+ const fmt=(v,n=2)=>v==null||!Number.isFinite(Number(v))?"-":Number(v).toFixed(n);
+ $("formFactor").textContent=fmt(analysisResult.F,3);
+ $("tideType").textContent=analysisResult.tide_type||"-";
+ $("varExplained").textContent=analysisResult.ve==null?"-":fmt(analysisResult.ve,2)+" %";
+ $("rmse").textContent=analysisResult.rmse==null?"-":fmt(analysisResult.rmse,4)+" m";
+ $("maxError").textContent=analysisResult.maxerr==null?"-":fmt(analysisResult.maxerr,4)+" m";
+ $("nConstit").textContent=analysisResult.rows.length;
+ $("nSignificant").textContent=analysisResult.rows.filter(r=>r.snr!=null&&r.snr>=2).length;
+ $("resultBody").innerHTML="";
+ [...analysisResult.rows].sort((a,b)=>(Number(b.A)||0)-(Number(a.A)||0)).forEach(r=>{
+   const info=constituentInfo(r.name,r.freq);
+   const tr=document.createElement("tr");
+   tr.innerHTML=`
+     <td>${r.name}${r.snr!=null&&r.snr>=2?" *":""}</td>
+     <td>${info.type}</td>
+     <td>${info.period}</td>
+     <td>${fmt(r.freq,7)}</td>
+     <td>${fmt(r.A,5)}</td>
+     <td>${fmt(r.g,2)}</td>
+     <td>${fmt(r.A_ci,5)}</td>
+     <td>${fmt(r.g_ci,2)}</td>
+     <td>${fmt(r.snr,2)}</td>
+     <td><span class="${snrInterpretation(r.snr).cls}">${snrInterpretation(r.snr).label}</span></td>
+     <td style="text-align:left;white-space:normal;min-width:260px">${info.desc}</td>`;
+   $("resultBody").appendChild(tr);
+ });
+ const plotMin=selectedData[0].date;
+ const plotMax=selectedData.at(-1).date;
+ $("plotStart").min=datetimeLocalValue(plotMin);
+ $("plotStart").max=datetimeLocalValue(plotMax);
+ $("plotEnd").min=datetimeLocalValue(plotMin);
+ $("plotEnd").max=datetimeLocalValue(plotMax);
+
+ $("plotStart").value=datetimeLocalValue(plotMin);
+ const defaultEnd=new Date(Math.min(plotMin.getTime()+7*86400000,plotMax.getTime()));
+ $("plotEnd").value=datetimeLocalValue(defaultEnd);
+}
+function requestPlot(){
+ if(!analysisReady||!pyWorker){
+   $("plotStatus").innerHTML='<span class="bad">請先完成 Harmonic analysis。</span>';
+   return;
+ }
+
+ const ps=parseDateTimeLocal($("plotStart").value);
+ const pe=parseDateTimeLocal($("plotEnd").value);
+
+ if(!ps||!pe||pe<=ps){
+   $("plotStatus").innerHTML='<span class="bad">圖面開始／結束時間設定無效。</span>';
+   return;
+ }
+
+ const analysisStart=selectedData[0].date;
+ const analysisEnd=selectedData.at(-1).date;
+
+ if(ps<analysisStart||pe>analysisEnd){
+   $("plotStatus").innerHTML='<span class="bad">圖面範圍不可超出本次 Harmonic Analysis 的分析期間。</span>';
+   return;
+ }
+
+ const spanDays=(pe-ps)/86400000;
+
+ if(spanDays>365){
+   $("plotStatus").innerHTML=`<span class="warn">顯示範圍 ${spanDays.toFixed(1)} 天，資料量較大，繪圖可能較慢。</span>`;
+ } else {
+   $("plotStatus").textContent=`要求 Python 重建 ${spanDays.toFixed(2)} 天圖面...`;
+ }
+
+ pyWorker.postMessage({
+   type:"plot",
+   start:$("plotStart").value+":00",
+   end:$("plotEnd").value+":00"
+ });
+}
+
+$("refreshChart").addEventListener("click",requestPlot);
+$("plotStart").addEventListener("change",()=>{});
+$("plotEnd").addEventListener("change",()=>{});
+
+document.querySelectorAll(".quickDays").forEach(b=>b.addEventListener("click",()=>{
+  const ps=parseDateTimeLocal($("plotStart").value);
+  if(!ps) return;
+
+  const analysisEnd=selectedData.at(-1).date;
+  const target=new Date(Math.min(
+    ps.getTime()+Number(b.dataset.days)*86400000,
+    analysisEnd.getTime()
+  ));
+
+  $("plotEnd").value=datetimeLocalValue(target);
+  requestPlot();
+}));
+
+function parsePyTime(s){
+ const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);if(!m)return NaN;
+ return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]).getTime();
+}
+function drawPlot(r){
+ const pyTimes=r.time.map(parsePyTime);
+ const start=parseDateTimeLocal($("plotStart").value);
+ const end=parseDateTimeLocal($("plotEnd").value);
+ const obs=selectedData.filter(x=>x.date>=start&&x.date<=end).map(x=>({x:x.date.getTime(),y:x.value}));
+ const ds=(arr)=>arr.map((v,i)=>({x:pyTimes[i],y:Number(v)})).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
+ const all=ds(r.all),m2=ds(r.M2),s2=ds(r.S2),k1=ds(r.K1),o1=ds(r.O1);
+ $("plotStatus").innerHTML=all.length?`<span class="ok">圖面重建成功：</span>${all.length} 個逐時點；Observed ${obs.length} 點。`:'<span class="bad">Python 回傳 0 個圖面點。</span>';
+ if(tideChart)tideChart.destroy();
+ tideChart=new Chart($("tideChart"),{
+  type:"line",
+  data:{datasets:[
+   {label:"Observed",data:obs,borderWidth:1.6,pointRadius:0,spanGaps:false},
+   {label:"All constituents",data:all,borderWidth:2.4,pointRadius:0},
+   {label:"M2",data:m2,borderWidth:1.2,pointRadius:0},
+   {label:"S2",data:s2,borderWidth:1.2,pointRadius:0},
+   {label:"K1",data:k1,borderWidth:1.2,pointRadius:0},
+   {label:"O1",data:o1,borderWidth:1.2,pointRadius:0}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,interaction:{mode:"nearest",intersect:false},
+   plugins:{legend:{position:"top"},tooltip:{callbacks:{title(items){return items.length?new Date(items[0].parsed.x).toLocaleString("zh-TW",{hour12:false}):""}}}},
+   scales:{x:{type:"linear",ticks:{maxTicksLimit:12,callback(v){const d=new Date(Number(v));return `${p2(d.getMonth()+1)}/${p2(d.getDate())} ${p2(d.getHours())}:00`}},title:{display:true,text:"Time"}},
+           y:{title:{display:true,text:"Water level / constituent contribution (m)"}}}
+  }
+ });
+ log(`圖面：Python ${all.length} 點，Observed ${obs.length} 點。`);
+}
+</script>
+</body>
+</html>
