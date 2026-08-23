@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tidal Analysis Toolkit v2.9.2 SI Meter Units</title>
+<title>Tidal Analysis Toolkit v3.0</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -57,16 +57,13 @@ pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space
 
 
 
-.gap-overview-wrap{height:210px;position:relative}
-
-.gap-overview-wrap canvas{width:100%!important;height:210px!important}
 .gap-detail-table{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
 .gap-detail-table table{margin:0}
 .gap-jump{cursor:pointer;text-decoration:underline;font-weight:600}
 
 .gap-chart-wrap canvas{width:100%!important;height:330px!important}
 .callout{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f9fafb}
-.module-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.module-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .module-card{border:1px solid var(--line);border-radius:10px;padding:11px;min-width:0}
 .module-card strong{display:block;margin-bottom:4px}
 .badge{display:inline-block;padding:3px 7px;border-radius:999px;font-size:12px;font-weight:700;background:#eef4ff;color:#3538cd}
@@ -83,7 +80,7 @@ pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space
 <body>
 <div class="wrap">
 <h1>Tidal Analysis Toolkit</h1>
-<p class="lead">v2.9.2：趨勢模組全面以 m 為基準單位；水位 m、變化率 m/yr、加速度 m/yr²。</p>
+<p class="lead">v3.0：補遺、UTide 調和分析與海水位趨勢分析整合版；水位 m、變化率 m/yr、加速度 m/yr²。</p>
 
 <div class="grid">
 
@@ -93,27 +90,25 @@ pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space
     <div class="module-card">
       <strong>Missing Data</strong>
       <span class="badge ready">已完成</span>
-      <div class="note">Linear / Spline / PCHIP、最大連續缺口限制。</div>
+      <div class="note">Linear / Spline / PCHIP、最大連續缺口限制與補遺前後比較。</div>
     </div>
+
     <div class="module-card">
       <strong>Harmonic Analysis</strong>
       <span class="badge ready">已完成</span>
       <div class="note">UTide、潮型、SNR、信賴區間與分潮重建。</div>
     </div>
+
     <div class="module-card">
-      <strong>FFT / Welch PSD</strong>
-      <span class="badge next">下一階段</span>
-      <div class="note">頻譜與能量密度分析，將共用補遺後序列。</div>
+      <strong>Sea-Level Trend</strong>
+      <span class="badge ready">已完成</span>
+      <div class="note">Linear Trend、Moving Window 局部海水位變化率與 Quadratic Acceleration。</div>
     </div>
+
     <div class="module-card">
-      <strong>Wavelet</strong>
-      <span class="badge next">下一階段</span>
-      <div class="note">Morlet CWT、時間－週期能量分布。</div>
-    </div>
-    <div class="module-card">
-      <strong>Moving Window / SLR</strong>
-      <span class="badge next">已完成</span>
-      <div class="note">時變分潮與海水位趨勢。</div>
+      <strong>Enhanced Harmonic Analysis</strong>
+      <span class="badge next">保留</span>
+      <div class="note">時變分潮振幅與相位分析，保留作為後續進階功能。</div>
     </div>
   </div>
 </section>
@@ -219,8 +214,8 @@ pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space
   <br>
   <div class="callout note">
     <b>分析資料來源：</b>
-    補遺完成後，Harmonic Analysis 可選擇「原始觀測資料」或「補遺後資料」。
-    FFT / PSD / Wavelet 後續會直接共用這個前處理結果。
+    補遺結果主要作為資料品質檢查，以及提供需要完整等時間距序列的分析使用。
+    Harmonic Analysis 建議仍以原始觀測資料為主要分析來源。
   </div>
 
   <br>
@@ -300,7 +295,7 @@ pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space
   <p id="harmonicSourceStatus" class="note">目前使用原始觀測資料。</p>
   <p class="note">
     UTide 本身可處理不規則／有缺口的時間序列，因此調和分析預設建議使用原始觀測資料；
-    補遺後資料主要供後續 FFT、PSD、Wavelet 等需要等時間距序列的模組使用。
+    補遺後資料保留作為資料品質檢查及需要完整等時間距序列的後續分析使用。
   </p>
 
   <div class="actions">
@@ -407,7 +402,7 @@ pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space
   <h2>8. Mean Sea-Level Trend｜一般潮位趨勢</h2>
   <p class="note">
     本模組使用<b>原始觀測資料</b>，不使用補遺值。先依資料完整率計算月平均，再進行：
-    <b>① 全期間線性趨勢、② Moving Window 局部上升率、③ 二次式加速度分析</b>。
+    <b>① 全期間線性趨勢、② Moving Window 局部海水位變化率、③ 二次式加速度分析</b>。
   </p>
 
   <div class="row">
@@ -548,7 +543,7 @@ pre{background:#101828;color:#f2f4f7;padding:12px;border-radius:10px;white-space
       <p>
         <b>Quadratic acceleration：</b>海平面研究中常以二次迴歸 η(t)=a+bt+ct²，
         並以 2c 表示平均 acceleration（m/yr²）。但 quadratic acceleration 對分析期間與起始年份高度敏感，
-        因此本工具同時提供 Moving Window SLR 作為診斷，而不只報告單一二次係數。
+        因此本工具同時提供 Moving Window 局部海水位變化率作為診斷，而不只報告單一二次係數。
       </p>
       <ol>
         <li>
@@ -1013,15 +1008,13 @@ function runGapProcessing(){
   // Preprocessing is now complete, so Harmonic may run.
   $("runHarmonic").disabled=false;
 
-  // If actual interpolation was performed, default to the processed series.
-  // If "none" was selected, keep the raw observations.
-  if(method==="none"){
-    $("harmonicDataSource").value="raw";
-    $("harmonicSourceStatus").textContent="缺值檢查已完成；Harmonic 將使用原始觀測資料。";
-  }else{
-    $("harmonicDataSource").value="filled";
-    $("harmonicSourceStatus").textContent=`補遺已完成；Harmonic 預設使用 ${methodDisplayName(method)} 補遺後資料。`;
-  }
+  // Harmonic Analysis defaults to raw observations.
+  // Filled data remain available only as an optional comparison source.
+  $("harmonicDataSource").value="raw";
+  $("harmonicSourceStatus").textContent=
+    method==="none"
+    ?"缺值檢查已完成；Harmonic 將使用原始觀測資料。"
+    :`補遺已完成（${methodDisplayName(method)}）；Harmonic 仍預設使用原始觀測資料。`;
 
   renderGapDetails();
   drawGapChart();
@@ -1759,7 +1752,7 @@ for i in range(len(coef.name)):
  aci=safe_float(coef.A_ci[i]) if hasattr(coef,"A_ci") else None
  g=safe_float(coef.g[i])
  gci=safe_float(coef.g_ci[i]) if hasattr(coef,"g_ci") else None
- snr=(A/aci)**2 if A is not None and aci is not None and aci>0 else None
+ snr=safe_float(coef.SNR[i]) if hasattr(coef,"SNR") else None
  rows.append({
      "name":str(coef.name[i]),
      "freq":safe_float(coef.aux.frq[i]),
@@ -1767,7 +1760,7 @@ for i in range(len(coef.name)):
      "g":g,
      "A_ci":aci,
      "g_ci":gci,
-     "snr":safe_float(snr)
+     "snr":snr
  })
 amp={r["name"]:r["A"] for r in rows}; F=None; typ=None
 if all(k in amp for k in ["K1","O1","M2","S2"]):
@@ -1786,7 +1779,7 @@ out={
 json.dumps(out)
 \`);
    postMessage({type:"analyzeDone",result:JSON.parse(r.toString())});
-   if(r && typeof r.destroy==="function") if(r && typeof r.destroy==="function") r.destroy();
+   if(r && typeof r.destroy==="function") r.destroy();
   }
   if(e.data.type==="plot"){
    pyodide.globals.set("plot_start",e.data.start);pyodide.globals.set("plot_end",e.data.end);
@@ -1813,7 +1806,7 @@ out={
 json.dumps(out)
 \`);
    postMessage({type:"plotDone",result:JSON.parse(r.toString())});
-   if(r && typeof r.destroy==="function") if(r && typeof r.destroy==="function") r.destroy();
+   if(r && typeof r.destroy==="function") r.destroy();
   }
  }catch(err){
   let msg=String(err);
