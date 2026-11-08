@@ -80,6 +80,59 @@
       text-decoration: none;
       display: block;
       transition: 0.18s ease;
+      /* 折疊選單 */
+.nav-group {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.nav-group:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.nav-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 10px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.nav-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-group > summary::after {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.18s ease;
+}
+
+.nav-group[open] > summary::after {
+  transform: rotate(90deg);
+}
+
+.nav-group > summary:hover {
+  background: #eef3f7;
+}
+
+.nav-group > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nav-items {
+  display: grid;
+  gap: 10px;
+  padding-top: 8px;
+}
     }
     .module-btn {
       cursor: pointer;
