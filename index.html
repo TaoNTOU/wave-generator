@@ -182,63 +182,63 @@
 
     <section class="layout">
 
-      <aside class="panel">
+     <aside class="panel">
+  <nav aria-label="modules">
 
-        <nav aria-label="modules">
+    <details class="nav-group" open>
+      <summary>工具箱</summary>
 
-          <div class="nav-title">
-            工具箱
-          </div>
+      <div class="nav-items">
+        <button
+          class="module-btn active"
+          data-src="modules/wave-generator.html">
+          規則波產生器
+          <span>Regular wave generator</span>
+        </button>
 
-          <button
-            class="module-btn active"
-            data-src="modules/wave-generator.html">
-            規則波產生器
-            <span>Regular wave generator</span>
-          </button>
+        <button
+          class="module-btn"
+          data-src="modules/spectrum-generator.html">
+          不規則波與波譜產生
+          <span>Irregular wave / spectrum generator</span>
+        </button>
 
-          <button
-            class="module-btn"
-            data-src="modules/spectrum-generator.html">
-            不規則波與波譜產生
-            <span>Irregular wave / spectrum generator</span>
-          </button>
+        <button
+          class="module-btn"
+          data-src="modules/wave-analysis.html">
+          零上／下切與頻譜分析
+          <span>Zero crossing / spectral analysis</span>
+        </button>
 
-          <button
-            class="module-btn"
-            data-src="modules/wave-analysis.html">
-            零上／下切與頻譜分析
-            <span>Zero crossing / spectral analysis</span>
-          </button>
+        <button
+          class="module-btn"
+          data-src="modules/tidal.html">
+          潮汐分析工具
+          <span>Tidal analysis / harmonic / sea-level trend</span>
+        </button>
 
-          <button
-            class="module-btn"
-            data-src="modules/tidal.html">
-            潮汐分析工具
-            <span>Tidal analysis / harmonic / sea-level trend</span>
-          </button>
+        <button
+          class="module-btn"
+          data-src="modules/coordinate-converter.html">
+          XYZ 座標轉換
+          <span>WGS84 / TWD97 coordinate converter</span>
+        </button>
+      </div>
+    </details>
 
-          <button
-            class="module-btn"
-            data-src="modules/coordinate-converter.html">
-            XYZ 座標轉換
-            <span>WGS84 / TWD97 coordinate converter</span>
-          </button>
+    <details class="nav-group">
+      <summary>數值模式</summary>
 
-          <div class="nav-title model">
-            數值模式
-          </div>
+      <div class="nav-items">
+        <a class="module-link" href="opendrift/">
+          OpenDrift / OpenOil
+          <span>Particle tracking / oil spill modeling</span>
+        </a>
+      </div>
+    </details>
 
-          <a
-            class="module-link"
-            href="opendrift/">
-            OpenDrift / OpenOil
-            <span>Particle tracking / oil spill modeling</span>
-          </a>
-
-        </nav>
-
-      </aside>
+  </nav>
+</aside>
 
       <section class="panel viewer">
 
